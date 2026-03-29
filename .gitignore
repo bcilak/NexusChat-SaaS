@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+chatbot.db
+chroma_data/
+uploads/
+node_modules/
+.next/
+frontend/.next/
+frontend/node_modules/
