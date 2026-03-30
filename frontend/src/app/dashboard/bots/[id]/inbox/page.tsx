@@ -17,6 +17,9 @@ interface Conversation {
   is_ai_active: boolean;
   last_message_at: string;
   created_at: string;
+  last_message_preview?: string;
+  last_message_sender?: string;
+  unread_count?: number;
 }
 
 interface Message {
@@ -24,6 +27,43 @@ interface Message {
   sender_type: "user" | "ai" | "human";
   content: string;
   created_at: string;
+}
+
+/** Format a raw phone number into a readable form: +90 5XX XXX XX XX */
+function formatPhoneNumber(raw: string): string {
+  if (!raw) return raw;
+  // Strip all non-digit characters
+  const digits = raw.replace(/\D/g, "");
+  
+  // Turkish number: 905XXXXXXXXX (12 digits)
+  if (digits.length === 12 && digits.startsWith("90")) {
+    return `+90 ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8, 10)} ${digits.slice(10)}`;
+  }
+  // International number with country code
+  if (digits.length >= 10 && digits.length <= 15) {
+    // Generic: +CC XXX XXX XX XX
+    return `+${digits.slice(0, digits.length - 10)} ${digits.slice(-10, -7)} ${digits.slice(-7, -4)} ${digits.slice(-4, -2)} ${digits.slice(-2)}`;
+  }
+  return raw;
+}
+
+/** Return a display-friendly contact name */
+function displayContact(contactId: string, platform: string): string {
+  if (platform === "whatsapp") {
+    return formatPhoneNumber(contactId);
+  }
+  // Web sessions — truncate if long session ID
+  if (contactId.length > 20) {
+    return contactId.slice(0, 8) + "…" + contactId.slice(-6);
+  }
+  return contactId;
+}
+
+/** Return a prefix icon character for sender type */
+function senderPrefix(sender: string): string {
+  if (sender === "ai") return "🤖 ";
+  if (sender === "human") return "👤 ";
+  return "";
 }
 
 export default function InboxPage() {
@@ -83,10 +123,18 @@ export default function InboxPage() {
       try {
         const data = JSON.parse(event.data);
         if (data.event === "new_message") {
-          // Bump conversation last_message_at
+          // Bump conversation last_message_at and update preview
           setConversations(prev => 
             prev.map(c => c.id === data.conversation_id 
-              ? { ...c, last_message_at: data.message.created_at } 
+              ? { 
+                  ...c, 
+                  last_message_at: data.message.created_at,
+                  last_message_preview: data.message.content?.slice(0, 80) || "",
+                  last_message_sender: data.message.sender_type,
+                  unread_count: data.message.sender_type === "user" && activeConvIdRef.current !== data.conversation_id
+                    ? (c.unread_count || 0) + 1
+                    : c.unread_count
+                } 
               : c
             )
           );
@@ -244,23 +292,40 @@ export default function InboxPage() {
                       : "bg-white dark:bg-white/5 border-transparent hover:border-white/10"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2 min-w-0">
                       {conv.platform === 'whatsapp' ? (
-                        <Phone className="w-4 h-4 text-emerald-400" />
+                        <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
                       ) : (
-                        <Globe className="w-4 h-4 text-blue-400" />
+                        <Globe className="w-4 h-4 text-blue-400 shrink-0" />
                       )}
-                      <span className="font-semibold text-gray-900 dark:text-white truncate max-w-[140px]">
-                        {conv.contact_id}
+                      <span className="font-semibold text-gray-900 dark:text-white truncate text-sm">
+                        {displayContact(conv.contact_id, conv.platform)}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-500 font-mono">
-                      {new Date(conv.last_message_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {(conv.unread_count ?? 0) > 0 && (
+                        <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center rounded-full bg-indigo-500 text-white text-[10px] font-bold shadow-[0_0_8px_rgba(99,102,241,0.5)]">
+                          {conv.unread_count}
+                        </span>
+                      )}
+                      <span className="text-[11px] text-gray-500 font-mono">
+                        {new Date(conv.last_message_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                    </div>
                   </div>
+                  
+                  {/* Message Preview */}
+                  {conv.last_message_preview && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2 pl-6">
+                      {senderPrefix(conv.last_message_sender || "")}{conv.last_message_preview}
+                    </p>
+                  )}
+                  
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Masaüstü/Mobil vs.</span>
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium pl-6">
+                      {conv.platform === "whatsapp" ? "WhatsApp" : "Web Chat"}
+                    </span>
                     {conv.is_ai_active ? (
                       <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> AI Devrede
@@ -288,8 +353,8 @@ export default function InboxPage() {
                     {activeConv.platform === 'whatsapp' ? <Phone className="w-5 h-5 text-emerald-500" /> : <Globe className="w-5 h-5 text-blue-500" />}
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900 dark:text-white">{activeConv.contact_id}</h3>
-                    <p className="text-xs text-gray-500 uppercase tracking-widest">{activeConv.platform} Sohbeti</p>
+                    <h3 className="font-bold text-gray-900 dark:text-white">{displayContact(activeConv.contact_id, activeConv.platform)}</h3>
+                    <p className="text-xs text-gray-500 uppercase tracking-widest">{activeConv.platform === "whatsapp" ? "WhatsApp" : "Web"} Sohbeti</p>
                   </div>
                 </div>
                 
@@ -305,9 +370,9 @@ export default function InboxPage() {
                   {toggling ? (
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   ) : activeConv.is_ai_active ? (
-                    <><Ban className="w-4 h-4" /> AI'yi Durdur (Devral)</>
+                    <><Ban className="w-4 h-4" /> AI&apos;yi Durdur (Devral)</>
                   ) : (
-                    <><BotIcon className="w-4 h-4" /> AI'ye Devret</>
+                    <><BotIcon className="w-4 h-4" /> AI&apos;ye Devret</>
                   )}
                 </button>
               </div>
@@ -366,7 +431,7 @@ export default function InboxPage() {
                 {activeConv.is_ai_active ? (
                   <div className="bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-xl p-3 flex items-center gap-3 text-sm font-medium">
                     <AlertCircle className="w-5 h-5 shrink-0" />
-                    <p>Yönetici olarak cevap yazabilmek için önce "AI'yi Durdur (Devral)" butonuna basmalısınız.</p>
+                    <p>Yönetici olarak cevap yazabilmek için önce &quot;AI&apos;yi Durdur (Devral)&quot; butonuna basmalısınız.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleSend} className="relative flex items-center">

@@ -17,6 +17,7 @@ router = APIRouter(prefix="/api/widget", tags=["widget"])
 class WidgetChatRequest(BaseModel):
     question: str
     session_id: Optional[str] = None
+    attachment_url: Optional[str] = None
 
 
 @router.get("/{bot_id}/config")
@@ -51,5 +52,5 @@ def widget_chat(
         raise HTTPException(status_code=404, detail="Bot bulunamadı")
 
     session_id = req.session_id or str(uuid.uuid4())
-    result = rag_chat(bot, req.question, session_id, db)
+    result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url)
     return result

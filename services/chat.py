@@ -52,13 +52,14 @@ def rag_chat(
     question: str,
     session_id: str,
     db: Session,
+    attachment_url: str = None
 ) -> dict:
     """Full RAG chain: retrieve → prompt → generate → save."""
     # 1. Retrieve relevant documents using Hybrid Search
     vectordb = VectorDBService()
     retrieved_docs = vectordb.hybrid_search(str(bot.id), question, k=4)
 
-    if not retrieved_docs:
+    if not retrieved_docs and not attachment_url:
         answer = "Bu konuda bilgim yok. Lütfen farklı bir soru sorun veya botun eğitim verilerine daha fazla bilgi ekleyin."
         sources = []
         is_fallback = True
@@ -73,14 +74,22 @@ def rag_chat(
         ).order_by(ChatHistory.created_at.desc()).limit(4).all()
         recent_history.reverse()
 
-        history_msgs = []
-        for h in recent_history:
-            history_msgs.append(("human", h.question))
-            history_msgs.append(("ai", h.answer))
-
         system_text = bot.prompt + "\n\nİlgili İçerikler (Knowledge Base):\n{context}\n\nUnutma: Eğer kullanıcı stok veya ürün sorarsa, sana sağlanan ecommerce aracını(tool) kullanıp gerçek veriyi söyleyebilirsin."
-        prompt_msgs = [("system", system_text)] + history_msgs + [("human", "{question}")]
-        prompt = ChatPromptTemplate.from_messages(prompt_msgs)
+        
+        from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+        
+        messages_input = [SystemMessage(content=system_text.format(context=context))]
+        for h in recent_history:
+            messages_input.append(HumanMessage(content=h.question))
+            messages_input.append(AIMessage(content=h.answer))
+            
+        if attachment_url:
+            messages_input.append(HumanMessage(content=[
+                {"type": "text", "text": question},
+                {"type": "image_url", "image_url": {"url": attachment_url}}
+            ]))
+        else:
+            messages_input.append(HumanMessage(content=question))
 
         # 3. Call LLM
         model_name = bot.model or "gpt-4o-mini"
@@ -122,45 +131,42 @@ def rag_chat(
 
         if active_tools:
             llm_with_tools = llm.bind_tools(active_tools)
-            chain = prompt | llm_with_tools
             
             # Initial invocation
-            response_msg = chain.invoke({"context": context, "question": question})
+            response_msg = llm_with_tools.invoke(messages_input)
             
             if response_msg.tool_calls:
-                messages = prompt.format_messages(context=context, question=question)
-                messages.append(response_msg)
+                messages_input.append(response_msg)
                 
                 for tc in response_msg.tool_calls:
                     tool = next((t for t in active_tools if t.name == tc["name"]), None)
                     if tool:
                         try:
                             tool_result = tool.invoke(tc["args"])
-                            messages.append(ToolMessage(content=str(tool_result), tool_call_id=tc["id"]))
+                            messages_input.append(ToolMessage(content=str(tool_result), tool_call_id=tc["id"]))
                         except Exception as e:
-                            messages.append(ToolMessage(content=f"Error executing tool: {e}", tool_call_id=tc["id"]))
+                            messages_input.append(ToolMessage(content=f"Error executing tool: {e}", tool_call_id=tc["id"]))
                 
                 # Final LLM output combining tool results
-                final_response = llm.invoke(messages)
+                final_response = llm.invoke(messages_input)
                 answer = final_response.content
             else:
                 answer = response_msg.content
         else:
             # Fallback to simple chain if no tools
-            # Fallback to simple chain if no tools
-            simple_prompt = ChatPromptTemplate.from_messages(
-                [("system", bot.prompt + "\n\nBilgiler:\n{context}")] + history_msgs + [("human", "{question}")]
-            )
-            chain = simple_prompt | llm
-            response = chain.invoke({"context": context, "question": question})
+            response = llm.invoke(messages_input)
             answer = response.content
         is_fallback = False
 
     # 4. Save to chat history
+    save_question = question
+    if attachment_url:
+        save_question = f"{question}\n\n![Resim]({attachment_url})"
+        
     history = ChatHistory(
         bot_id=bot.id,
         session_id=session_id,
-        question=question,
+        question=save_question,
         answer=answer,
         sources=json.dumps(sources, ensure_ascii=False),
         is_fallback=is_fallback

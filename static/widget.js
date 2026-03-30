@@ -95,6 +95,21 @@
     }
     .acw-input-area button:disabled { opacity: 0.5; cursor: not-allowed; }
     
+    .acw-input-area .acw-attach-btn {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 10px; cursor: pointer; color: #e2e8f0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s; font-size: 16px;
+    }
+    .acw-input-area .acw-attach-btn:hover { background: rgba(255,255,255,0.1); }
+    
+    #acw-preview-container {
+      display: none; padding: 8px 16px; background: rgba(0,0,0,0.2); 
+      border-top: 1px solid rgba(255,255,255,0.06); align-items: center; justify-content: space-between;
+    }
+    #acw-preview-container img { max-height: 48px; border-radius: 6px; }
+    #acw-preview-container .remove { color: #f87171; cursor: pointer; font-size: 12px; font-weight: bold; background: none; border: none; }
+    
     .acw-suggestion {
       display: inline-block; padding: 6px 12px; font-size: 12px; color: var(--acw-theme, #a5b4fc);
       border: 1px solid var(--acw-theme, #8b5cf6); border-radius: 16px; cursor: pointer; margin-right: 6px; margin-top: 6px;
@@ -132,7 +147,10 @@
       <div class="acw-msg bot" id="acw-welcome">Merhaba! Size nasıl yardımcı olabilirim?</div>
       <div id="acw-suggestions-container"></div>
     </div>
+    <div id="acw-preview-container"></div>
     <div class="acw-input-area">
+      <label for="acw-file-upload" class="acw-attach-btn" id="acw-attach-icon" title="Resim Yükle">📎</label>
+      <input type="file" id="acw-file-upload" accept="image/*" style="display: none;" />
       <input type="text" id="acw-input" placeholder="Mesajınızı yazın..." autocomplete="off" />
       <button id="acw-send">Gönder</button>
     </div>
@@ -200,17 +218,74 @@
   const input = document.getElementById("acw-input");
   const sendBtn = document.getElementById("acw-send");
   const messages = document.getElementById("acw-messages");
+  
+  let currentAttachmentUrl = null;
+  const fileInput = document.getElementById("acw-file-upload");
+  const previewContainer = document.getElementById("acw-preview-container");
+  
+  fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    document.getElementById("acw-attach-icon").textContent = "⌛";
+    
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    try {
+      const res = await fetch(`${apiBase}/api/upload`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if (data.url) {
+        currentAttachmentUrl = data.url;
+        previewContainer.innerHTML = `<img src="${data.url}" /> <button class="remove" onclick="window.acwRemoveAttachment()">✖ Kaldır</button>`;
+        previewContainer.style.display = "flex";
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Dosya yüklenemedi.");
+    } finally {
+      document.getElementById("acw-attach-icon").textContent = "📎";
+      fileInput.value = "";
+    }
+  });
+
+  window.acwRemoveAttachment = function() {
+    currentAttachmentUrl = null;
+    previewContainer.style.display = "none";
+    previewContainer.innerHTML = "";
+  };
 
   async function sendMessage() {
     const question = input.value.trim();
-    if (!question) return;
+    if (!question && !currentAttachmentUrl) return;
 
     // Add user message
     const userMsg = document.createElement("div");
     userMsg.className = "acw-msg user";
-    userMsg.textContent = question;
+    if (question) {
+        const textSpan = document.createElement("div");
+        textSpan.textContent = question;
+        userMsg.appendChild(textSpan);
+    }
+    
+    if (currentAttachmentUrl) {
+        const img = document.createElement("img");
+        img.src = currentAttachmentUrl;
+        img.style.maxWidth = "100%";
+        img.style.borderRadius = "8px";
+        img.style.marginTop = question ? "8px" : "0";
+        userMsg.appendChild(img);
+    }
+    
     messages.appendChild(userMsg);
     input.value = "";
+    
+    const sentAttachment = currentAttachmentUrl;
+    window.acwRemoveAttachment();
+    
     sendBtn.disabled = true;
 
     // Add typing indicator
@@ -224,7 +299,11 @@
       const res = await fetch(`${apiBase}/api/widget/${botId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, session_id: sessionId }),
+        body: JSON.stringify({ 
+            question: question || "Bu görselde ne görüyorsun?", 
+            session_id: sessionId,
+            attachment_url: sentAttachment
+        }),
       });
       const data = await res.json();
 

@@ -31,7 +31,8 @@ def upgrade_db():
         ("example_questions", "TEXT"),
         ("whatsapp_phone_id", "VARCHAR(100)"),
         ("whatsapp_token", "VARCHAR(500)"),
-        ("whatsapp_verify_token", "VARCHAR(100)")
+        ("whatsapp_verify_token", "VARCHAR(100)"),
+        ("whatsapp_welcome_message", "TEXT")
     ]
     
     for col_name, col_def in bot_columns:

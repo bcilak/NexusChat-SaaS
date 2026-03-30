@@ -4,8 +4,16 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { integrationsApi, botsApi } from "@/lib/api";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bot, CheckCircle2, AlertCircle, Plug, Link as LinkIcon, ShoppingBag, ShoppingCart, Info, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Bot, CheckCircle2, AlertCircle, Plug, Link as LinkIcon, ShoppingBag, ShoppingCart, Info, Trash2, Plus, Smartphone, ExternalLink, MessageCircle } from "lucide-react";
 import Link from "next/link";
+
+interface BotInfo {
+  id: number;
+  name: string;
+  whatsapp_phone_id?: string | null;
+  whatsapp_token?: string | null;
+  whatsapp_verify_token?: string | null;
+}
 
 export default function IntegrationsPage() {
   const params = useParams();
@@ -13,6 +21,7 @@ export default function IntegrationsPage() {
   const botId = Number(params.id);
 
   const [botName, setBotName] = useState("");
+  const [botInfo, setBotInfo] = useState<BotInfo | null>(null);
   const [integrations, setIntegrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -23,8 +32,10 @@ export default function IntegrationsPage() {
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [connecting, setConnecting] = useState(false);
 
+  const whatsappConfigured = !!(botInfo?.whatsapp_phone_id && botInfo?.whatsapp_token);
+
   useEffect(() => {
-    botsApi.get(botId).then((b) => setBotName(b.name)).catch(() => {});
+    botsApi.get(botId).then((b: BotInfo) => { setBotName(b.name); setBotInfo(b); }).catch(() => {});
     fetchIntegrations();
   }, [botId]);
 
@@ -209,6 +220,63 @@ export default function IntegrationsPage() {
               ))}
             </div>
           )}
+        </motion.div>
+
+        {/* WhatsApp Cloud API Integration Card */}
+        <motion.div variants={itemVariants} className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-3xl p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-green-500/5 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
+          
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+              <MessageCircle className="w-5 h-5 text-green-500" /> WhatsApp Cloud API
+            </h3>
+            {whatsappConfigured ? (
+              <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Yapılandırıldı
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-gray-500 bg-gray-500/10 px-3 py-1.5 rounded-lg border border-gray-500/20">
+                <span className="w-2 h-2 rounded-full bg-gray-500" /> Bağlı Değil
+              </span>
+            )}
+          </div>
+          
+          <div className="bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between group hover:border-green-500/30 transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/10 border border-green-500/20 flex items-center justify-center">
+                <Smartphone className="w-7 h-7 text-green-500" />
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900 dark:text-white">WhatsApp Business</h4>
+                {whatsappConfigured ? (
+                  <div className="space-y-1 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                      Phone ID: {botInfo?.whatsapp_phone_id?.slice(0, 8)}...{botInfo?.whatsapp_phone_id?.slice(-4)}
+                    </p>
+                    <p className="text-xs text-emerald-500 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Webhook alımına hazır
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Meta Developer panelinden aldığınız bilgileri girerek bağlantıyı kurun.
+                  </p>
+                )}
+              </div>
+            </div>
+            <Link 
+              href={`/dashboard/bots/${botId}`}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 hover:bg-green-500/20 hover:border-green-500/40 shrink-0"
+            >
+              <ExternalLink className="w-4 h-4" />
+              {whatsappConfigured ? "Ayarları Düzenle" : "Yapılandır"}
+            </Link>
+          </div>
+          
+          <p className="text-[11px] text-gray-500 mt-4 flex items-center gap-1.5">
+            <Info className="w-3.5 h-3.5 text-green-500/60" />
+            WhatsApp bilgileri Bot Ayarları sayfasından yönetilir. Gelen mesajlar otomatik olarak Gelen Kutusu&apos;nda görünür.
+          </p>
         </motion.div>
 
         {integrations.length === 0 && (

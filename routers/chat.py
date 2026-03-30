@@ -21,6 +21,7 @@ router = APIRouter(prefix="/api/bots/{bot_id}/chat", tags=["chat"])
 class ChatRequest(BaseModel):
     question: str
     session_id: Optional[str] = None
+    attachment_url: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -51,7 +52,7 @@ def chat(
     bot = get_user_bot(bot_id, current_user, db)
     session_id = req.session_id or str(uuid.uuid4())
 
-    result = rag_chat(bot, req.question, session_id, db)
+    result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url)
     return ChatResponse(**result)
 
 

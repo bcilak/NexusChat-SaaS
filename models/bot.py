@@ -35,6 +35,7 @@ class Bot(Base):
     whatsapp_phone_id = Column(String(100), nullable=True, index=True)
     whatsapp_token = Column(String(500), nullable=True)
     whatsapp_verify_token = Column(String(100), nullable=True)
+    whatsapp_welcome_message = Column(Text, nullable=True)  # Auto-greeting for first WhatsApp contact
     
     created_at = Column(DateTime, default=datetime.utcnow)
 

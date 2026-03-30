@@ -30,6 +30,7 @@ interface BotType {
   whatsapp_phone_id: string | null;
   whatsapp_token: string | null;
   whatsapp_verify_token: string | null;
+  whatsapp_welcome_message: string | null;
 }
 
 export default function BotDetailPage() {
@@ -67,6 +68,7 @@ export default function BotDetailPage() {
         whatsapp_phone_id: bot.whatsapp_phone_id,
         whatsapp_token: bot.whatsapp_token,
         whatsapp_verify_token: bot.whatsapp_verify_token,
+        whatsapp_welcome_message: bot.whatsapp_welcome_message,
       });
       setBot(updated);
       setMessage({ text: "Ayarlar başarıyla kaydedildi.", type: "success" });
@@ -277,9 +279,23 @@ export default function BotDetailPage() {
 
           {/* WhatsApp Settings */}
           <motion.div variants={itemVariants} className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl p-6 relative overflow-hidden">
-            <h3 className="text-lg font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-white">
-              <Smartphone className="w-5 h-5 text-green-500" /> WhatsApp Entegrasyonu
-            </h3>
+            <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+            
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                <Smartphone className="w-5 h-5 text-green-500" /> WhatsApp Entegrasyonu
+              </h3>
+              {bot.whatsapp_phone_id && bot.whatsapp_token ? (
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Yapılandırıldı
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500 bg-gray-500/10 px-2.5 py-1 rounded-lg border border-gray-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-500" /> Bağlı Değil
+                </span>
+              )}
+            </div>
+
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Telefon Numarası ID (Phone ID)</label>
@@ -310,8 +326,42 @@ export default function BotDetailPage() {
                   placeholder="my-secret-token"
                   className="w-full px-4 py-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-600 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/50 transition-all text-sm font-mono"
                 />
-                <p className="text-xs text-gray-500 mt-2">Bu değeri Meta Developer panelindeki Webhook onayında kullanacaksınız.</p>
               </div>
+
+              {/* Auto-Welcome Message */}
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">🎉 Otomatik Karşılama Mesajı (İlk Mesaj)</label>
+                <textarea 
+                  value={bot.whatsapp_welcome_message || ""} 
+                  onChange={(e) => update("whatsapp_welcome_message", e.target.value)}
+                  rows={2}
+                  placeholder="Merhaba! Hoş geldiniz. Size nasıl yardımcı olabilirim?"
+                  className="w-full px-4 py-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-600 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/50 transition-all text-sm resize-none"
+                />
+                <p className="text-[11px] text-gray-500 mt-1.5">Yeni bir müşteri ilk kez mesaj attığında bu karşılama mesajı otomatik gönderilir. Boş bırakırsanız karşılama mesajı gönderilmez.</p>
+              </div>
+
+              {/* Webhook URL Info */}
+              <div className="bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">📌 Meta Webhook URL (bunu Meta Developer paneline yapıştırın):</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs font-mono bg-gray-100 dark:bg-black/30 text-emerald-600 dark:text-emerald-400 px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 select-all break-all">
+                    https://YOUR_DOMAIN/api/webhooks/whatsapp
+                  </code>
+                </div>
+                <p className="text-[11px] text-gray-500 leading-relaxed">
+                  Meta Developer {">"} WhatsApp {">"} Configuration {">"} Webhook alanına bu URL'yi girin. Verify Token olarak yukarıdaki alanı kullanın. Subscribe: <strong>messages</strong> alanını işaretleyin.
+                </p>
+              </div>
+
+              <a 
+                href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-xs font-medium text-indigo-500 hover:text-indigo-400 transition-colors"
+              >
+                📖 Meta WhatsApp Cloud API Kurulum Rehberi →
+              </a>
             </div>
           </motion.div>
         </div>

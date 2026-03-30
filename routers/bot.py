@@ -31,6 +31,7 @@ class BotCreate(BaseModel):
     whatsapp_phone_id: Optional[str] = None
     whatsapp_token: Optional[str] = None
     whatsapp_verify_token: Optional[str] = None
+    whatsapp_welcome_message: Optional[str] = None
 
 
 class BotUpdate(BaseModel):
@@ -50,6 +51,7 @@ class BotUpdate(BaseModel):
     whatsapp_phone_id: Optional[str] = None
     whatsapp_token: Optional[str] = None
     whatsapp_verify_token: Optional[str] = None
+    whatsapp_welcome_message: Optional[str] = None
 
 
 class BotResponse(BaseModel):
@@ -70,6 +72,7 @@ class BotResponse(BaseModel):
     whatsapp_phone_id: Optional[str]
     whatsapp_token: Optional[str]
     whatsapp_verify_token: Optional[str]
+    whatsapp_welcome_message: Optional[str]
     document_count: int = 0
     created_at: str
 
@@ -101,6 +104,7 @@ def bot_to_response(bot: Bot) -> BotResponse:
         whatsapp_phone_id=bot.whatsapp_phone_id,
         whatsapp_token=bot.whatsapp_token,
         whatsapp_verify_token=bot.whatsapp_verify_token,
+        whatsapp_welcome_message=bot.whatsapp_welcome_message,
         document_count=len(bot.documents) if bot.documents else 0,
         created_at=bot.created_at.isoformat() if bot.created_at else "",
     )
