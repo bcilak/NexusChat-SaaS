@@ -44,6 +44,7 @@ export default function AnalyticsPage() {
     { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
     { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
     { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
+    { label: "🛠️ API Araçları", path: `/dashboard/bots/${botId}/tools` },
     { label: "💬 Chat Test", path: `/dashboard/bots/${botId}/chat` },
     { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
   ];
