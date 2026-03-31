@@ -711,9 +711,9 @@
       const res = await fetch(`${apiBase}/api/upload`, { method: "POST", body: fd });
       const data = await res.json();
       if (data.url) {
-        attachmentUrl = data.url;
+        attachmentUrl = apiBase ? `${apiBase}${data.url}` : data.url;
         preview.style.display = "flex";
-        preview.innerHTML = `<img src="${data.url}" alt="preview"/> <button onclick="window.__nxcClear()">✖ Kaldır</button>`;
+        preview.innerHTML = `<img src="${attachmentUrl}" alt="preview"/> <button onclick="window.__nxcClear()">✖ Kaldır</button>`;
       }
     } catch {
       alert("Dosya yüklenemedi.");

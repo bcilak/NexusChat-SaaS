@@ -40,8 +40,7 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
     finally:
         file.file.close()
 
-    # Return the absolute path based on the incoming request base_url
-    base_url = str(request.base_url).rstrip("/")
-    file_url = f"{base_url}/uploads/{unique_filename}"
+    # Return the absolute path from root instead of request.base_url which may be wrong behind proxies
+    file_url = f"/uploads/{unique_filename}"
     
     return {"url": file_url, "filename": file.filename}

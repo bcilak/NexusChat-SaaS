@@ -341,8 +341,8 @@ export default function HistoryPage() {
                           <span className="text-xs font-semibold text-gray-300">Ziyaretçi</span>
                         </div>
                         {/* Chatbase inspired User Bubble: usually colored or distinct */}
-                        <div className="bg-indigo-600 text-white px-5 py-3.5 rounded-2xl rounded-tr-sm shadow-md text-[15px] leading-relaxed max-w-full relative group">
-                          {r.question}
+                        <div className="bg-indigo-600 text-white px-5 py-3.5 rounded-2xl rounded-tr-sm shadow-md text-[15px] leading-relaxed max-w-full relative group prose prose-invert prose-p:my-0 prose-img:rounded-xl prose-img:my-2 prose-a:text-indigo-200">
+                          <ReactMarkdown>{r.question}</ReactMarkdown>
                         </div>
                       </div>
                       
@@ -358,10 +358,10 @@ export default function HistoryPage() {
                         </div>
                         
                         {/* Chatbase inspired Bot Bubble: White background, subtle shadow, dark text */}
-                        <div className={`px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-lg text-[15px] leading-relaxed max-w-full whitespace-pre-wrap relative
-                          ${r.is_fallback ? 'bg-[#fff5f5] text-red-900 border border-red-200' : 'bg-white text-gray-800 border border-gray-100'}
+                        <div className={`px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-lg text-[15px] leading-relaxed max-w-full whitespace-pre-wrap relative prose md:prose-p:my-0
+                          ${r.is_fallback ? 'bg-[#fff5f5] text-red-900 border border-red-200 prose-red' : 'bg-white text-gray-800 border border-gray-100 prose-a:text-indigo-600'}
                         `}>
-                          {r.answer}
+                          <ReactMarkdown>{r.answer || ""}</ReactMarkdown>
                         </div>
                       </div>
                       

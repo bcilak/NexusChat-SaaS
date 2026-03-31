@@ -83,10 +83,28 @@ def rag_chat(
             messages_input.append(HumanMessage(content=h.question))
             messages_input.append(AIMessage(content=h.answer))
             
+        import base64
+        import mimetypes
+
         if attachment_url:
+            # Prevent OpenAI's "cannot download local file" error by intercepting local uploads
+            image_url_payload = attachment_url
+            if "/uploads/" in attachment_url:
+                # Extract filename and load locally
+                filename = attachment_url.split("/uploads/")[-1]
+                upload_dir = os.getenv("UPLOAD_DIR", "./uploads")
+                local_path = os.path.join(upload_dir, filename)
+                
+                if os.path.exists(local_path):
+                    mime_type, _ = mimetypes.guess_type(local_path)
+                    mime_type = mime_type or 'image/jpeg'
+                    with open(local_path, "rb") as image_file:
+                        b64_img = base64.b64encode(image_file.read()).decode("utf-8")
+                    image_url_payload = f"data:{mime_type};base64,{b64_img}"
+
             messages_input.append(HumanMessage(content=[
                 {"type": "text", "text": question},
-                {"type": "image_url", "image_url": {"url": attachment_url}}
+                {"type": "image_url", "image_url": {"url": image_url_payload}}
             ]))
         else:
             messages_input.append(HumanMessage(content=question))
