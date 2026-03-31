@@ -41,7 +41,7 @@ export default function HistoryPage() {
         end_date: endDate || undefined, 
         search: search || undefined
       });
-      setRecords(data);
+      setRecords(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -239,7 +239,7 @@ export default function HistoryPage() {
               <div className="flex justify-between items-start gap-4">
                 <div className="flex items-center gap-2 text-[11px] font-mono text-gray-500">
                   <span className="bg-white/5 px-2 py-1 rounded-md">{new Date(r.created_at).toLocaleString('tr-TR')}</span>
-                  <span className="bg-white/5 px-2 py-1 rounded-md truncate max-w-[120px]" title={r.session_id}>Sen: {r.session_id.substring(0,8)}</span>
+                  <span className="bg-white/5 px-2 py-1 rounded-md truncate max-w-[120px]" title={r.session_id || "Bilinmeyen"}>Sen: {r.session_id ? r.session_id.substring(0,8) : "Gizli"}</span>
                 </div>
                 {r.is_fallback && <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/20">Cevapsız Kaldı</span>}
               </div>
