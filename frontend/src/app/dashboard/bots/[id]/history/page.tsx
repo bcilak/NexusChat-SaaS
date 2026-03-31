@@ -109,6 +109,26 @@ export default function HistoryPage() {
     { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
   ];
 
+  const [expandedSession, setExpandedSession] = useState<string | null>(null);
+
+  // Group records by session_id
+  const groupedSessions = records.reduce((acc, curr) => {
+    const sid = curr.session_id || "Bilinmeyen_Oturum_" + curr.id;
+    if (!acc[sid]) acc[sid] = [];
+    acc[sid].push(curr);
+    return acc;
+  }, {} as Record<string, HistoryRecord[]>);
+
+  // Sort sessions by most recent interaction
+  const sortedSessions = Object.entries(groupedSessions)
+    .map(([sessionId, msgs]) => ({
+      sessionId,
+      lastActive: new Date(msgs[0].created_at).getTime(),
+      // Sort messages chronologically (oldest first) for chat flow
+      messages: msgs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    }))
+    .sort((a, b) => b.lastActive - a.lastActive);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.1 } }
@@ -222,7 +242,7 @@ export default function HistoryPage() {
         <div className="flex justify-center items-center py-32">
           <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
         </div>
-      ) : records.length === 0 ? (
+      ) : sortedSessions.length === 0 ? (
         <div className="text-center py-20 bg-white/[0.02] rounded-3xl border border-white/5 border-dashed">
           <FileX className="w-12 h-12 text-gray-500 mx-auto mb-4 opacity-50" />
           <h3 className="text-lg font-bold text-white mb-2">Sohbet Bulunamadı</h3>
@@ -231,30 +251,90 @@ export default function HistoryPage() {
       ) : (
         <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-4">
           <div className="flex justify-between items-center px-2 mb-2">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sonuçlar ({records.length})</span>
-            {records.length === 1000 && <span className="text-[10px] text-yellow-500/80 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">Maks. 1000 kayıt</span>}
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sonuçlar ({sortedSessions.length} Oturum, {records.length} Mesaj)</span>
+            {records.length === 1000 && <span className="text-[10px] text-yellow-500/80 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">Maks. 1000 mesaj çekildi</span>}
           </div>
-          {records.map((r) => (
-            <motion.div key={r.id} className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:border-indigo-500/30 transition-colors flex flex-col gap-3">
-              <div className="flex justify-between items-start gap-4">
-                <div className="flex items-center gap-2 text-[11px] font-mono text-gray-500">
-                  <span className="bg-white/5 px-2 py-1 rounded-md">{new Date(r.created_at).toLocaleString('tr-TR')}</span>
-                  <span className="bg-white/5 px-2 py-1 rounded-md truncate max-w-[120px]" title={r.session_id || "Bilinmeyen"}>Sen: {r.session_id ? r.session_id.substring(0,8) : "Gizli"}</span>
-                </div>
-                {r.is_fallback && <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/20">Cevapsız Kaldı</span>}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-1">
-                <div className="bg-black/20 p-4 rounded-xl border border-white/5 relative">
-                  <div className="absolute top-4 left-4 w-1.5 h-1.5 rounded-full bg-blue-400" />
-                  <p className="text-sm text-gray-200 pl-6 pr-2 font-medium">{r.question}</p>
-                </div>
-                <div className="bg-indigo-500/5 p-4 rounded-xl border border-indigo-500/10 relative">
-                  <div className="absolute top-4 left-4 w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <p className="text-sm text-gray-300 pl-6 pr-2 whitespace-pre-wrap">{r.answer}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+          
+          {sortedSessions.map((session, index) => {
+            const isExpanded = expandedSession === session.sessionId;
+            const hasFallback = session.messages.some(m => m.is_fallback);
+            
+            return (
+              <motion.div 
+                key={session.sessionId} 
+                className={`bg-white/[0.03] border ${isExpanded ? 'border-indigo-500/50' : 'border-white/10'} rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-colors`}
+              >
+                <button 
+                  onClick={() => setExpandedSession(isExpanded ? null : session.sessionId)}
+                  className="w-full flex justify-between items-center p-5 text-left bg-gradient-to-r from-transparent hover:from-white/[0.02] transition-colors"
+                >
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <span className="text-white font-medium flex items-center gap-2">
+                        <MessageCircle size={16} className={isExpanded ? "text-indigo-400" : "text-gray-400"} />
+                        Oturum: <span className="font-mono text-gray-300">{session.sessionId.substring(0, 10)}</span>
+                      </span>
+                      {hasFallback && (
+                        <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                          Cevapsız İçerik İçeriyor
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500 flex items-center gap-2">
+                      <span>{new Date(session.lastActive).toLocaleString('tr-TR')}</span>
+                      <span>•</span>
+                      <span>{session.messages.length} mesaj</span>
+                    </div>
+                  </div>
+                  <div className={`w-8 h-8 rounded-full bg-white/5 flex items-center justify-center transition-transform ${isExpanded ? 'rotate-90 bg-indigo-500/20 text-indigo-400' : 'text-gray-400'}`}>
+                    <ChevronRight size={16} />
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="border-t border-white/5 bg-black/20"
+                    >
+                      <div className="p-5 flex flex-col gap-6">
+                        {session.messages.map(r => (
+                          <div key={r.id} className="flex flex-col gap-4">
+                            {/* User Question */}
+                            <div className="flex justify-end pl-12">
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="text-[10px] text-gray-500 font-mono px-1">
+                                  Müşteri • {new Date(r.created_at).toLocaleTimeString('tr-TR')}
+                                </div>
+                                <div className="bg-indigo-600/20 border border-indigo-500/20 text-indigo-50 px-4 py-3 rounded-2xl rounded-tr-sm text-sm">
+                                  {r.question}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Bot Answer */}
+                            <div className="flex justify-start pr-12">
+                              <div className="flex flex-col items-start gap-1">
+                                <div className="text-[10px] text-gray-500 font-mono px-1 flex items-center gap-2">
+                                  Bot
+                                  {r.is_fallback && <span className="text-amber-500 font-medium"> (Cevapsız Kalan)</span>}
+                                </div>
+                                <div className={`px-4 py-3 rounded-2xl rounded-tl-sm text-sm border whitespace-pre-wrap ${r.is_fallback ? 'bg-amber-500/10 border-amber-500/20 text-amber-100' : 'bg-gray-800 border-white/10 text-gray-200'}`}>
+                                  {r.answer}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </motion.div>
       )}
 
