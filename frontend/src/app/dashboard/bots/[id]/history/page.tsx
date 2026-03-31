@@ -109,7 +109,7 @@ export default function HistoryPage() {
     { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
   ];
 
-  const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
 
   // Group records by session_id
   const groupedSessions = records.reduce((acc, curr) => {
@@ -128,6 +128,15 @@ export default function HistoryPage() {
       messages: msgs.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
     }))
     .sort((a, b) => b.lastActive - a.lastActive);
+
+  // Auto-select first session if none selected and records exist
+  useEffect(() => {
+    if (!selectedSession && sortedSessions.length > 0) {
+      setSelectedSession(sortedSessions[0].sessionId);
+    }
+  }, [sortedSessions, selectedSession]);
+
+  const activeSessionData = sortedSessions.find(s => s.sessionId === selectedSession);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -184,7 +193,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Filters & Actions */}
-      <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 mb-8 flex flex-col lg:flex-row gap-4 justify-between">
+      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 mb-8 flex flex-col lg:flex-row gap-4 justify-between shadow-sm">
         <form onSubmit={handleSearch} className="flex flex-wrap items-end gap-4 flex-1">
           <div>
             <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12}/> Başlangıç</label>
@@ -192,7 +201,7 @@ export default function HistoryPage() {
               type="date" 
               value={startDate} 
               onChange={e => setStartDate(e.target.value)}
-              className="px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
+              className="px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
             />
           </div>
           <div>
@@ -201,7 +210,7 @@ export default function HistoryPage() {
               type="date" 
               value={endDate} 
               onChange={e => setEndDate(e.target.value)}
-              className="px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
+              className="px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
             />
           </div>
           <div className="flex-1 min-w-[200px]">
@@ -211,7 +220,7 @@ export default function HistoryPage() {
               placeholder="Sorularda veya cevaplarda ara..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
+              className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
             />
           </div>
           <button type="submit" className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-medium border border-white/10 transition-colors">
@@ -225,15 +234,15 @@ export default function HistoryPage() {
             disabled={loading || records.length === 0}
             className="flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-medium border border-white/10 transition-colors disabled:opacity-50"
           >
-            <Download size={16} /> CSV İndir
+            <Download size={16} /> CSV
           </button>
           <button 
             onClick={handleAnalyze}
             disabled={loading || isAnalyzing || records.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-xl text-sm font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all disabled:opacity-50 disabled:grayscale"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-xl text-sm font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all disabled:opacity-50 disabled:grayscale whitespace-nowrap"
           >
             {isAnalyzing ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles size={16} />}
-            AI Analiz Raporu
+            AI Analizi
           </button>
         </div>
       </div>
@@ -243,99 +252,131 @@ export default function HistoryPage() {
           <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
         </div>
       ) : sortedSessions.length === 0 ? (
-        <div className="text-center py-20 bg-white/[0.02] rounded-3xl border border-white/5 border-dashed">
+        <div className="text-center py-20 bg-[#0a0a0a] rounded-3xl border border-white/5 border-dashed">
           <FileX className="w-12 h-12 text-gray-500 mx-auto mb-4 opacity-50" />
           <h3 className="text-lg font-bold text-white mb-2">Sohbet Bulunamadı</h3>
           <p className="text-gray-400 text-sm">Belirttiğiniz filtrelere veya arama terimine uygun geçmiş kayıt yok.</p>
         </div>
       ) : (
-        <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-4">
-          <div className="flex justify-between items-center px-2 mb-2">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Sonuçlar ({sortedSessions.length} Oturum, {records.length} Mesaj)</span>
-            {records.length === 1000 && <span className="text-[10px] text-yellow-500/80 bg-yellow-500/10 px-2 py-0.5 rounded border border-yellow-500/20">Maks. 1000 mesaj çekildi</span>}
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[700px]">
           
-          {sortedSessions.map((session, index) => {
-            const isExpanded = expandedSession === session.sessionId;
-            const hasFallback = session.messages.some(m => m.is_fallback);
+          {/* Left Sidebar: Session List */}
+          <div className="lg:col-span-4 bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden flex flex-col shadow-lg">
+            <div className="p-4 border-b border-white/10 bg-white/[0.02]">
+              <h2 className="text-sm font-bold text-gray-200">Görüşmeler</h2>
+              <p className="text-xs text-gray-500 mt-1">{sortedSessions.length} Oturum bulundu</p>
+            </div>
             
-            return (
-              <motion.div 
-                key={session.sessionId} 
-                className={`bg-white/[0.03] border ${isExpanded ? 'border-indigo-500/50' : 'border-white/10'} rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-colors`}
-              >
-                <button 
-                  onClick={() => setExpandedSession(isExpanded ? null : session.sessionId)}
-                  className="w-full flex justify-between items-center p-5 text-left bg-gradient-to-r from-transparent hover:from-white/[0.02] transition-colors"
-                >
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="text-white font-medium flex items-center gap-2">
-                        <MessageCircle size={16} className={isExpanded ? "text-indigo-400" : "text-gray-400"} />
-                        Oturum: <span className="font-mono text-gray-300">{session.sessionId.substring(0, 10)}</span>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+              {sortedSessions.map((session) => {
+                const isActive = session.sessionId === selectedSession;
+                const hasFallback = session.messages.some(m => m.is_fallback);
+                // Get snippet from latest message
+                const latestMsg = session.messages[session.messages.length - 1];
+                
+                return (
+                  <button
+                    key={session.sessionId}
+                    onClick={() => setSelectedSession(session.sessionId)}
+                    className={`w-full text-left p-3 rounded-2xl transition-all ${
+                      isActive 
+                        ? 'bg-indigo-500/10 border border-indigo-500/20 shadow-[inset_0_0_20px_rgba(99,102,241,0.05)]' 
+                        : 'hover:bg-white/[0.02] border border-transparent'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-1.5">
+                      <span className={`font-mono text-sm ${isActive ? 'text-indigo-400 font-bold' : 'text-gray-300'}`}>
+                        {session.sessionId.substring(0, 8)}...
+                      </span>
+                      <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                        {new Date(session.lastActive).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })}
+                      </span>
+                    </div>
+                    <p className={`text-xs line-clamp-1 ${isActive ? 'text-indigo-200/70' : 'text-gray-500'}`}>
+                      {latestMsg?.question}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/5 text-gray-400">
+                        {session.messages.length} mesaj
                       </span>
                       {hasFallback && (
-                        <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                          Cevapsız İçerik İçeriyor
+                        <span className="text-[10px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded-md border border-amber-500/20">
+                          Cevapsız
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500 flex items-center gap-2">
-                      <span>{new Date(session.lastActive).toLocaleString('tr-TR')}</span>
-                      <span>•</span>
-                      <span>{session.messages.length} mesaj</span>
-                    </div>
-                  </div>
-                  <div className={`w-8 h-8 rounded-full bg-white/5 flex items-center justify-center transition-transform ${isExpanded ? 'rotate-90 bg-indigo-500/20 text-indigo-400' : 'text-gray-400'}`}>
-                    <ChevronRight size={16} />
-                  </div>
-                </button>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-white/5 bg-black/20"
-                    >
-                      <div className="p-5 flex flex-col gap-6">
-                        {session.messages.map(r => (
-                          <div key={r.id} className="flex flex-col gap-4">
-                            {/* User Question */}
-                            <div className="flex justify-end pl-12">
-                              <div className="flex flex-col items-end gap-1">
-                                <div className="text-[10px] text-gray-500 font-mono px-1">
-                                  Müşteri • {new Date(r.created_at).toLocaleTimeString('tr-TR')}
-                                </div>
-                                <div className="bg-indigo-600/20 border border-indigo-500/20 text-indigo-50 px-4 py-3 rounded-2xl rounded-tr-sm text-sm">
-                                  {r.question}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            {/* Bot Answer */}
-                            <div className="flex justify-start pr-12">
-                              <div className="flex flex-col items-start gap-1">
-                                <div className="text-[10px] text-gray-500 font-mono px-1 flex items-center gap-2">
-                                  Bot
-                                  {r.is_fallback && <span className="text-amber-500 font-medium"> (Cevapsız Kalan)</span>}
-                                </div>
-                                <div className={`px-4 py-3 rounded-2xl rounded-tl-sm text-sm border whitespace-pre-wrap ${r.is_fallback ? 'bg-amber-500/10 border-amber-500/20 text-amber-100' : 'bg-gray-800 border-white/10 text-gray-200'}`}>
-                                  {r.answer}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+          {/* Right Panel: Active Session Chat Flow */}
+          <div className="lg:col-span-8 bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden flex flex-col shadow-lg relative">
+            {activeSessionData ? (
+              <>
+                {/* Chat Header */}
+                <div className="px-6 py-4 border-b border-white/10 bg-white/[0.02] flex justify-between items-center backdrop-blur-md z-10 relative shadow-sm">
+                  <div>
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <MessageCircle size={16} className="text-indigo-400" />
+                      Oturum Detayı
+                    </h3>
+                    <p className="text-xs text-gray-400 mt-1 font-mono">ID: {activeSessionData.sessionId}</p>
+                  </div>
+                  <div className="text-xs text-gray-500 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                    {new Date(activeSessionData.lastActive).toLocaleString('tr-TR')}
+                  </div>
+                </div>
+
+                {/* Chat Messages */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-[#050510]">
+                  {activeSessionData.messages.map(r => (
+                    <div key={r.id} className="flex flex-col gap-5">
+                      
+                      {/* User Message Bubble */}
+                      <div className="flex flex-col items-end w-full pl-12 sm:pl-24">
+                        <div className="flex items-center gap-2 mb-1.5 px-1">
+                          <span className="text-[10px] text-gray-500">{new Date(r.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
+                          <span className="text-xs font-semibold text-gray-300">Ziyaretçi</span>
+                        </div>
+                        {/* Chatbase inspired User Bubble: usually colored or distinct */}
+                        <div className="bg-indigo-600 text-white px-5 py-3.5 rounded-2xl rounded-tr-sm shadow-md text-[15px] leading-relaxed max-w-full relative group">
+                          {r.question}
+                        </div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                      
+                      {/* Bot Answer Bubble */}
+                      <div className="flex flex-col items-start w-full pr-12 sm:pr-24">
+                        <div className="flex items-center gap-2 mb-1.5 px-1">
+                          <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                            <Bot size={12} className="text-indigo-400" />
+                          </div>
+                          <span className="text-xs font-semibold text-white">{botName || "Bot"}</span>
+                          <span className="text-[10px] text-gray-500">{new Date(r.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
+                          {r.is_fallback && <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded ml-1 border border-amber-500/20">Cevapsız</span>}
+                        </div>
+                        
+                        {/* Chatbase inspired Bot Bubble: White background, subtle shadow, dark text */}
+                        <div className={`px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-lg text-[15px] leading-relaxed max-w-full whitespace-pre-wrap relative
+                          ${r.is_fallback ? 'bg-[#fff5f5] text-red-900 border border-red-200' : 'bg-white text-gray-800 border border-gray-100'}
+                        `}>
+                          {r.answer}
+                        </div>
+                      </div>
+                      
+                    </div>
+                  ))}
+                  <div className="pt-2 pb-6 text-center text-[10px] text-gray-600 font-medium">Bu oturumun sonuna geldiniz.</div>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-gray-500">
+                Lütfen soldan bir görüşme seçin
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {/* AI Analysis Modal */}
