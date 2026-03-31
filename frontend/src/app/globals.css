@@ -65,15 +65,25 @@ html {
 
 /* --- Utility classes --- */
 .glass {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.80);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
 }
 
+.dark .glass {
+  background: rgba(255, 255, 255, 0.03);
+}
+
 .glass-strong {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.90);
   backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border);
+}
+
+.dark .glass-strong {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .card {
@@ -418,3 +428,40 @@ select.input {
   background: transparent;
   padding: 0;
 }
+
+/* --- Autofill fix for login/register forms --- */
+.auto-fill-dark:-webkit-autofill,
+.auto-fill-dark:-webkit-autofill:hover,
+.auto-fill-dark:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #f3f4f6 inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  caret-color: #111827;
+  border-color: #d1d5db !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.dark .auto-fill-dark:-webkit-autofill,
+.dark .auto-fill-dark:-webkit-autofill:hover,
+.dark .auto-fill-dark:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(10, 10, 30, 0.9) inset !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+  caret-color: #e2e8f0;
+  border-color: rgba(255,255,255,0.15) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* General autofill override */
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #f3f4f6 inset;
+  -webkit-text-fill-color: #111827;
+  transition: background-color 5000s;
+}
+
+.dark input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px rgba(10, 10, 30, 0.95) inset;
+  -webkit-text-fill-color: #e2e8f0;
+}
+
+/* --- Hide scrollbar utility --- */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
