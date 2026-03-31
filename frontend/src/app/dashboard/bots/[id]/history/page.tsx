@@ -357,9 +357,11 @@ export default function HistoryPage() {
                           {r.is_fallback && <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded ml-1 border border-amber-500/20">Cevapsız</span>}
                         </div>
                         
-                        {/* Bot Bubble: white in both themes, very readable */}
+                        {/* Bot Bubble: white bg + dark text in light mode; dark bg + light text in dark mode */}
                         <div className={`px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-md text-[15px] leading-relaxed max-w-full whitespace-pre-wrap relative prose prose-p:my-0
-                          ${r.is_fallback ? 'bg-red-50 dark:bg-[#fff5f5] text-red-900 border border-red-200' : 'bg-white dark:bg-white text-gray-800 border border-gray-200 dark:border-gray-100 prose-a:text-indigo-600'}
+                          ${r.is_fallback 
+                            ? 'bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-300 border border-red-200 dark:border-red-800/50' 
+                            : 'bg-white dark:bg-white/[0.06] text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-white/10 prose-a:text-indigo-600 dark:prose-a:text-indigo-400 dark:prose-headings:text-gray-100 dark:prose-strong:text-gray-100 dark:prose-code:text-indigo-300'}
                         `}>
                           <ReactMarkdown>{r.answer || ""}</ReactMarkdown>
                         </div>
