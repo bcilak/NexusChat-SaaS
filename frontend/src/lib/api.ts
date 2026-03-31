@@ -161,6 +161,19 @@ export const integrationsApi = {
 export const analyticsApi = {
   getStats: (botId: number) => apiFetch(`/api/analytics/bot/${botId}/stats`),
   getFallbacks: (botId: number) => apiFetch(`/api/analytics/bot/${botId}/fallbacks`),
+  getHistory: (botId: number, params: { start_date?: string, end_date?: string, search?: string }) => {
+    const q = new URLSearchParams();
+    if (params.start_date) q.append("start_date", params.start_date);
+    if (params.end_date) q.append("end_date", params.end_date);
+    if (params.search) q.append("search", params.search);
+    const qs = q.toString();
+    return apiFetch(`/api/analytics/bot/${botId}/history${qs ? "?" + qs : ""}`);
+  },
+  analyzeHistory: (botId: number, data: { start_date?: string, end_date?: string, search?: string }) =>
+    apiFetch(`/api/analytics/bot/${botId}/analyze`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // --- Admin ---
