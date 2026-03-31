@@ -193,46 +193,46 @@ export default function HistoryPage() {
       </div>
 
       {/* Filters & Actions */}
-      <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 mb-8 flex flex-col lg:flex-row gap-4 justify-between shadow-sm">
+      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl p-5 mb-8 flex flex-col lg:flex-row gap-4 justify-between shadow-sm">
         <form onSubmit={handleSearch} className="flex flex-wrap items-end gap-4 flex-1">
           <div>
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12}/> Başlangıç</label>
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12}/> Başlangıç</label>
             <input 
               type="date" 
               value={startDate} 
               onChange={e => setStartDate(e.target.value)}
-              className="px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
+              className="px-4 py-2.5 bg-gray-100 dark:bg-black/40 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12}/> Bitiş</label>
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12}/> Bitiş</label>
             <input 
               type="date" 
               value={endDate} 
               onChange={e => setEndDate(e.target.value)}
-              className="px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
+              className="px-4 py-2.5 bg-gray-100 dark:bg-black/40 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50"
             />
           </div>
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Search size={12}/> Metin Arama</label>
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Search size={12}/> Metin Arama</label>
             <input 
               type="text" 
               placeholder="Sorularda veya cevaplarda ara..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full px-4 py-2.5 bg-black/40 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-indigo-500/50"
+              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/40 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 placeholder:text-gray-400"
             />
           </div>
-          <button type="submit" className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-medium border border-white/10 transition-colors">
+          <button type="submit" className="px-5 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-800 dark:text-white rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 transition-colors">
             Filtrele
           </button>
         </form>
         
-        <div className="flex gap-3 items-end lg:border-l lg:border-white/10 lg:pl-4">
+        <div className="flex gap-3 items-end lg:border-l lg:border-gray-200 dark:lg:border-white/10 lg:pl-4">
           <button 
             onClick={handleDownloadCsv}
             disabled={loading || records.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm font-medium border border-white/10 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-800 dark:text-white rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 transition-colors disabled:opacity-50"
           >
             <Download size={16} /> CSV
           </button>
@@ -252,18 +252,18 @@ export default function HistoryPage() {
           <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
         </div>
       ) : sortedSessions.length === 0 ? (
-        <div className="text-center py-20 bg-[#0a0a0a] rounded-3xl border border-white/5 border-dashed">
+        <div className="text-center py-20 bg-gray-100 dark:bg-[#0a0a0a] rounded-3xl border border-gray-200 dark:border-white/5 border-dashed">
           <FileX className="w-12 h-12 text-gray-500 mx-auto mb-4 opacity-50" />
-          <h3 className="text-lg font-bold text-white mb-2">Sohbet Bulunamadı</h3>
-          <p className="text-gray-400 text-sm">Belirttiğiniz filtrelere veya arama terimine uygun geçmiş kayıt yok.</p>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Sohbet Bulunamadı</h3>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Belirttiğiniz filtrelere veya arama terimine uygun geçmiş kayıt yok.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[700px]">
           
           {/* Left Sidebar: Session List */}
-          <div className="lg:col-span-4 bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden flex flex-col shadow-lg">
-            <div className="p-4 border-b border-white/10 bg-white/[0.02]">
-              <h2 className="text-sm font-bold text-gray-200">Görüşmeler</h2>
+          <div className="lg:col-span-4 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col shadow-lg">
+            <div className="p-4 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02]">
+              <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200">Görüşmeler</h2>
               <p className="text-xs text-gray-500 mt-1">{sortedSessions.length} Oturum bulundu</p>
             </div>
             
@@ -281,22 +281,22 @@ export default function HistoryPage() {
                     className={`w-full text-left p-3 rounded-2xl transition-all ${
                       isActive 
                         ? 'bg-indigo-500/10 border border-indigo-500/20 shadow-[inset_0_0_20px_rgba(99,102,241,0.05)]' 
-                        : 'hover:bg-white/[0.02] border border-transparent'
+                        : 'hover:bg-gray-100 dark:hover:bg-white/[0.02] border border-transparent'
                     }`}
                   >
                     <div className="flex justify-between items-start mb-1.5">
-                      <span className={`font-mono text-sm ${isActive ? 'text-indigo-400 font-bold' : 'text-gray-300'}`}>
+                      <span className={`font-mono text-sm ${isActive ? 'text-indigo-500 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300'}`}>
                         {session.sessionId.substring(0, 8)}...
                       </span>
                       <span className="text-[10px] text-gray-500 whitespace-nowrap">
                         {new Date(session.lastActive).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })}
                       </span>
                     </div>
-                    <p className={`text-xs line-clamp-1 ${isActive ? 'text-indigo-200/70' : 'text-gray-500'}`}>
+                    <p className={`text-xs line-clamp-1 ${isActive ? 'text-indigo-500/70 dark:text-indigo-200/70' : 'text-gray-500'}`}>
                       {latestMsg?.question}
                     </p>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/5 text-gray-400">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-200 dark:bg-white/5 text-gray-500 dark:text-gray-400">
                         {session.messages.length} mesaj
                       </span>
                       {hasFallback && (
@@ -312,25 +312,25 @@ export default function HistoryPage() {
           </div>
 
           {/* Right Panel: Active Session Chat Flow */}
-          <div className="lg:col-span-8 bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden flex flex-col shadow-lg relative">
+          <div className="lg:col-span-8 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col shadow-lg relative">
             {activeSessionData ? (
               <>
                 {/* Chat Header */}
-                <div className="px-6 py-4 border-b border-white/10 bg-white/[0.02] flex justify-between items-center backdrop-blur-md z-10 relative shadow-sm">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02] flex justify-between items-center backdrop-blur-md z-10 relative shadow-sm">
                   <div>
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                       <MessageCircle size={16} className="text-indigo-400" />
                       Oturum Detayı
                     </h3>
-                    <p className="text-xs text-gray-400 mt-1 font-mono">ID: {activeSessionData.sessionId}</p>
+                    <p className="text-xs text-gray-500 mt-1 font-mono">ID: {activeSessionData.sessionId}</p>
                   </div>
-                  <div className="text-xs text-gray-500 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                  <div className="text-xs text-gray-500 bg-gray-200 dark:bg-white/5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-white/5">
                     {new Date(activeSessionData.lastActive).toLocaleString('tr-TR')}
                   </div>
                 </div>
 
                 {/* Chat Messages */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-[#050510]">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gray-50 dark:bg-[#050510]">
                   {activeSessionData.messages.map(r => (
                     <div key={r.id} className="flex flex-col gap-5">
                       
@@ -338,9 +338,9 @@ export default function HistoryPage() {
                       <div className="flex flex-col items-end w-full pl-12 sm:pl-24">
                         <div className="flex items-center gap-2 mb-1.5 px-1">
                           <span className="text-[10px] text-gray-500">{new Date(r.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
-                          <span className="text-xs font-semibold text-gray-300">Ziyaretçi</span>
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">Ziyaretçi</span>
                         </div>
-                        {/* Chatbase inspired User Bubble: usually colored or distinct */}
+                        {/* Chatbase inspired User Bubble: colored, always readable */}
                         <div className="bg-indigo-600 text-white px-5 py-3.5 rounded-2xl rounded-tr-sm shadow-md text-[15px] leading-relaxed max-w-full relative group prose prose-invert prose-p:my-0 prose-img:rounded-xl prose-img:my-2 prose-a:text-indigo-200">
                           <ReactMarkdown>{r.question}</ReactMarkdown>
                         </div>
@@ -352,14 +352,14 @@ export default function HistoryPage() {
                           <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
                             <Bot size={12} className="text-indigo-400" />
                           </div>
-                          <span className="text-xs font-semibold text-white">{botName || "Bot"}</span>
+                          <span className="text-xs font-semibold text-gray-800 dark:text-white">{botName || "Bot"}</span>
                           <span className="text-[10px] text-gray-500">{new Date(r.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
                           {r.is_fallback && <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded ml-1 border border-amber-500/20">Cevapsız</span>}
                         </div>
                         
-                        {/* Chatbase inspired Bot Bubble: White background, subtle shadow, dark text */}
-                        <div className={`px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-lg text-[15px] leading-relaxed max-w-full whitespace-pre-wrap relative prose md:prose-p:my-0
-                          ${r.is_fallback ? 'bg-[#fff5f5] text-red-900 border border-red-200 prose-red' : 'bg-white text-gray-800 border border-gray-100 prose-a:text-indigo-600'}
+                        {/* Bot Bubble: white in both themes, very readable */}
+                        <div className={`px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-md text-[15px] leading-relaxed max-w-full whitespace-pre-wrap relative prose prose-p:my-0
+                          ${r.is_fallback ? 'bg-red-50 dark:bg-[#fff5f5] text-red-900 border border-red-200' : 'bg-white dark:bg-white text-gray-800 border border-gray-200 dark:border-gray-100 prose-a:text-indigo-600'}
                         `}>
                           <ReactMarkdown>{r.answer || ""}</ReactMarkdown>
                         </div>
@@ -367,7 +367,7 @@ export default function HistoryPage() {
                       
                     </div>
                   ))}
-                  <div className="pt-2 pb-6 text-center text-[10px] text-gray-600 font-medium">Bu oturumun sonuna geldiniz.</div>
+                  <div className="pt-2 pb-6 text-center text-[10px] text-gray-500 font-medium">Bu oturumun sonuna geldiniz.</div>
                 </div>
               </>
             ) : (
