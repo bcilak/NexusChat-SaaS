@@ -101,7 +101,7 @@ export default function HistoryPage() {
   const tabs = [
     { label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` },
     { label: "📥 Gelen Kutusu", path: `/dashboard/bots/${botId}/inbox` },
-    { label: "💬 Seçmiş", path: `/dashboard/bots/${botId}/history` },
+    { label: "💬 Geçmiş", path: `/dashboard/bots/${botId}/history` },
     { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
     { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
     { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
@@ -151,7 +151,7 @@ export default function HistoryPage() {
                 isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              {tab.label === "💬 Seçmiş" ? "💬 Geçmiş" : tab.label}
+              {tab.label}
               {isActive && (
                 <motion.div 
                   layoutId="activeTab" 

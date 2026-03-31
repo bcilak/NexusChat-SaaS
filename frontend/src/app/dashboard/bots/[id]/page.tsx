@@ -249,6 +249,7 @@ export default function BotDetailPage() {
   const tabs = [
     { label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` },
     { label: "📥 Gelen Kutusu", path: `/dashboard/bots/${botId}/inbox` },
+    { label: "💬 Geçmiş", path: `/dashboard/bots/${botId}/history` },
     { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
     { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
     { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
