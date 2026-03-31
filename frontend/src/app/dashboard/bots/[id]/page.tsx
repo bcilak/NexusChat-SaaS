@@ -264,8 +264,8 @@ export default function BotDetailPage() {
       onClick={() => setActiveSection(key)}
       className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
         activeSection === key
-          ? "text-white border"
-          : "text-gray-400 hover:text-white hover:bg-white/5"
+          ? "border"
+          : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
       }`}
       style={activeSection === key ? {
         background: `${color}18`,
@@ -284,7 +284,7 @@ export default function BotDetailPage() {
       <div className="mb-8">
         <button
           onClick={() => router.push("/dashboard/bots")}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-white transition-colors mb-4 group"
+          className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors mb-4 group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Botlara Dön
         </button>
@@ -296,7 +296,7 @@ export default function BotDetailPage() {
             <Bot className="w-7 h-7" style={{ color: accent }} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">{bot.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{bot.name}</h1>
             <div className="flex items-center gap-2 text-xs font-medium">
               <span className="px-2.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
                 {bot.model}
@@ -311,7 +311,7 @@ export default function BotDetailPage() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="flex overflow-x-auto gap-1 mb-8 border-b border-white/10 pb-px">
+      <div className="flex overflow-x-auto gap-1 mb-8 border-b border-gray-200 dark:border-white/10 pb-px">
         {tabs.map((tab) => {
           const isActive = tab.path === `/dashboard/bots/${botId}`;
           return (
@@ -319,7 +319,7 @@ export default function BotDetailPage() {
               key={tab.path}
               href={tab.path}
               className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${
-                isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
+                isActive ? "text-indigo-400" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
             >
               {tab.label}
@@ -351,7 +351,7 @@ export default function BotDetailPage() {
       )}
 
       {/* Section Navigation */}
-      <div className="flex gap-2 mb-6 p-1 bg-white/[0.03] border border-white/10 rounded-2xl w-fit">
+      <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl w-fit">
         {sectionBtn("appearance", <Palette className="w-4 h-4" />, "Görünüm & Arayüz", "#a78bfa")}
         {sectionBtn("ai", <BrainCircuit className="w-4 h-4" />, "Yapay Zeka", "#6366f1")}
         {sectionBtn("whatsapp", <Smartphone className="w-4 h-4" />, "WhatsApp", "#22c55e")}
@@ -366,9 +366,9 @@ export default function BotDetailPage() {
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white/[0.03] border border-white/10 rounded-2xl p-6"
+              className="bg-gray-100 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl p-6"
             >
-              <h3 className="text-base font-bold mb-5 flex items-center gap-2 text-white">
+              <h3 className="text-base font-bold mb-5 flex items-center gap-2 text-gray-900 dark:text-white">
                 <Settings className="w-4 h-4 text-indigo-400" /> Temel Bilgiler
               </h3>
               <div className="space-y-4">
@@ -378,7 +378,7 @@ export default function BotDetailPage() {
                     type="text"
                     value={bot.name}
                     onChange={(e) => update("name", e.target.value)}
-                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm font-medium"
+                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm font-medium"
                   />
                 </div>
                 <div>
@@ -387,7 +387,7 @@ export default function BotDetailPage() {
                     value={bot.description}
                     onChange={(e) => update("description", e.target.value)}
                     rows={2}
-                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-none text-sm"
+                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-none text-sm"
                     placeholder="Bu bot ne işe yarar?"
                   />
                 </div>
@@ -398,7 +398,7 @@ export default function BotDetailPage() {
                     value={bot.logo_url || ""}
                     onChange={(e) => update("logo_url", e.target.value)}
                     placeholder="https://site.com/logo.png"
-                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm font-mono"
+                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm font-mono"
                   />
                 </div>
                 <div>
@@ -408,7 +408,7 @@ export default function BotDetailPage() {
                     value={bot.welcome_message || ""}
                     onChange={(e) => update("welcome_message", e.target.value)}
                     placeholder="Merhaba, size nasıl yardımcı olabilirim?"
-                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm"
+                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm"
                   />
                 </div>
               </div>
@@ -581,10 +581,10 @@ export default function BotDetailPage() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/[0.03] border border-white/10 rounded-2xl p-6 relative overflow-hidden max-w-3xl"
+          className="bg-gray-100 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl p-6 relative overflow-hidden max-w-3xl"
         >
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
-          <h3 className="text-base font-bold mb-6 flex items-center gap-2 text-white relative z-10">
+          <h3 className="text-base font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-white relative z-10">
             <BrainCircuit className="w-5 h-5 text-indigo-400" /> Yapay Zeka (AI) Kimliği
           </h3>
 
@@ -597,19 +597,19 @@ export default function BotDetailPage() {
               <textarea
                 value={bot.prompt}
                 onChange={(e) => update("prompt", e.target.value)}
-                className="w-full min-h-[180px] px-4 py-4 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-y text-sm leading-relaxed"
+                className="w-full min-h-[180px] px-4 py-4 bg-gray-100 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all resize-y text-sm leading-relaxed"
                 placeholder="Sen bir e-ticaret müşteri temsilcisisin. Sadece kibar ve kısa cevaplar ver..."
               />
             </div>
 
             {/* Advanced Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-black/20 p-5 rounded-xl border border-white/5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-200/60 dark:bg-black/20 p-5 rounded-xl border border-gray-300 dark:border-white/5">
               <div>
                 <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Dil Modeli (LLM)</label>
                 <select
                   value={bot.model}
                   onChange={(e) => update("model", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm appearance-none"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-black/50 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm appearance-none"
                 >
                   <optgroup label="Anthropic (Tavsiye Edilen)">
                     <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
@@ -631,7 +631,7 @@ export default function BotDetailPage() {
                 <select
                   value={bot.language}
                   onChange={(e) => update("language", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm appearance-none"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-black/50 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm appearance-none"
                 >
                   <option value="tr">Türkçe (Varsayılan)</option>
                   <option value="en">English (İngilizce)</option>
@@ -648,7 +648,7 @@ export default function BotDetailPage() {
                   min="0" max="1" step="0.1"
                   value={bot.temperature}
                   onChange={(e) => update("temperature", parseFloat(e.target.value))}
-                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  className="w-full h-2 bg-gray-300 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                 />
                 <div className="flex justify-between text-[10px] text-gray-500 mt-1.5 font-medium">
                   <span>Kesin/Net</span>
@@ -665,14 +665,14 @@ export default function BotDetailPage() {
                     value={bot.max_tokens}
                     onChange={(e) => update("max_tokens", parseInt(e.target.value))}
                     min={128} max={8192}
-                    className="w-full pl-9 pr-4 py-2.5 bg-black/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm font-mono"
+                    className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-black/50 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm font-mono"
                   />
                 </div>
               </div>
             </div>
 
             {/* Toggle: Show Sources */}
-            <div className="bg-black/20 border border-white/5 rounded-xl p-4">
+            <div className="bg-gray-200/60 dark:bg-black/20 border border-gray-300 dark:border-white/5 rounded-xl p-4">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <div className="relative flex items-center">
                   <input
@@ -681,11 +681,11 @@ export default function BotDetailPage() {
                     onChange={(e) => update("show_sources", e.target.checked)}
                     className="peer sr-only"
                   />
-                  <div className="w-10 h-5 bg-white/10 rounded-full peer-checked:bg-indigo-500 transition-colors"></div>
+                  <div className="w-10 h-5 bg-gray-300 dark:bg-white/10 rounded-full peer-checked:bg-indigo-500 transition-colors"></div>
                   <div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full peer-checked:translate-x-5 transition-transform"></div>
                 </div>
                 <div>
-                  <span className="text-sm text-gray-300 group-hover:text-white transition-colors font-medium">Yanıtlarda Kaynak / Referans Göster</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors font-medium">Yanıtlarda Kaynak / Referans Göster</span>
                   <p className="text-xs text-gray-500 mt-0.5">Bot cevaplarında döküman kaynaklarını gösterir.</p>
                 </div>
               </label>

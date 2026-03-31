@@ -237,7 +237,9 @@ export default function TrainingPage() {
         <button 
           onClick={() => setTrainingMode("file")}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            trainingMode === "file" ? "bg-white/10 text-white shadow-sm" : "text-gray-400 hover:text-gray-300"
+            trainingMode === "file" 
+              ? "bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm" 
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
           }`}
         >
           <FileText className="w-4 h-4" /> Dokümanlar
@@ -245,7 +247,9 @@ export default function TrainingPage() {
         <button 
           onClick={() => setTrainingMode("web")}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            trainingMode === "web" ? "bg-white/10 text-white shadow-sm" : "text-gray-400 hover:text-gray-300"
+            trainingMode === "web" 
+              ? "bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm" 
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
           }`}
         >
           <Globe className="w-4 h-4" /> Web Siteleri
@@ -271,7 +275,7 @@ export default function TrainingPage() {
               className={`relative overflow-hidden group cursor-pointer border-2 border-dashed rounded-3xl p-12 text-center transition-all duration-300 ${
                 dragOver 
                   ? "border-indigo-400 bg-indigo-500/10" 
-                  : "border-white/10 bg-white/5 hover:border-indigo-500/50 hover:bg-white/[0.07]"
+                  : "border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/5 hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-white/[0.07]"
               }`}
             >
               <input 
