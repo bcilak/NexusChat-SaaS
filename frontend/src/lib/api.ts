@@ -215,4 +215,34 @@ export const inboxApi = {
     }),
 };
 
+// --- Bot API Tools ---
+export const toolsApi = {
+  list: (botId: number) =>
+    apiFetch(`/api/bots/${botId}/tools`),
+
+  create: (botId: number, data: object) =>
+    apiFetch(`/api/bots/${botId}/tools`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (botId: number, toolId: number, data: object) =>
+    apiFetch(`/api/bots/${botId}/tools/${toolId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (botId: number, toolId: number) =>
+    apiFetch(`/api/bots/${botId}/tools/${toolId}`, { method: "DELETE" }),
+
+  toggle: (botId: number, toolId: number) =>
+    apiFetch(`/api/bots/${botId}/tools/${toolId}/toggle`, { method: "PATCH" }),
+
+  test: (botId: number, data: object) =>
+    apiFetch(`/api/bots/${botId}/tools/test`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
 export { API_BASE };

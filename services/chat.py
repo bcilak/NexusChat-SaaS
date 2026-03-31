@@ -14,7 +14,7 @@ from models.chat_history import ChatHistory
 from models.chat_history import ChatHistory
 from models.bot_integration import BotIntegration
 from services.vectordb import VectorDBService
-from services.tools import ECommerceProductSearchTool
+from services.tools import ECommerceProductSearchTool, build_dynamic_tools_from_db
 from langchain_core.messages import ToolMessage
 
 load_dotenv()
@@ -74,7 +74,7 @@ def rag_chat(
         ).order_by(ChatHistory.created_at.desc()).limit(4).all()
         recent_history.reverse()
 
-        system_text = bot.prompt + "\n\nİlgili İçerikler (Knowledge Base):\n{context}\n\nUnutma: Eğer kullanıcı stok veya ürün sorarsa, sana sağlanan ecommerce aracını(tool) kullanıp gerçek veriyi söyleyebilirsin."
+        system_text = bot.prompt + "\n\nİlgili İçerikler (Knowledge Base):\n{context}\n\nUnutma: Eğer kullanıcı ürün/stok soruyorsa e-ticaret aracını, başka dinamik bilgi (hava, kur vb.) için uygun aracı kullanabilirsin."
         
         from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
         
@@ -135,7 +135,7 @@ def rag_chat(
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
             )
         
-        # Determine tools based on Bot Integration
+        # Determine tools: e-commerce integrations + user-defined dynamic API tools
         active_tools = []
         integrations = db.query(BotIntegration).filter(BotIntegration.bot_id == bot.id, BotIntegration.is_active == True).all()
         for i in integrations:
@@ -146,6 +146,10 @@ def rag_chat(
                     api_secret=i.api_secret or "",
                     provider=i.provider
                 ))
+
+        # Dynamic API tools defined by the user in the dashboard
+        dynamic_tools = build_dynamic_tools_from_db(bot.id, db)
+        active_tools.extend(dynamic_tools)
 
         if active_tools:
             llm_with_tools = llm.bind_tools(active_tools)

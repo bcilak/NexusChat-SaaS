@@ -45,3 +45,4 @@ class Bot(Base):
     crawled_pages = relationship("CrawledPage", back_populates="bot", cascade="all, delete-orphan")
     integrations = relationship("BotIntegration", back_populates="bot", cascade="all, delete-orphan")
     inbox_conversations = relationship("InboxConversation", back_populates="bot", cascade="all, delete-orphan")
+    tools = relationship("BotTool", back_populates="bot", cascade="all, delete-orphan")
