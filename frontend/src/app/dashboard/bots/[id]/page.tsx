@@ -274,6 +274,30 @@ export default function BotDetailPage() {
                   className="w-full px-4 py-2.5 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all text-sm"
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+                  💬 Önerilen Sorular (Hazır Butonlar)
+                </label>
+                <p className="text-[11px] text-gray-500 mb-2">
+                  Virgülle ayırın. Widget açıldığında hızlı tıklanabilir butonlar olarak görünür.
+                </p>
+                <textarea
+                  value={bot.example_questions || ""}
+                  onChange={(e) => update("example_questions", e.target.value)}
+                  rows={3}
+                  placeholder="Fiyatlarınız nedir?, Nasıl kayıt olurum?, İletişim bilgileriniz?"
+                  className="w-full px-4 py-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all text-sm resize-none"
+                />
+                {bot.example_questions && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {bot.example_questions.split(",").map((q, i) => q.trim() && (
+                      <span key={i} className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                        {q.trim()}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
 
