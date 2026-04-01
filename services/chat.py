@@ -74,7 +74,7 @@ def rag_chat(
         ).order_by(ChatHistory.created_at.desc()).limit(4).all()
         recent_history.reverse()
 
-        system_text = bot.prompt + "\n\nİlgili İçerikler (Knowledge Base):\n{context}\n\nUnutma: Eğer kullanıcı ürün/stok soruyorsa e-ticaret aracını, başka dinamik bilgi (hava, kur vb.) için uygun aracı kullanabilirsin."
+        system_text = bot.prompt + "\n\nİlgili İçerikler (Knowledge Base):\n{context}\n\nÖNEMLİ KURALLAR:\n1. Gelen API verilerini veya cevaplarını düz bir uzun paragraf yerine; MUTLAKA satır atlayarak, Markdown listeleri (- ) ve kalın fontlar (**bold**) kullanarak ÇOK ŞIK, KISA ve OKUNAKLI formatla.\n2. Cümle aralarında 'Daha fazla sorun varsa buradayım', 'İşte hava durumu' gibi gereksiz sohbet uzatmaları yapma, direkt net cevabı listeler halinde ver.\n3. Kullanıcı ürün/stok soruyorsa e-ticaret aracını, dinamik bilgi (hava, kur vb.) için uygun aracı kullan."
         
         from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
         

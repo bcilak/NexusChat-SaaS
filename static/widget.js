@@ -792,7 +792,16 @@
       /* Bot bubble */
       const botBubble = document.createElement("div");
       botBubble.className = "nxc-msg bot";
-      botBubble.textContent = data.answer || "Yanıt alınamadı.";
+      
+      let rawText = data.answer || "Yanıt alınamadı.";
+      let mdHtml = rawText
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.*?)\*/g, "<em>$1</em>")
+        .replace(/\n\n/g, "<br><br>")
+        .replace(/\n/g, "<br>");
+      
+      botBubble.innerHTML = mdHtml;
 
       const botTime = document.createElement("span");
       botTime.className = "nxc-msg-time";

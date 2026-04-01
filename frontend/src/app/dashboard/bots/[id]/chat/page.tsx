@@ -162,7 +162,7 @@ export default function ChatTestPage() {
                 {msg.role === "user" ? (
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 ) : (
-                  <div className="prose prose-invert prose-sm max-w-none">
+                  <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap leading-relaxed">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 )}
