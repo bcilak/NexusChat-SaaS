@@ -43,6 +43,7 @@ class TestToolRequest(BaseModel):
     query_params: str = "{}"
     body_template: str = ""
     response_path: str = ""
+    response_template: str = ""
     query: str = ""          # {query} placeholder'ının yerine geçer
 
 

@@ -43,7 +43,14 @@ async function apiFetch(path: string, options: RequestInit = {}) {
     throw new Error("Unauthorized");
   }
 
-  const data = await res.json();
+  let data;
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    data = await res.json();
+  } else {
+    const textData = await res.text();
+    data = { detail: textData || "Bilinmeyen bir hata oluştu" };
+  }
 
   if (!res.ok) {
     throw new Error(data.detail || "Bir hata oluştu");
