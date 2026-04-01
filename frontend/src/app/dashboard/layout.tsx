@@ -43,7 +43,7 @@ function Sidebar() {
           <Bot className="w-5 h-5 text-white" />
         </div>
         <div>
-          <span className="font-bold text-base text-gray-900 dark:text-white tracking-tight">NexusChat</span>
+          <span className="font-bold text-base text-gray-900 dark:text-white tracking-tight">ChatGenius</span>
           <div className="text-[10px] text-gray-500 dark:text-gray-500 font-medium">AI Platform</div>
         </div>
       </Link>

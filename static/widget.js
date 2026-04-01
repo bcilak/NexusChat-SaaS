@@ -1,5 +1,5 @@
 /**
- * NexusChat AI Widget — Premium Embeddable Chat Widget v2.1
+ * ChatGenius AI Widget — Premium Embeddable Chat Widget v2.1
  * Usage: <script src="https://yoursite.com/static/widget.js" data-bot-id="BOT_ID"></script>
  * Optional: data-api-base="https://custom-api-origin.com"
  */
@@ -13,7 +13,7 @@
     script.src.replace("/static/widget.js", "");
 
   if (!botId) {
-    console.error("NexusChat Widget: data-bot-id attribute is required");
+    console.error("ChatGenius Widget: data-bot-id attribute is required");
     return;
   }
 
@@ -595,7 +595,7 @@
         <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
       </button>
     </div>
-    <div class="nxc-branding">Powered by <a href="#" target="_blank">NexusChat</a></div>
+    <div class="nxc-branding">Powered by <a href="#" target="_blank">ChatGenius</a></div>
   `;
   document.body.appendChild(container);
 

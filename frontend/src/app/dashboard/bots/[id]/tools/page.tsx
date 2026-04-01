@@ -99,7 +99,7 @@ const PRESETS = [
       description: "Kullanıcı bir adres, ilçe, şehir veya yer ismi hakkında konum bilgisi, koordinat, bölge bilgisi sorduğunda bu aracı kullan.",
       api_url: "https://nominatim.openstreetmap.org/search",
       method: "GET",
-      headers: JSON.stringify({ "User-Agent": "NexusChatBot/1.0" }, null, 2),
+      headers: JSON.stringify({ "User-Agent": "ChatGeniusBot/1.0" }, null, 2),
       query_params: JSON.stringify({ q: "{query}", format: "json", limit: "1", "accept-language": "tr" }, null, 2),
       body_template: "",
       response_path: "0.display_name,0.lat,0.lon",

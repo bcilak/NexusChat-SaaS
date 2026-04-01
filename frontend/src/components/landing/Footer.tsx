@@ -12,7 +12,7 @@ export function Footer() {
             <Link href="/" className="flex items-center gap-2 mb-6">
               <Bot className="w-8 h-8 text-indigo-500" />
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                NexusChat
+                ChatGenius
               </span>
             </Link>
             <p className="text-gray-400 max-w-sm mb-6">
@@ -52,7 +52,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-white/5 pt-8 text-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} NexusChat AI. Tüm hakları saklıdır.</p>
+          <p>&copy; {new Date().getFullYear()} ChatGenius AI. Tüm hakları saklıdır.</p>
         </div>
       </div>
     </footer>

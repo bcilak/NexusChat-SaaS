@@ -152,7 +152,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
         </button>
       </div>
       <div className="text-center py-1.5 text-[9px]" style={{ color: "rgba(255,255,255,0.18)" }}>
-        Powered by <span style={{ color: "rgba(255,255,255,0.35)" }}>NexusChat</span>
+        Powered by <span style={{ color: "rgba(255,255,255,0.35)" }}>ChatGenius</span>
       </div>
     </div>
   );

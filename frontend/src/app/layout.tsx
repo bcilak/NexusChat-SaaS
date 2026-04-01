@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "NexusChat - Premium AI Chatbot Platform",
+  title: "ChatGenius - Premium AI Chatbot Platform",
   description: "Kendi verilerinizle desteklenen, e-ticaret entegrasyonlu ve yapay zeka hafızasına sahip akıllı asistanınızı dakikalar içinde oluşturun.",
 };
 
