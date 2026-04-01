@@ -47,7 +47,7 @@ export function Features() {
             viewport={{ once: true }}
             className="text-3xl md:text-5xl font-bold mb-4"
           >
-            Neden <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">ChatGenius?</span>
+            Neden <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">NexusChat?</span>
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}

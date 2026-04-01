@@ -54,7 +54,7 @@ export default function LoginPage() {
             <Bot className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 mb-2">
-            ChatGenius
+            NexusChat
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm">
             {isLogin ? "Hesabınıza giriş yapın" : "Sisteme katılın"}

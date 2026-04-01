@@ -401,6 +401,25 @@ export default function BotDetailPage() {
                     placeholder="https://site.com/logo.png"
                     className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm font-mono"
                   />
+                  <div className="mt-3">
+                    <label className="block text-[10px] font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Hızlı Logo Seçimi</label>
+                    <div className="flex flex-wrap gap-2">
+                      {["bottts", "bottts-neutral", "fun-emoji", "shapes", "icons", "avataaars"].map((type, i) => {
+                        const baseUrl = `https://api.dicebear.com/7.x/${type}/svg?seed=${botId * 10 + i}&backgroundColor=transparent`;
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => update("logo_url", baseUrl)}
+                            className="w-10 h-10 rounded-xl overflow-hidden border-2 transition-all hover:scale-110"
+                            style={{ borderColor: bot.logo_url === baseUrl ? "#6366f1" : "rgba(150,150,150,0.2)" }}
+                            title={`${type} logo`}
+                          >
+                            <img src={baseUrl} alt="avatar" className="w-full h-full object-cover p-1 bg-gray-900/10 dark:bg-white/5" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Karşılama Mesajı</label>
