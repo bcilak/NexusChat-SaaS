@@ -27,7 +27,11 @@ DEFAULT_BOT_ID = 1
 def verify_webhook_signature(request_body: bytes, signature_header: str) -> bool:
     """Verify that the webhook request actually came from Meta using X-Hub-Signature-256."""
     if not META_APP_SECRET:
-        # If no app secret configured, skip verification (dev mode)
+        # In production, this MUST be set
+        env = os.getenv("ENV", "development")
+        if env == "production":
+            raise ValueError("META_APP_SECRET is required in production for security")
+        # Allow in development only
         return True
     
     if not signature_header:
