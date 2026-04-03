@@ -102,10 +102,26 @@ export default function InboxPage() {
     return () => clearInterval(interval);
   }, [botId]);
 
-  // Load messages initially when active conv changes
+  // Load messages initially and poll to guarantee real-time updates (fallback for WebSocket issues)
   useEffect(() => {
     if (!activeConvId) return;
-    inboxApi.getMessages(botId, activeConvId).then(setMessages).catch(() => {});
+    
+    const fetchMsgs = () => {
+      inboxApi.getMessages(botId, activeConvId).then(data => {
+        setMessages(prev => {
+          // Sadece yeni mesaj varsa veya boyut değiştiyse state'i güncelle (gereksiz re-render'ı engellemek için)
+          if (prev.length !== data.length) return data;
+          const lastPrev = prev[prev.length - 1];
+          const lastData = data[data.length - 1];
+          if (lastPrev?.id !== lastData?.id) return data;
+          return prev;
+        });
+      }).catch(() => {});
+    };
+    
+    fetchMsgs();
+    const interval = setInterval(fetchMsgs, 3000);
+    return () => clearInterval(interval);
   }, [botId, activeConvId]);
 
   // WebSocket Connection for Real-Time Messages
