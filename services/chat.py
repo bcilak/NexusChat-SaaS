@@ -1,20 +1,17 @@
 """Chat service — RAG-based question answering."""
 import os
 import json
-from typing import List, Tuple
+from typing import List
 
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
 from models.bot import Bot
 from models.chat_history import ChatHistory
-from models.chat_history import ChatHistory
-from models.bot_integration import BotIntegration
 from services.vectordb import VectorDBService
-from services.tools import ECommerceProductSearchTool, build_dynamic_tools_from_db
+from services.tools import build_ecommerce_tools, build_dynamic_tools_from_db
 from langchain_core.messages import ToolMessage
 
 load_dotenv()
@@ -135,17 +132,10 @@ def rag_chat(
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
             )
         
-        # Determine tools: e-commerce integrations + user-defined dynamic API tools
+        # E-ticaret entegrasyon araçları (WooCommerce, IdeaSoft, Shopify, Ticimax)
         active_tools = []
-        integrations = db.query(BotIntegration).filter(BotIntegration.bot_id == bot.id, BotIntegration.is_active == True).all()
-        for i in integrations:
-            if i.provider in ["woocommerce", "shopify"]:
-                active_tools.append(ECommerceProductSearchTool(
-                    api_url=i.api_url,
-                    api_key=i.api_key,
-                    api_secret=i.api_secret or "",
-                    provider=i.provider
-                ))
+        ecommerce_tools = build_ecommerce_tools(bot.id, db)
+        active_tools.extend(ecommerce_tools)
 
         # Dynamic API tools defined by the user in the dashboard
         dynamic_tools = build_dynamic_tools_from_db(bot.id, db)

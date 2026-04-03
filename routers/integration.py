@@ -11,6 +11,8 @@ from routers.auth import get_current_user
 router = APIRouter(prefix="/api/integrations", tags=["integrations"])
 
 
+# ─── Request / Response Modelleri ────────────────────────────────────────────
+
 class IntegrationCreate(BaseModel):
     bot_id: int
     provider: str
@@ -40,6 +42,23 @@ class IntegrationResponse(BaseModel):
     meta_data: Optional[str] = None
 
 
+class TestConnectionRequest(BaseModel):
+    provider: str
+    api_url: str
+    api_key: str
+    api_secret: Optional[str] = None
+
+
+class TestConnectionResponse(BaseModel):
+    success: bool
+    message: str
+    store_name: Optional[str] = None
+    product_count: Optional[int] = None
+    provider: str
+
+
+# ─── Yardımcı ────────────────────────────────────────────────────────────────
+
 def integration_to_response(intg: BotIntegration) -> IntegrationResponse:
     return IntegrationResponse(
         id=intg.id,
@@ -53,19 +72,22 @@ def integration_to_response(intg: BotIntegration) -> IntegrationResponse:
     )
 
 
+# ─── CRUD Endpoint'leri ───────────────────────────────────────────────────────
+
 @router.post("", response_model=IntegrationResponse)
 def create_integration(
     req: IntegrationCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Verify exact bot ownership
     bot = db.query(Bot).filter(Bot.id == req.bot_id, Bot.user_id == current_user.id).first()
     if not bot:
         raise HTTPException(status_code=403, detail="Bot bulunamadı veya yetkisiz erişim")
 
-    # Check if this bot already has this provider integration (optional logic step, usually 1 woo per bot)
-    existing = db.query(BotIntegration).filter(BotIntegration.bot_id == req.bot_id, BotIntegration.provider == req.provider).first()
+    existing = db.query(BotIntegration).filter(
+        BotIntegration.bot_id == req.bot_id,
+        BotIntegration.provider == req.provider
+    ).first()
     if existing:
         raise HTTPException(status_code=400, detail=f"Bot için zaten {req.provider} entegrasyonu mevcut.")
 
@@ -82,11 +104,10 @@ def get_bot_integrations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Verify ownership
     bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
     if not bot:
         raise HTTPException(status_code=403, detail="Yetkisiz erişim")
-        
+
     integrations = db.query(BotIntegration).filter(BotIntegration.bot_id == bot_id).all()
     return [integration_to_response(i) for i in integrations]
 
@@ -102,14 +123,14 @@ def update_integration(
         BotIntegration.id == integration_id,
         Bot.user_id == current_user.id
     ).first()
-    
+
     if not integration:
         raise HTTPException(status_code=404, detail="Entegrasyon bulunamadı")
-        
+
     update_data = req.model_dump(exclude_unset=True)
     for k, v in update_data.items():
         setattr(integration, k, v)
-        
+
     db.commit()
     db.refresh(integration)
     return integration_to_response(integration)
@@ -125,10 +146,134 @@ def delete_integration(
         BotIntegration.id == integration_id,
         Bot.user_id == current_user.id
     ).first()
-    
+
     if not integration:
         raise HTTPException(status_code=404, detail="Entegrasyon bulunamadı")
-        
+
     db.delete(integration)
     db.commit()
     return {"detail": "Entegrasyon silindi"}
+
+
+# ─── Bağlantı Test Endpoint'i ─────────────────────────────────────────────────
+
+@router.post("/test-connection", response_model=TestConnectionResponse)
+def test_connection(
+    req: TestConnectionRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Entegrasyon kaydetmeden önce bağlantıyı test eder.
+    Her sağlayıcıya özel yöntem kullanılır.
+    """
+    import requests as http_req
+
+    provider = req.provider.lower().strip()
+
+    # ── IdeaSoft ─────────────────────────────────────────────────────────────
+    if provider == "ideasoft":
+        from services.ideasoft import test_connection as ideasoft_test
+        result = ideasoft_test(
+            api_url=req.api_url,
+            client_id=req.api_key,
+            client_secret=req.api_secret or "",
+        )
+        return TestConnectionResponse(
+            success=result["success"],
+            message=result["message"],
+            store_name=result.get("store_name", ""),
+            product_count=result.get("product_count", 0),
+            provider="ideasoft",
+        )
+
+    # ── WooCommerce ───────────────────────────────────────────────────────────
+    elif provider == "woocommerce":
+        try:
+            endpoint = f"{req.api_url.rstrip('/')}/wp-json/wc/v3/products"
+            params = {
+                "consumer_key": req.api_key,
+                "consumer_secret": req.api_secret or "",
+                "per_page": 1,
+            }
+            resp = http_req.get(endpoint, params=params, timeout=10)
+            if resp.ok:
+                total = int(resp.headers.get("X-WP-Total", 0))
+                return TestConnectionResponse(
+                    success=True,
+                    message="WooCommerce bağlantısı başarılı!",
+                    store_name=req.api_url,
+                    product_count=total,
+                    provider="woocommerce",
+                )
+            return TestConnectionResponse(
+                success=False,
+                message=f"WooCommerce bağlantısı başarısız (HTTP {resp.status_code}). "
+                        "API key/secret ve URL'yi kontrol edin.",
+                provider="woocommerce",
+            )
+        except Exception as e:
+            return TestConnectionResponse(
+                success=False,
+                message=f"WooCommerce bağlantı hatası: {str(e)}",
+                provider="woocommerce",
+            )
+
+    # ── Ticimax ───────────────────────────────────────────────────────────────
+    elif provider == "ticimax":
+        try:
+            endpoint = f"{req.api_url.rstrip('/')}/api/Product/GetProducts"
+            headers = {"Authorization": f"Bearer {req.api_key}"}
+            resp = http_req.get(endpoint, headers=headers, params={"pageSize": 1}, timeout=10)
+            if resp.ok:
+                return TestConnectionResponse(
+                    success=True,
+                    message="Ticimax bağlantısı başarılı!",
+                    store_name=req.api_url,
+                    provider="ticimax",
+                )
+            return TestConnectionResponse(
+                success=False,
+                message=f"Ticimax bağlantısı başarısız (HTTP {resp.status_code}). "
+                        "API anahtarını kontrol edin.",
+                provider="ticimax",
+            )
+        except Exception as e:
+            return TestConnectionResponse(
+                success=False,
+                message=f"Ticimax bağlantı hatası: {str(e)}",
+                provider="ticimax",
+            )
+
+    # ── Shopify ───────────────────────────────────────────────────────────────
+    elif provider == "shopify":
+        try:
+            shop = req.api_url.rstrip("/")
+            endpoint = f"{shop}/admin/api/2024-01/products.json"
+            headers = {"X-Shopify-Access-Token": req.api_key}
+            resp = http_req.get(endpoint, headers=headers, params={"limit": 1}, timeout=10)
+            if resp.ok:
+                return TestConnectionResponse(
+                    success=True,
+                    message="Shopify bağlantısı başarılı!",
+                    store_name=shop,
+                    provider="shopify",
+                )
+            return TestConnectionResponse(
+                success=False,
+                message=f"Shopify bağlantısı başarısız (HTTP {resp.status_code}). "
+                        "Access token ve mağaza URL'sini kontrol edin.",
+                provider="shopify",
+            )
+        except Exception as e:
+            return TestConnectionResponse(
+                success=False,
+                message=f"Shopify bağlantı hatası: {str(e)}",
+                provider="shopify",
+            )
+
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"'{provider}' sağlayıcısı desteklenmiyor. "
+                   "Desteklenenler: ideasoft, woocommerce, ticimax, shopify",
+        )

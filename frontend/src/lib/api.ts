@@ -162,6 +162,11 @@ export const integrationsApi = {
   list: (botId: number) => apiFetch(`/api/integrations/bot/${botId}`),
   create: (data: Record<string, unknown>) => apiFetch(`/api/integrations`, { method: "POST", body: JSON.stringify(data) }),
   delete: (id: number) => apiFetch(`/api/integrations/${id}`, { method: "DELETE" }),
+  testConnection: (data: { provider: string; api_url: string; api_key: string; api_secret?: string }) =>
+    apiFetch(`/api/integrations/test-connection`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // --- Analytics ---
