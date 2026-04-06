@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from db.database import Base
 
@@ -14,6 +14,8 @@ class User(Base):
     plan = Column(String(50), default="free")
     role = Column(String(50), default="user")
     credits = Column(Integer, default=1000)
+    can_use_api_tools = Column(Boolean, default=False)
+    can_remove_branding = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     bots = relationship("Bot", back_populates="owner", cascade="all, delete-orphan")

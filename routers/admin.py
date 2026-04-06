@@ -31,10 +31,31 @@ def list_users(db: Session = Depends(get_db), admin: User = Depends(get_current_
             "email": u.email,
             "plan": u.plan,
             "role": u.role,
+            "credits": u.credits,
+            "can_use_api_tools": u.can_use_api_tools,
+            "can_remove_branding": u.can_remove_branding,
             "created_at": u.created_at
         }
         for u in users
     ]
+
+@router.put("/users/{user_id}")
+def update_user(user_id: int, payload: dict, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    
+    if "plan" in payload:
+        user.plan = payload["plan"]
+    if "credits" in payload:
+        user.credits = payload["credits"]
+    if "can_use_api_tools" in payload:
+        user.can_use_api_tools = payload["can_use_api_tools"]
+    if "can_remove_branding" in payload:
+        user.can_remove_branding = payload["can_remove_branding"]
+        
+    db.commit()
+    return {"message": "Kullanıcı güncellendi"}
 
 @router.put("/users/{user_id}/plan")
 def update_user_plan(user_id: int, payload: dict, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):

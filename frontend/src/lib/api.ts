@@ -203,6 +203,12 @@ export const adminApi = {
 
   getUsers: () => apiFetch(`/api/admin/users`),
 
+  updateUser: (userId: number, payload: Record<string, any>) =>
+    apiFetch(`/api/admin/users/${userId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
   updateUserPlan: (userId: number, plan: string) =>
     apiFetch(`/api/admin/users/${userId}/plan`, {
       method: "PUT",
