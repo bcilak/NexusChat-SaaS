@@ -48,7 +48,8 @@ def upgrade_db():
     # ChatHistory table
     chat_columns = [
         ("is_liked", "BOOLEAN"),
-        ("is_fallback", "BOOLEAN DEFAULT 0")
+        ("is_fallback", "BOOLEAN DEFAULT 0"),
+        ("platform", "VARCHAR(50) DEFAULT 'web'")
     ]
     
     for col_name, col_def in chat_columns:
