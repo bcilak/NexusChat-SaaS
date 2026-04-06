@@ -92,12 +92,20 @@ function Sidebar() {
 
       {/* User Info */}
       <div className="p-3 border-t border-gray-200 dark:border-white/[0.06]">
-        {/* Plan Badge */}
-        <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium uppercase tracking-wider">Mevcut Plan</span>
-          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${planBadgeColors[plan] || planBadgeColors.free}`}>
-            {plan}
-          </span>
+        {/* Plan & Credits */}
+        <div className="flex flex-col gap-2 mb-3">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium uppercase tracking-wider">Mevcut Plan</span>
+            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${planBadgeColors[plan] || planBadgeColors.free}`}>
+              {plan}
+            </span>
+          </div>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium uppercase tracking-wider">Kredi</span>
+            <span className="text-xs font-bold text-indigo-500 dark:text-indigo-400">
+              {user?.credits?.toLocaleString() ?? 0}
+            </span>
+          </div>
         </div>
 
         {/* User Card */}
