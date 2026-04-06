@@ -30,7 +30,7 @@ export function Hero() {
           </h1>
           
           <p className="text-lg text-gray-400 mb-8 max-w-xl leading-relaxed">
-            Kendi veri tabanınızla eğitebileceğiniz, e-ticaret sitenizle anında konuşabilen ve geçmiş diyalogları hatırlayan yapay zeka chatbot platformu.
+            Kredi tabanlı esnek kullanım, güncel yapay zeka modelleri (GPT-4o, Claude 3.5) ve canlı API yetenekleriyle işletmenizi geleceğe taşıyan chatbot platformu.
           </p>
 
           <div className="flex flex-wrap items-center gap-4">

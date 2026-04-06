@@ -1,38 +1,38 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Search, BrainCircuit, ShoppingCart, MessageSquare, Zap, ShieldCheck } from "lucide-react";
+import { BrainCircuit, PlugZap, Coins, MessageSquare, Palette, BarChart3 } from "lucide-react";
 
 const features = [
   {
-    icon: <Search className="w-6 h-6 text-indigo-400" />,
-    title: "Hybrid Search Teknolojisi",
-    description: "Vektörel ve kelime tabanlı aramayı birleştirerek, dokümanlarınızdaki en alakalı bilgiyi saniyeler içinde bulur."
+    icon: <Coins className="w-6 h-6 text-indigo-400" />,
+    title: "Kredi ile Esnek Kullanım",
+    description: "Kullandıkça ödeyin. Adil faturalandırma sayesinde yalnızca seçtiğiniz modele göre (GPT-4o-mini: 1 Kredi, Claude-3.5: 3 Kredi vb.) harcama yaparsınız."
   },
   {
     icon: <BrainCircuit className="w-6 h-6 text-purple-400" />,
-    title: "Multi-LLM & Hafıza",
-    description: "Gemini, Claude 3.5 veya OpenAI arasından seçim yapın. Konuşma hafızası ile diyalog bağlamından asla kopmaz."
+    title: "Güncel Yapay Zeka Modelleri",
+    description: "Projenizin ihtiyacına göre GPT-4o, Claude 3.5 Sonnet veya o1-mini gibi sektörün en güçlü LLM'leri arasında anında geçiş yapın."
   },
   {
-    icon: <ShoppingCart className="w-6 h-6 text-emerald-400" />,
-    title: "Canlı E-Ticaret Entegrasyonu",
-    description: "LangChain AgentExecutor sayesinde WooCommerce, Shopify, Ticimax üzerinden anlık stok ve fiyat sorgular."
+    icon: <PlugZap className="w-6 h-6 text-emerald-400" />,
+    title: "Canlı API Entegrasyonu",
+    description: "Kendi veritabanınızı veya dış servisleri (hava durumu, canlı kargo takibi, CRM vb.) API araçlarıyla botunuza kolayca bağlayın."
   },
   {
-    icon: <MessageSquare className="w-6 h-6 text-pink-400" />,
-    title: "Tam Özelleştirilebilir Widget",
-    description: "Markanızın renkleri, logonuz ve önceden belirlenmiş karşılama mesajlarıyla tamamen size ait bir deneyim."
+    icon: <Palette className="w-6 h-6 text-pink-400" />,
+    title: "White-Label (MarkasızKullanım)",
+    description: "Sanki kendi yazılım ekibiniz geliştirmiş gibi, kendi markanız, firmanızın logosu ve renkleriyle tamamen size ait bir chatbot deneyimi sunun."
   },
   {
-    icon: <ShieldCheck className="w-6 h-6 text-blue-400" />,
+    icon: <BarChart3 className="w-6 h-6 text-blue-400" />,
     title: "Detaylı Analitik ve Loglar",
-    description: "Müşterilerinizin neleri sorduğunu, hangi sorularda cevap bulunamadığını analiz edin ve sisteminizi geliştirin."
+    description: "Müşterilerinizin neleri sorduğunu, hangi sorularda cevap bulunamadığını analiz edin ve sisteminizi sürekli geliştirin."
   },
   {
-    icon: <Zap className="w-6 h-6 text-yellow-400" />,
-    title: "Kurulumsuz Entegrasyon",
-    description: "Size verilen tek satırlık JavaScript kodunu sitenize ekleyin, asistanınız hemen çalışmaya başlasın."
+    icon: <MessageSquare className="w-6 h-6 text-yellow-400" />,
+    title: "Gelişmiş RAG Teknolojisi",
+    description: "Vektörel arama ile pdf, web sitesi veya metin dokümanlarınızı saniyeler içinde tarayıp, müşteriye en doğru cevabı anında iletin."
   }
 ];
 
