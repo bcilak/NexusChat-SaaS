@@ -10,6 +10,7 @@ import {
   Info, Zap, Globe, CloudSun, DollarSign, Package, Newspaper, MapPin,
   X, Play, Loader2, HelpCircle, Code2, ArrowRight
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 
 // ─────────────────────── Types ───────────────────────
@@ -160,6 +161,7 @@ function ParamRow({ keyVal, value, onChange, onDelete }: { keyVal: string; value
 // ─────────────────────── Main Page ───────────────────────
 
 export default function ToolsPage() {
+  const { user } = useAuth();
   const params = useParams();
   const router = useRouter();
   const botId = Number(params.id);
@@ -399,6 +401,16 @@ export default function ToolsPage() {
         )}
       </AnimatePresence>
 
+      {user && !user.can_use_api_tools ? (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center flex flex-col items-center justify-center mt-4">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+            <Plug className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Erişim Engellendi / Access Denied</h2>
+          <p className="text-gray-500 max-w-md mx-auto mb-6">Mevcut planınızda API Araçları kullanımı desteklenmiyor. Bu özelliği kullanabilmek için lütfen planınızı yükseltin.</p>
+        </div>
+      ) : (
+        <>
       {/* ── How it works banner ── */}
       <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start gap-4">
         <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
@@ -790,6 +802,7 @@ export default function ToolsPage() {
           </div>
         )}
       </div>
+      </>}
     </div>
   );
 }

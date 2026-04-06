@@ -19,7 +19,7 @@ interface UserData {
 export default function UsersAdminPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
@@ -99,7 +99,7 @@ export default function UsersAdminPage() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <select 
+                    <select
                       value={user.plan}
                       onChange={(e) => handlePlanChange(user.id, e.target.value)}
                       className="bg-gray-100 dark:bg-[#0a0a1a] border border-gray-200 dark:border-white/10 text-sm rounded-lg px-2 py-1 outline-none"
@@ -111,9 +111,9 @@ export default function UsersAdminPage() {
                   </td>
                   <td className="p-4 text-sm text-gray-500">{new Date(user.created_at).toLocaleDateString()}</td>
                   <td className="p-4 text-right">
-                    <button 
-                      onClick={() => openEditModal(user)} 
-                      className="p-2 text-gray-400 hover:text-indigo-500 transition-colors" 
+                    <button
+                      onClick={() => openEditModal(user)}
+                      className="p-2 text-gray-400 hover:text-indigo-500 transition-colors"
                       title="Düzenle"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -140,7 +140,7 @@ export default function UsersAdminPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4 text-sm">
               <div>
                 <label className="block text-gray-500 mb-1">Kredi</label>
