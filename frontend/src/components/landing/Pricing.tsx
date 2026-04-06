@@ -80,12 +80,12 @@ export function Pricing() {
             <div className="mb-6">
               <span className="text-2xl font-bold">Özel Fiyat</span>
             </div>
-            <p className="text-sm text-gray-400 mb-6">Yüksek trafikli projeler, ajanslar ve büyük markalar için.</p>
+            <p className="text-sm text-gray-400 mb-6">Özel fiyat teklifi almak ve projenize uygun çözümleri değerlendirmek için bizimle iletişime geçin.</p>
             <Link href="#contact" className="btn btn-secondary w-full mb-8">Bize Ulaşın</Link>
 
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Sınırsız Chatbot</li>
-              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Aylık 40.000 Kredi</li>
+              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Özel Kredi Paketi</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Size Özel API Geliştirmeleri</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Özel (Dedicated) Sunucu Seçeneği</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />7/24 Teknik Destek & SLA</li>
