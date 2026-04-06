@@ -12,7 +12,7 @@ export function Hero() {
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10 grid lg:grid-cols-2 gap-12 items-center">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
@@ -21,14 +21,14 @@ export function Hero() {
             <Sparkles className="w-4 h-4" />
             <span>Yeni Nesil RAG & Agent Mimarisi</span>
           </div>
-          
+
           <h1 className="text-5xl lg:text-7xl font-bold leading-tight mb-6">
-            Müşterileriniz İçin <br/>
+            Müşterileriniz İçin <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 animate-gradient-x">
               Akıllı Asistan
             </span>
           </h1>
-          
+
           <p className="text-lg text-gray-400 mb-8 max-w-xl leading-relaxed">
             Kredi tabanlı esnek kullanım, güncel yapay zeka modelleri (GPT-4o, Claude 3.5) ve canlı API yetenekleriyle işletmenizi geleceğe taşıyan chatbot platformu.
           </p>
@@ -41,14 +41,14 @@ export function Hero() {
               Canlı Demo İncele
             </Link>
           </div>
-          
+
           <div className="mt-12 flex items-center gap-8 text-sm text-gray-500">
             <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Kurulum Gerektirmez</div>
             <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-indigo-500" /> Multi-LLM Desteği</div>
           </div>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
@@ -93,7 +93,7 @@ export function Hero() {
                 </div>
               </div>
             </div>
-            
+
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0a0a1a] to-transparent pointer-events-none" />
           </div>
         </motion.div>

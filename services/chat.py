@@ -205,11 +205,11 @@ def rag_chat(
         if "gpt-4o-mini" in model_name:
             deduction = 1
         elif "gpt-4o" in model_name:
-            deduction = 4
+            deduction = 30
         elif "claude-3-opus" in model_name:
-            deduction = 6
-        elif "claude-3" in model_name:
-            deduction = 3
+            deduction = 100
+        elif "claude-3-5-sonnet" in model_name or "claude-3" in model_name:
+            deduction = 20
         else:
             deduction = 2
             

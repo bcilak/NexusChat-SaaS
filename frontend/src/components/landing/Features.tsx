@@ -41,7 +41,7 @@ export function Features() {
     <section id="features" className="py-24 relative z-10">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -49,7 +49,7 @@ export function Features() {
           >
             Neden <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">ChatGenius?</span>
           </motion.h2>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
