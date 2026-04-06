@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
 from models.bot import Bot
+from models.user import User
 from models.chat_history import ChatHistory
 from services.vectordb import VectorDBService
 from services.tools import build_ecommerce_tools, build_dynamic_tools_from_db
@@ -53,6 +54,18 @@ def rag_chat(
     platform: str = "web"
 ) -> dict:
     """Full RAG chain: retrieve → prompt → generate → save."""
+    # Check if the bot owner has enough credits
+    user = db.query(User).filter(User.id == bot.owner_id).first()
+    if user and user.credits <= 0:
+        return {
+            "answer": "Bu botun kullanım limiti (kredi) dolmuştur. Lütfen bot sahibiyle iletişime geçin.",
+            "sources": [],
+            "session_id": session_id,
+        }
+
+    model_name = bot.model or "gpt-4o-mini"
+    llm_invoked = False
+
     # 1. Retrieve relevant documents using Hybrid Search
     vectordb = VectorDBService()
     retrieved_docs = vectordb.hybrid_search(str(bot.id), question, k=4)
@@ -108,7 +121,7 @@ def rag_chat(
             messages_input.append(HumanMessage(content=question))
 
         # 3. Call LLM
-        model_name = bot.model or "gpt-4o-mini"
+        llm_invoked = True
         if "gemini" in model_name:
             from langchain_google_genai import ChatGoogleGenerativeAI
             llm = ChatGoogleGenerativeAI(
@@ -186,6 +199,23 @@ def rag_chat(
         is_fallback=is_fallback
     )
     db.add(history)
+
+    # 5. Deduct credits
+    if user and llm_invoked:
+        if "gpt-4o-mini" in model_name:
+            deduction = 1
+        elif "gpt-4o" in model_name:
+            deduction = 4
+        elif "claude-3-opus" in model_name:
+            deduction = 6
+        elif "claude-3" in model_name:
+            deduction = 3
+        else:
+            deduction = 2
+            
+        user.credits -= deduction
+        db.add(user)
+
     db.commit()
 
     return {

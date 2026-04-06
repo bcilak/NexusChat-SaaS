@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { botsApi, inboxApi, API_BASE } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
+import {
   ArrowLeft, MessageSquare, User, Bot as BotIcon, Zap, Send, Ban, CheckCircle2, AlertCircle, Phone, Globe, Trash2
 } from "lucide-react";
 import Link from "next/link";
@@ -35,7 +35,7 @@ function formatPhoneNumber(raw: string): string {
   if (!raw) return raw;
   // Strip all non-digit characters
   const digits = raw.replace(/\D/g, "");
-  
+
   // Turkish number: 905XXXXXXXXX (12 digits)
   if (digits.length === 12 && digits.startsWith("90")) {
     return `+90 ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8, 10)} ${digits.slice(10)}`;
@@ -73,17 +73,17 @@ export default function InboxPage() {
   const botId = Number(params.id);
   const { user } = useAuth();
   const [botName, setBotName] = useState("");
-  
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
   const [platformFilter, setPlatformFilter] = useState<string>("all");
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
-  
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const [toggling, setToggling] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeConvIdRef = useRef<number | null>(null);
 
@@ -93,13 +93,13 @@ export default function InboxPage() {
 
   // Load bot details
   useEffect(() => {
-    botsApi.get(botId).then(b => setBotName(b.name)).catch(() => {});
+    botsApi.get(botId).then(b => setBotName(b.name)).catch(() => { });
   }, [botId]);
 
   // Poll conversations every 5 seconds for status updates
   useEffect(() => {
     const fetchConvs = () => {
-      inboxApi.getConversations(botId).then(setConversations).catch(() => {});
+      inboxApi.getConversations(botId).then(setConversations).catch(() => { });
     };
     fetchConvs();
     const interval = setInterval(fetchConvs, 5000);
@@ -109,7 +109,7 @@ export default function InboxPage() {
   // Load messages initially and poll to guarantee real-time updates (fallback for WebSocket issues)
   useEffect(() => {
     if (!activeConvId) return;
-    
+
     const fetchMsgs = () => {
       inboxApi.getMessages(botId, activeConvId).then(data => {
         setMessages(prev => {
@@ -120,9 +120,9 @@ export default function InboxPage() {
           if (lastPrev?.id !== lastData?.id) return data;
           return prev;
         });
-      }).catch(() => {});
+      }).catch(() => { });
     };
-    
+
     fetchMsgs();
     const interval = setInterval(fetchMsgs, 3000);
     return () => clearInterval(interval);
@@ -131,34 +131,34 @@ export default function InboxPage() {
   // WebSocket Connection for Real-Time Messages
   useEffect(() => {
     if (!botId) return;
-    
+
     // Convert API_BASE http:// to ws://
-    const wsBaseUrl = API_BASE.startsWith("http") 
-      ? API_BASE.replace(/^http/, "ws") 
+    const wsBaseUrl = API_BASE.startsWith("http")
+      ? API_BASE.replace(/^http/, "ws")
       : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`;
-      
+
     const ws = new WebSocket(`${wsBaseUrl}/api/bots/${botId}/inbox/ws`);
-    
+
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         if (data.event === "new_message") {
           // Bump conversation last_message_at and update preview
-          setConversations(prev => 
-            prev.map(c => c.id === data.conversation_id 
-              ? { 
-                  ...c, 
-                  last_message_at: data.message.created_at,
-                  last_message_preview: data.message.content?.slice(0, 80) || "",
-                  last_message_sender: data.message.sender_type,
-                  unread_count: data.message.sender_type === "user" && activeConvIdRef.current !== data.conversation_id
-                    ? (c.unread_count || 0) + 1
-                    : c.unread_count
-                } 
+          setConversations(prev =>
+            prev.map(c => c.id === data.conversation_id
+              ? {
+                ...c,
+                last_message_at: data.message.created_at,
+                last_message_preview: data.message.content?.slice(0, 80) || "",
+                last_message_sender: data.message.sender_type,
+                unread_count: data.message.sender_type === "user" && activeConvIdRef.current !== data.conversation_id
+                  ? (c.unread_count || 0) + 1
+                  : c.unread_count
+              }
               : c
             )
           );
-          
+
           // Append message if looking at the same conversation
           if (activeConvIdRef.current === data.conversation_id) {
             setMessages(prev => {
@@ -174,7 +174,7 @@ export default function InboxPage() {
         console.error("WS parse error", e);
       }
     };
-    
+
     return () => ws.close();
   }, [botId]);
 
@@ -186,11 +186,11 @@ export default function InboxPage() {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyText.trim() || !activeConvId) return;
-    
+
     const text = replyText;
     setReplyText("");
     setSending(true);
-    
+
     // Optimistic UI
     const tempMsg: Message = {
       id: Date.now(),
@@ -199,7 +199,7 @@ export default function InboxPage() {
       created_at: new Date().toISOString()
     };
     setMessages(prev => [...prev, tempMsg]);
-    
+
     try {
       await inboxApi.sendMessage(botId, activeConvId, text);
     } catch (err) {
@@ -228,7 +228,7 @@ export default function InboxPage() {
   const handleDeleteConversation = async (convId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm("Sohbeti silmek istediğinize emin misiniz?")) return;
-    
+
     setIsDeleting(convId);
     try {
       await inboxApi.deleteConversation(botId, convId);
@@ -263,8 +263,8 @@ export default function InboxPage() {
     <div className="pb-24 max-w-7xl mx-auto flex flex-col h-[calc(100vh-80px)]">
       {/* Header */}
       <div className="mb-6 shrink-0">
-        <button 
-          onClick={() => router.push("/dashboard/bots")} 
+        <button
+          onClick={() => router.push("/dashboard/bots")}
           className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-white transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" /> Botlara Dön
@@ -289,18 +289,17 @@ export default function InboxPage() {
         {tabs.map((tab) => {
           const isActive = tab.path === `/dashboard/bots/${botId}/inbox`;
           return (
-            <Link 
-              key={tab.path} 
+            <Link
+              key={tab.path}
               href={tab.path}
-              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${
-                isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
-              }`}
+              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
+                }`}
             >
               {tab.label}
               {isActive && (
-                <motion.div 
-                  layoutId="activeTab" 
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" 
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]"
                 />
               )}
             </Link>
@@ -310,7 +309,7 @@ export default function InboxPage() {
 
       {/* Main Inbox Application Area */}
       <div className="flex-1 min-h-0 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-3xl overflow-hidden flex shadow-sm">
-        
+
         {/* Left: Conversation List */}
         <div className="w-1/3 min-w-[300px] max-w-[400px] border-r border-gray-200 dark:border-white/5 flex flex-col bg-gray-50 dark:bg-black/10">
           <div className="p-4 border-b border-gray-200 dark:border-white/5 shrink-0 bg-white/50 dark:bg-white/5 flex flex-col gap-3">
@@ -329,7 +328,7 @@ export default function InboxPage() {
               </select>
             )}
           </div>
-          
+
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
             {filteredConversations.length === 0 ? (
               <div className="text-center py-10 text-gray-500">
@@ -341,11 +340,10 @@ export default function InboxPage() {
                 <button
                   key={conv.id}
                   onClick={() => setActiveConvId(conv.id)}
-                  className={`w-full text-left p-4 rounded-2xl transition-all border ${
-                    activeConvId === conv.id 
-                      ? "bg-indigo-500/10 border-indigo-500/30" 
+                  className={`w-full text-left p-4 rounded-2xl transition-all border ${activeConvId === conv.id
+                      ? "bg-indigo-500/10 border-indigo-500/30"
                       : "bg-white dark:bg-white/5 border-transparent hover:border-white/10"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2 min-w-0">
@@ -365,18 +363,18 @@ export default function InboxPage() {
                         </span>
                       )}
                       <span className="text-[11px] text-gray-500 font-mono">
-                        {new Date(conv.last_message_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        {new Date(conv.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Message Preview */}
                   {conv.last_message_preview && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate mb-2 pl-6">
                       {senderPrefix(conv.last_message_sender || "")}{conv.last_message_preview}
                     </p>
                   )}
-                  
+
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2 pl-6">
                       <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">
@@ -392,8 +390,8 @@ export default function InboxPage() {
                         </span>
                       )}
                     </div>
-                    
-                    <button 
+
+                    <button
                       onClick={(e) => handleDeleteConversation(conv.id, e)}
                       className={`text-red-500 hover:bg-red-500/20 p-1.5 flex items-center justify-center rounded transition-colors ${isDeleting === conv.id ? 'opacity-50 cursor-not-allowed' : ''}`}
                       title="Görüşmeyi Sil"
@@ -423,15 +421,14 @@ export default function InboxPage() {
                     <p className="text-xs text-gray-500 uppercase tracking-widest">{activeConv.platform === "whatsapp" ? "WhatsApp" : "Web"} Sohbeti</p>
                   </div>
                 </div>
-                
+
                 <button
                   onClick={handleToggleAi}
                   disabled={toggling}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${
-                    activeConv.is_ai_active 
-                      ? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20" 
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${activeConv.is_ai_active
+                      ? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
                       : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20"
-                  }`}
+                    }`}
                 >
                   {toggling ? (
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -454,26 +451,25 @@ export default function InboxPage() {
                     const isUser = msg.sender_type === "user";
                     const isAdmin = msg.sender_type === "human";
                     const isAi = msg.sender_type === "ai";
-                    
+
                     return (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                        key={msg.id} 
+                        key={msg.id}
                         className={`flex flex-col max-w-[80%] ${isUser ? "ml-0" : "ml-auto items-end"}`}
                       >
                         <div className="flex items-end gap-2 mb-1">
                           {isUser && <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-xs text-gray-500 shrink-0"><User className="w-3 h-3" /></div>}
-                          
-                          <div className={`px-4 py-3 rounded-2xl ${
-                            isUser 
-                              ? "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-bl-sm" 
+
+                          <div className={`px-4 py-3 rounded-2xl ${isUser
+                              ? "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-bl-sm"
                               : isAdmin
                                 ? "bg-purple-500 text-white rounded-br-sm shadow-md shadow-purple-500/20"
                                 : "bg-indigo-500 text-white rounded-br-sm shadow-md shadow-indigo-500/20"
-                          }`}>
+                            }`}>
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           </div>
-                          
+
                           {!isUser && (
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs shrink-0 ${isAdmin ? 'bg-purple-500/20 text-purple-400' : 'bg-indigo-500/20 text-indigo-400'}`}>
                               {isAdmin ? <User className="w-3 h-3" /> : <BotIcon className="w-3 h-3" />}
@@ -483,7 +479,7 @@ export default function InboxPage() {
                         <span className="text-[10px] text-gray-500 font-mono px-8">
                           {isAi && "Yapay Zeka • "}
                           {isAdmin && "Yönetici • "}
-                          {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </motion.div>
                     );
@@ -527,7 +523,7 @@ export default function InboxPage() {
             </div>
           )}
         </div>
-        
+
       </div>
     </div>
   );

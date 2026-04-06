@@ -200,36 +200,36 @@ export const analyticsApi = {
 // --- Admin ---
 export const adminApi = {
   getStats: () => apiFetch(`/api/admin/stats`),
-  
+
   getUsers: () => apiFetch(`/api/admin/users`),
-  
-  updateUserPlan: (userId: number, plan: string) => 
+
+  updateUserPlan: (userId: number, plan: string) =>
     apiFetch(`/api/admin/users/${userId}/plan`, {
       method: "PUT",
       body: JSON.stringify({ plan }),
     }),
-    
+
   getBots: () => apiFetch(`/api/admin/bots`),
-  
+
   deleteBot: (botId: number) =>
     apiFetch(`/api/admin/bots/${botId}`, { method: "DELETE" }),
 };
 
 // --- Inbox (Omnichannel & WhatsApp Live Chat) ---
 export const inboxApi = {
-  getConversations: (botId: number) => 
+  getConversations: (botId: number) =>
     apiFetch(`/api/bots/${botId}/inbox/conversations`),
-    
-  getMessages: (botId: number, convId: number) => 
+
+  getMessages: (botId: number, convId: number) =>
     apiFetch(`/api/bots/${botId}/inbox/conversations/${convId}/messages`),
-    
-  toggleAi: (botId: number, convId: number, is_ai_active: boolean) => 
+
+  toggleAi: (botId: number, convId: number, is_ai_active: boolean) =>
     apiFetch(`/api/bots/${botId}/inbox/conversations/${convId}/toggle-ai`, {
       method: "POST",
       body: JSON.stringify({ is_ai_active }),
     }),
-    
-  sendMessage: (botId: number, convId: number, content: string) => 
+
+  sendMessage: (botId: number, convId: number, content: string) =>
     apiFetch(`/api/bots/${botId}/inbox/conversations/${convId}/send`, {
       method: "POST",
       body: JSON.stringify({ content }),

@@ -9,7 +9,8 @@ def upgrade_db():
     
     # Users table
     user_columns = [
-        ("role", "VARCHAR(50) DEFAULT 'user'")
+        ("role", "VARCHAR(50) DEFAULT 'user'"),
+        ("credits", "INTEGER DEFAULT 1000")
     ]
     
     for col_name, col_def in user_columns:

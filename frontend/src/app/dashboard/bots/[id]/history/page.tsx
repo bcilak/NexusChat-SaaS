@@ -28,24 +28,24 @@ export default function HistoryPage() {
   const [botName, setBotName] = useState("");
   const [records, setRecords] = useState<HistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
   const [platform, setPlatform] = useState("all");
-  
+
   const [isDeleting, setIsDeleting] = useState(false);
 
-  
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeReport, setAnalyzeReport] = useState<string | null>(null);
 
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const data = await analyticsApi.getHistory(botId, { 
-        start_date: startDate || undefined, 
-        end_date: endDate || undefined, 
+      const data = await analyticsApi.getHistory(botId, {
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
         search: search || undefined,
         platform: platform !== "all" ? platform : undefined
       });
@@ -58,7 +58,7 @@ export default function HistoryPage() {
   };
 
   useEffect(() => {
-    botsApi.get(botId).then((b) => setBotName(b.name)).catch(() => {});
+    botsApi.get(botId).then((b) => setBotName(b.name)).catch(() => { });
     fetchHistory();
   }, [botId]);
 
@@ -70,7 +70,7 @@ export default function HistoryPage() {
   const handleDownloadCsv = () => {
     if (records.length === 0) return;
     const header = ["Tarih", "Oturum", "Müşteri (Soru)", "Bot (Cevap)", "Zorlandı"];
-    const csvContent = records.map(r => 
+    const csvContent = records.map(r =>
       [
         new Date(r.created_at).toLocaleString('tr-TR'),
         r.session_id,
@@ -84,7 +84,7 @@ export default function HistoryPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `bot_${botId}_gecmis_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `bot_${botId}_gecmis_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -109,7 +109,7 @@ export default function HistoryPage() {
   const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Butona tıklanınca session seçilmesin
     if (!confirm("Bu sohbet oturumunu silmek istediğinize emin misiniz?")) return;
-    
+
     setIsDeleting(true);
     try {
       await chatApi.deleteSession(botId, sessionId);
@@ -176,8 +176,8 @@ export default function HistoryPage() {
     <div className="pb-24 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <button 
-          onClick={() => router.push("/dashboard/bots")} 
+        <button
+          onClick={() => router.push("/dashboard/bots")}
           className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-white transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" /> Botlara Dön
@@ -202,18 +202,17 @@ export default function HistoryPage() {
         {tabs.map((tab) => {
           const isActive = tab.path === `/dashboard/bots/${botId}/history`;
           return (
-            <Link 
-              key={tab.path} 
+            <Link
+              key={tab.path}
               href={tab.path}
-              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${
-                isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
-              }`}
+              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
+                }`}
             >
               {tab.label}
               {isActive && (
-                <motion.div 
-                  layoutId="activeTab" 
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" 
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]"
                 />
               )}
             </Link>
@@ -225,27 +224,27 @@ export default function HistoryPage() {
       <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-2xl p-5 mb-8 flex flex-col lg:flex-row gap-4 justify-between shadow-sm">
         <form onSubmit={handleSearch} className="flex flex-wrap items-end gap-4 flex-1">
           <div>
-            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12}/> Başlangıç</label>
-            <input 
-              type="date" 
-              value={startDate} 
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12} /> Başlangıç</label>
+            <input
+              type="date"
+              value={startDate}
               onChange={e => setStartDate(e.target.value)}
               className="px-4 py-2.5 bg-gray-100 dark:bg-black/40 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50"
             />
           </div>
           <div>
-            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12}/> Bitiş</label>
-            <input 
-              type="date" 
-              value={endDate} 
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Calendar size={12} /> Bitiş</label>
+            <input
+              type="date"
+              value={endDate}
               onChange={e => setEndDate(e.target.value)}
               className="px-4 py-2.5 bg-gray-100 dark:bg-black/40 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50"
             />
           </div>
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Search size={12}/> Metin Arama</label>
-            <input 
-              type="text" 
+            <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5"><Search size={12} /> Metin Arama</label>
+            <input
+              type="text"
               placeholder="Sorularda veya cevaplarda ara..."
               value={search}
               onChange={e => setSearch(e.target.value)}
@@ -270,16 +269,16 @@ export default function HistoryPage() {
             Filtrele
           </button>
         </form>
-        
+
         <div className="flex gap-3 items-end lg:border-l lg:border-gray-200 dark:lg:border-white/10 lg:pl-4">
-          <button 
+          <button
             onClick={handleDownloadCsv}
             disabled={loading || records.length === 0}
             className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-800 dark:text-white rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 transition-colors disabled:opacity-50"
           >
             <Download size={16} /> CSV
           </button>
-          <button 
+          <button
             onClick={handleAnalyze}
             disabled={loading || isAnalyzing || records.length === 0}
             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-xl text-sm font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all disabled:opacity-50 disabled:grayscale whitespace-nowrap"
@@ -302,30 +301,29 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[700px]">
-          
+
           {/* Left Sidebar: Session List */}
           <div className="lg:col-span-4 bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col shadow-lg">
             <div className="p-4 border-b border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/[0.02]">
               <h2 className="text-sm font-bold text-gray-800 dark:text-gray-200">Görüşmeler</h2>
               <p className="text-xs text-gray-500 mt-1">{sortedSessions.length} Oturum bulundu</p>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
               {sortedSessions.map((session) => {
                 const isActive = session.sessionId === selectedSession;
                 const hasFallback = session.messages.some(m => m.is_fallback);
                 // Get snippet from latest message
                 const latestMsg = session.messages[session.messages.length - 1];
-                
+
                 return (
                   <button
                     key={session.sessionId}
                     onClick={() => setSelectedSession(session.sessionId)}
-                    className={`w-full text-left p-3 rounded-2xl transition-all ${
-                      isActive 
-                        ? 'bg-indigo-500/10 border border-indigo-500/20 shadow-[inset_0_0_20px_rgba(99,102,241,0.05)]' 
+                    className={`w-full text-left p-3 rounded-2xl transition-all ${isActive
+                        ? 'bg-indigo-500/10 border border-indigo-500/20 shadow-[inset_0_0_20px_rgba(99,102,241,0.05)]'
                         : 'hover:bg-gray-100 dark:hover:bg-white/[0.02] border border-transparent'
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-start mb-1.5">
                       <span className={`font-mono text-sm ${isActive ? 'text-indigo-500 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300'}`}>
@@ -349,7 +347,7 @@ export default function HistoryPage() {
                           </span>
                         )}
                       </div>
-                      <button 
+                      <button
                         onClick={(e) => handleDeleteSession(session.sessionId, e)}
                         className={`text-red-500 hover:bg-red-500/20 p-1 rounded transition-colors ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title="Sohbeti Sil"
@@ -386,11 +384,11 @@ export default function HistoryPage() {
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-gray-50 dark:bg-[#050510]">
                   {activeSessionData.messages.map(r => (
                     <div key={r.id} className="flex flex-col gap-5">
-                      
+
                       {/* User Message Bubble */}
                       <div className="flex flex-col items-end w-full pl-12 sm:pl-24">
                         <div className="flex items-center gap-2 mb-1.5 px-1">
-                          <span className="text-[10px] text-gray-500">{new Date(r.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
+                          <span className="text-[10px] text-gray-500">{new Date(r.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
                           <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">Ziyaretçi</span>
                         </div>
                         {/* Chatbase inspired User Bubble: colored, always readable */}
@@ -398,7 +396,7 @@ export default function HistoryPage() {
                           <ReactMarkdown>{r.question}</ReactMarkdown>
                         </div>
                       </div>
-                      
+
                       {/* Bot Answer Bubble */}
                       <div className="flex flex-col items-start w-full pr-12 sm:pr-24">
                         <div className="flex items-center gap-2 mb-1.5 px-1">
@@ -406,20 +404,20 @@ export default function HistoryPage() {
                             <Bot size={12} className="text-indigo-400" />
                           </div>
                           <span className="text-xs font-semibold text-gray-800 dark:text-white">{botName || "Bot"}</span>
-                          <span className="text-[10px] text-gray-500">{new Date(r.created_at).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
+                          <span className="text-[10px] text-gray-500">{new Date(r.created_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
                           {r.is_fallback && <span className="text-[10px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded ml-1 border border-amber-500/20">Cevapsız</span>}
                         </div>
-                        
+
                         {/* Bot Bubble: white bg + dark text in light mode; dark bg + light text in dark mode */}
                         <div className={`px-5 py-3.5 rounded-2xl rounded-tl-sm shadow-md text-[15px] leading-relaxed max-w-full whitespace-pre-wrap relative prose prose-p:my-0
-                          ${r.is_fallback 
-                            ? 'bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-300 border border-red-200 dark:border-red-800/50' 
+                          ${r.is_fallback
+                            ? 'bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-300 border border-red-200 dark:border-red-800/50'
                             : 'bg-white dark:bg-white/[0.06] text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-white/10 prose-a:text-indigo-600 dark:prose-a:text-indigo-400 dark:prose-headings:text-gray-100 dark:prose-strong:text-gray-100 dark:prose-code:text-indigo-300'}
                         `}>
                           <ReactMarkdown>{r.answer || ""}</ReactMarkdown>
                         </div>
                       </div>
-                      
+
                     </div>
                   ))}
                   <div className="pt-2 pb-6 text-center text-[10px] text-gray-500 font-medium">Bu oturumun sonuna geldiniz.</div>
@@ -438,18 +436,18 @@ export default function HistoryPage() {
       <AnimatePresence>
         {analyzeReport && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 pb-20 sm:pb-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setAnalyzeReport(null)}
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-4xl max-h-[85vh] flex flex-col bg-[#0f0f1a] border border-indigo-500/30 rounded-3xl shadow-[0_0_50px_rgba(99,102,241,0.2)] overflow-hidden"
             >
               <div className="flex items-center justify-between p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-indigo-500/10 to-transparent">
                 <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                  <Sparkles className="text-indigo-400 w-6 h-6" /> 
+                  <Sparkles className="text-indigo-400 w-6 h-6" />
                   Yapay Zeka Geçmiş Analizi
                 </h3>
                 <button onClick={() => setAnalyzeReport(null)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors">

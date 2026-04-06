@@ -4,8 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { botsApi } from "@/lib/api";
 import { motion } from "framer-motion";
-import { 
-  ArrowLeft, Settings, Palette, BrainCircuit, Save, 
+import {
+  ArrowLeft, Settings, Palette, BrainCircuit, Save,
   CheckCircle2, AlertCircle, Bot, MessageSquare, Zap, Smartphone,
   Eye, X, Send, ChevronRight, Sparkles
 } from "lucide-react";
@@ -74,9 +74,9 @@ function WidgetPreview({ bot }: { bot: BotType }) {
 
   const sendPreview = () => {
     if (!previewMsg.trim()) return;
-    setChatMsgs(prev => [...prev, 
-      { role: "user", text: previewMsg },
-      { role: "bot", text: "Bu bir önizleme modudur. Gerçek bot bu cevabı üretecektir." }
+    setChatMsgs(prev => [...prev,
+    { role: "user", text: previewMsg },
+    { role: "bot", text: "Bu bir önizleme modudur. Gerçek bot bu cevabı üretecektir." }
     ]);
     setPreviewMsg("");
   };
@@ -110,7 +110,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
         <div className="text-center text-[10px] text-white/30 font-medium">Bugün</div>
         {chatMsgs.map((msg, i) => (
           <div key={i} className={`max-w-[85%] px-3 py-2 rounded-2xl text-[12px] leading-relaxed ${msg.role === "bot" ? "self-start" : "self-end"}`}
-            style={msg.role === "bot" 
+            style={msg.role === "bot"
               ? { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.09)", color: "#e2e8f0", borderBottomLeftRadius: 4 }
               : { background: `linear-gradient(135deg, ${accent}, ${accentEnd})`, color: textOnAccent, borderBottomRightRadius: 4, boxShadow: rgba(accent, 0.3) + " 0 4px 14px" }
             }
@@ -263,11 +263,10 @@ export default function BotDetailPage() {
   const sectionBtn = (key: typeof activeSection, icon: React.ReactNode, label: string, color: string) => (
     <button
       onClick={() => setActiveSection(key)}
-      className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-        activeSection === key
+      className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${activeSection === key
           ? "border"
           : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
-      }`}
+        }`}
       style={activeSection === key ? {
         background: `${color}18`,
         borderColor: `${color}40`,
@@ -319,9 +318,8 @@ export default function BotDetailPage() {
             <Link
               key={tab.path}
               href={tab.path}
-              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${
-                isActive ? "text-indigo-400" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-              }`}
+              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${isActive ? "text-indigo-400" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                }`}
             >
               {tab.label}
               {isActive && (
@@ -340,11 +338,10 @@ export default function BotDetailPage() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`flex items-center gap-3 p-4 rounded-xl mb-8 border ${
-            message.type === "success"
+          className={`flex items-center gap-3 p-4 rounded-xl mb-8 border ${message.type === "success"
               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
               : "bg-red-500/10 border-red-500/20 text-red-400"
-          }`}
+            }`}
         >
           {message.type === "success" ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
           <p className="text-sm font-medium">{message.text}</p>
@@ -632,8 +629,9 @@ export default function BotDetailPage() {
                   className="w-full px-4 py-2.5 bg-white dark:bg-black/50 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm appearance-none"
                 >
                   <optgroup label="Anthropic (Tavsiye Edilen)">
-                    <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
-                    <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                    <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
                   </optgroup>
                   <optgroup label="OpenAI">
                     <option value="gpt-4o">GPT-4o (Gelişmiş)</option>

@@ -13,6 +13,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     plan = Column(String(50), default="free")
     role = Column(String(50), default="user")
+    credits = Column(Integer, default=1000)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     bots = relationship("Bot", back_populates="owner", cascade="all, delete-orphan")
