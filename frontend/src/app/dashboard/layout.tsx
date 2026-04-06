@@ -59,11 +59,10 @@ function Sidebar() {
             <Link
               key={link.path}
               href={link.path}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${
-                isActive
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${isActive
                   ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20"
                   : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/[0.04]"
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <span className={isActive ? "text-indigo-500 dark:text-indigo-400" : "text-gray-400 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400"}>{link.icon}</span>

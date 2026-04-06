@@ -55,7 +55,7 @@ def rag_chat(
 ) -> dict:
     """Full RAG chain: retrieve → prompt → generate → save."""
     # Check if the bot owner has enough credits
-    user = db.query(User).filter(User.id == bot.owner_id).first()
+    user = db.query(User).filter(User.id == bot.user_id).first()
     if user and user.credits <= 0:
         return {
             "answer": "Bu botun kullanım limiti (kredi) dolmuştur. Lütfen bot sahibiyle iletişime geçin.",
