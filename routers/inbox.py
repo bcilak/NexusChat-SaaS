@@ -220,3 +220,20 @@ def human_send_message(
     })
     
     return response_data
+
+
+@router.delete("/conversations/{conv_id}")
+def delete_conversation(
+    bot_id: int,
+    conv_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    bot = get_user_bot(bot_id, current_user, db)
+    conv = db.query(InboxConversation).filter(InboxConversation.id == conv_id, InboxConversation.bot_id == bot_id).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+        
+    db.delete(conv)
+    db.commit()
+    return {"detail": "Conversation deleted"}

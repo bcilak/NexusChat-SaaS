@@ -52,5 +52,5 @@ def widget_chat(
         raise HTTPException(status_code=404, detail="Bot bulunamadı")
 
     session_id = req.session_id or str(uuid.uuid4())
-    result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url)
+    result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url, platform="web")
     return result

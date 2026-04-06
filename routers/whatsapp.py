@@ -250,7 +250,7 @@ def process_whatsapp_message(
     # Only process AI response for text-type messages when AI is active
     if conv.is_ai_active and msg_type == "text":
         session_id = f"wa_{phone_number}"
-        rag_response = rag_chat(bot, text, session_id, db)
+        rag_response = rag_chat(bot, text, session_id, db, platform="whatsapp")
         answer = rag_response.get("answer", "Üzgünüm, yanıt veremiyorum.")
         
         # Check 24-hour window: if the conversation's last user message is older than 24h,

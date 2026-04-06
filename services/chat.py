@@ -49,7 +49,8 @@ def rag_chat(
     question: str,
     session_id: str,
     db: Session,
-    attachment_url: str = None
+    attachment_url: str = None,
+    platform: str = "web"
 ) -> dict:
     """Full RAG chain: retrieve → prompt → generate → save."""
     # 1. Retrieve relevant documents using Hybrid Search
@@ -181,6 +182,7 @@ def rag_chat(
         question=save_question,
         answer=answer,
         sources=json.dumps(sources, ensure_ascii=False),
+        platform=platform,
         is_fallback=is_fallback
     )
     db.add(history)

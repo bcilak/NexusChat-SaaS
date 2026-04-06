@@ -22,7 +22,7 @@ class ChatRequest(BaseModel):
     question: str
     session_id: Optional[str] = None
     attachment_url: Optional[str] = None
-
+    platform: Optional[str] = "web"
 
 class ChatResponse(BaseModel):
     answer: str
@@ -35,6 +35,7 @@ class HistoryItem(BaseModel):
     question: str
     answer: str
     sources: list
+    platform: str
     created_at: str
 
 
@@ -52,7 +53,7 @@ def chat(
     bot = get_user_bot(bot_id, current_user, db)
     session_id = req.session_id or str(uuid.uuid4())
 
-    result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url)
+    result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url, platform=req.platform)
     return ChatResponse(**result)
 
 
@@ -60,6 +61,7 @@ def chat(
 def get_history(
     bot_id: int,
     session_id: Optional[str] = None,
+    platform: Optional[str] = None,
     limit: int = 50,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -68,6 +70,8 @@ def get_history(
     query = db.query(ChatHistory).filter(ChatHistory.bot_id == bot_id)
     if session_id:
         query = query.filter(ChatHistory.session_id == session_id)
+    if platform:
+        query = query.filter(ChatHistory.platform == platform)
     records = query.order_by(ChatHistory.created_at.desc()).limit(limit).all()
     return [
         HistoryItem(
@@ -75,6 +79,7 @@ def get_history(
             question=r.question,
             answer=r.answer,
             sources=json.loads(r.sources) if r.sources else [],
+            platform=r.platform,
             created_at=r.created_at.isoformat() if r.created_at else "",
         )
         for r in records
@@ -95,3 +100,18 @@ def submit_feedback(
     history.is_liked = req.is_liked
     db.commit()
     return {"detail": "Geri bildirim kaydedildi"}
+
+
+@router.delete("/history")
+def delete_history_session(
+    bot_id: int,
+    session_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    bot = get_user_bot(bot_id, current_user, db)
+    deleted_count = db.query(ChatHistory).filter(ChatHistory.bot_id == bot_id, ChatHistory.session_id == session_id).delete()
+    if deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+    db.commit()
+    return {"detail": "Session deleted"}

@@ -145,16 +145,24 @@ export const webTrainApi = {
 
 // --- Chat ---
 export const chatApi = {
-  send: (botId: number, question: string, sessionId?: string) =>
+  send: (botId: number, question: string, sessionId?: string, platform?: string) =>
     apiFetch(`/api/bots/${botId}/chat`, {
       method: "POST",
-      body: JSON.stringify({ question, session_id: sessionId }),
+      body: JSON.stringify({ question, session_id: sessionId, platform: platform || "web" }),
     }),
 
-  history: (botId: number, sessionId?: string) =>
-    apiFetch(
-      `/api/bots/${botId}/chat/history${sessionId ? `?session_id=${sessionId}` : ""}`
-    ),
+  history: (botId: number, sessionId?: string, platform?: string) => {
+    const params = new URLSearchParams();
+    if (sessionId) params.append("session_id", sessionId);
+    if (platform) params.append("platform", platform);
+    const qs = params.toString();
+    return apiFetch(`/api/bots/${botId}/chat/history${qs ? '?' + qs : ''}`);
+  },
+
+  deleteSession: (botId: number, sessionId: string) =>
+    apiFetch(`/api/bots/${botId}/chat/history?session_id=${sessionId}`, {
+      method: "DELETE"
+    }),
 };
 
 // --- Integrations ---
@@ -173,11 +181,12 @@ export const integrationsApi = {
 export const analyticsApi = {
   getStats: (botId: number) => apiFetch(`/api/analytics/bot/${botId}/stats`),
   getFallbacks: (botId: number) => apiFetch(`/api/analytics/bot/${botId}/fallbacks`),
-  getHistory: (botId: number, params: { start_date?: string, end_date?: string, search?: string }) => {
+  getHistory: (botId: number, params: { start_date?: string, end_date?: string, search?: string, platform?: string }) => {
     const q = new URLSearchParams();
     if (params.start_date) q.append("start_date", params.start_date);
     if (params.end_date) q.append("end_date", params.end_date);
     if (params.search) q.append("search", params.search);
+    if (params.platform) q.append("platform", params.platform);
     const qs = q.toString();
     return apiFetch(`/api/analytics/bot/${botId}/history${qs ? "?" + qs : ""}`);
   },
@@ -224,6 +233,11 @@ export const inboxApi = {
     apiFetch(`/api/bots/${botId}/inbox/conversations/${convId}/send`, {
       method: "POST",
       body: JSON.stringify({ content }),
+    }),
+
+  deleteConversation: (botId: number, convId: number) =>
+    apiFetch(`/api/bots/${botId}/inbox/conversations/${convId}`, {
+      method: "DELETE"
     }),
 };
 

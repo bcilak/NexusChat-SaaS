@@ -50,6 +50,7 @@ def get_chat_history(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    platform: Optional[str] = Query(None),
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
@@ -85,6 +86,9 @@ def get_chat_history(
             )
         )
         
+    if platform and platform != "all":
+        query = query.filter(ChatHistory.platform == platform)
+        
     records = query.order_by(ChatHistory.created_at.desc()).limit(1000).all()
     
     return [
@@ -94,6 +98,7 @@ def get_chat_history(
             "question": r.question, 
             "answer": r.answer,
             "is_fallback": r.is_fallback,
+            "platform": r.platform,
             "created_at": r.created_at.isoformat() if r.created_at else ""
         } 
         for r in records

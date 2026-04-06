@@ -5,10 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import { botsApi, inboxApi, API_BASE } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowLeft, MessageSquare, User, Bot as BotIcon, Zap, Send, Ban, CheckCircle2, AlertCircle, Phone, Globe
+  ArrowLeft, MessageSquare, User, Bot as BotIcon, Zap, Send, Ban, CheckCircle2, AlertCircle, Phone, Globe, Trash2
 } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Conversation {
   id: number;
@@ -70,10 +71,13 @@ export default function InboxPage() {
   const params = useParams();
   const router = useRouter();
   const botId = Number(params.id);
+  const { user } = useAuth();
   const [botName, setBotName] = useState("");
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
+  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [replyText, setReplyText] = useState("");
@@ -221,6 +225,28 @@ export default function InboxPage() {
     }
   };
 
+  const handleDeleteConversation = async (convId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Sohbeti silmek istediğinize emin misiniz?")) return;
+    
+    setIsDeleting(convId);
+    try {
+      await inboxApi.deleteConversation(botId, convId);
+      if (activeConvId === convId) setActiveConvId(null);
+      setConversations(prev => prev.filter(c => c.id !== convId));
+    } catch (err) {
+      console.error(err);
+      alert("Silme işlemi başarısız.");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
+  const filteredConversations = conversations.filter(c => {
+    if (platformFilter === "all") return true;
+    return c.platform === platformFilter;
+  });
+
   const tabs = [
     { label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` },
     { label: "📥 Gelen Kutusu", path: `/dashboard/bots/${botId}/inbox` },
@@ -287,20 +313,31 @@ export default function InboxPage() {
         
         {/* Left: Conversation List */}
         <div className="w-1/3 min-w-[300px] max-w-[400px] border-r border-gray-200 dark:border-white/5 flex flex-col bg-gray-50 dark:bg-black/10">
-          <div className="p-4 border-b border-gray-200 dark:border-white/5 shrink-0 bg-white/50 dark:bg-white/5">
+          <div className="p-4 border-b border-gray-200 dark:border-white/5 shrink-0 bg-white/50 dark:bg-white/5 flex flex-col gap-3">
             <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-indigo-400" /> Aktif Sohbetler
             </h3>
+            {user && user.plan !== "free" && (
+              <select
+                value={platformFilter}
+                onChange={e => setPlatformFilter(e.target.value)}
+                className="w-full px-3 py-2 bg-white dark:bg-black/40 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50"
+              >
+                <option value="all">Tüm Platformlar</option>
+                <option value="web">Web Sohbetleri</option>
+                <option value="whatsapp">WhatsApp Sohbetleri</option>
+              </select>
+            )}
           </div>
           
           <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
-            {conversations.length === 0 ? (
+            {filteredConversations.length === 0 ? (
               <div className="text-center py-10 text-gray-500">
                 <MessageSquare className="w-8 h-8 opacity-20 mx-auto mb-2" />
                 <p className="text-sm">Henüz bir sohbet yok.</p>
               </div>
             ) : (
-              conversations.map(conv => (
+              filteredConversations.map(conv => (
                 <button
                   key={conv.id}
                   onClick={() => setActiveConvId(conv.id)}
@@ -340,19 +377,30 @@ export default function InboxPage() {
                     </p>
                   )}
                   
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium pl-6">
-                      {conv.platform === "whatsapp" ? "WhatsApp" : "Web Chat"}
-                    </span>
-                    {conv.is_ai_active ? (
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> AI Devrede
+                  <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-2 pl-6">
+                      <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">
+                        {conv.platform === "whatsapp" ? "WhatsApp" : "Web Chat"}
                       </span>
-                    ) : (
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">
-                        <User className="w-3 h-3" /> İnsan Devrede
-                      </span>
-                    )}
+                      {conv.is_ai_active ? (
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> AI
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">
+                          <User className="w-3 h-3" /> İnsan
+                        </span>
+                      )}
+                    </div>
+                    
+                    <button 
+                      onClick={(e) => handleDeleteConversation(conv.id, e)}
+                      className={`text-red-500 hover:bg-red-500/20 p-1.5 flex items-center justify-center rounded transition-colors ${isDeleting === conv.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      title="Görüşmeyi Sil"
+                      disabled={isDeleting === conv.id}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </button>
               ))

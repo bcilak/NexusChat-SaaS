@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { botsApi, analyticsApi } from "@/lib/api";
+import { botsApi, analyticsApi, chatApi } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Bot, MessageCircle, Download, Sparkles, X, Search, Calendar, ChevronRight, FileX } from "lucide-react";
+import { ArrowLeft, Bot, MessageCircle, Download, Sparkles, X, Search, Calendar, ChevronRight, FileX, Trash2 } from "lucide-react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface HistoryRecord {
   id: number;
@@ -14,6 +15,7 @@ interface HistoryRecord {
   question: string;
   answer: string;
   is_fallback: boolean;
+  platform?: string;
   created_at: string;
 }
 
@@ -21,6 +23,7 @@ export default function HistoryPage() {
   const params = useParams();
   const router = useRouter();
   const botId = Number(params.id);
+  const { user } = useAuth();
 
   const [botName, setBotName] = useState("");
   const [records, setRecords] = useState<HistoryRecord[]>([]);
@@ -29,6 +32,10 @@ export default function HistoryPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
+  const [platform, setPlatform] = useState("all");
+  
+  const [isDeleting, setIsDeleting] = useState(false);
+
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeReport, setAnalyzeReport] = useState<string | null>(null);
@@ -39,7 +46,8 @@ export default function HistoryPage() {
       const data = await analyticsApi.getHistory(botId, { 
         start_date: startDate || undefined, 
         end_date: endDate || undefined, 
-        search: search || undefined
+        search: search || undefined,
+        platform: platform !== "all" ? platform : undefined
       });
       setRecords(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -95,6 +103,26 @@ export default function HistoryPage() {
       setAnalyzeReport(err.message || "Rapor oluşturulamadı.");
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Butona tıklanınca session seçilmesin
+    if (!confirm("Bu sohbet oturumunu silmek istediğinize emin misiniz?")) return;
+    
+    setIsDeleting(true);
+    try {
+      await chatApi.deleteSession(botId, sessionId);
+      if (selectedSession === sessionId) {
+        setSelectedSession(null);
+      }
+      // Silinen session'ı records state'inden çıkart
+      setRecords(prev => prev.filter(r => r.session_id !== sessionId));
+    } catch (err) {
+      console.error("Silinemedi:", err);
+      alert("Silme işlemi başarısız oldu.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -224,6 +252,20 @@ export default function HistoryPage() {
               className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/40 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 placeholder:text-gray-400"
             />
           </div>
+          {user && user.plan !== "free" && (
+            <div>
+              <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">Platform</label>
+              <select
+                value={platform}
+                onChange={e => setPlatform(e.target.value)}
+                className="px-4 py-2.5 bg-gray-100 dark:bg-black/40 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50"
+              >
+                <option value="all">Tümü</option>
+                <option value="web">Web Widget</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+            </div>
+          )}
           <button type="submit" className="px-5 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-800 dark:text-white rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 transition-colors">
             Filtrele
           </button>
@@ -296,15 +338,25 @@ export default function HistoryPage() {
                     <p className={`text-xs line-clamp-1 ${isActive ? 'text-indigo-500/70 dark:text-indigo-200/70' : 'text-gray-500'}`}>
                       {latestMsg?.question}
                     </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-200 dark:bg-white/5 text-gray-500 dark:text-gray-400">
-                        {session.messages.length} mesaj
-                      </span>
-                      {hasFallback && (
-                        <span className="text-[10px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded-md border border-amber-500/20">
-                          Cevapsız
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-200 dark:bg-white/5 text-gray-500 dark:text-gray-400">
+                          {session.messages.length} mesaj
                         </span>
-                      )}
+                        {hasFallback && (
+                          <span className="text-[10px] bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded-md border border-amber-500/20">
+                            Cevapsız
+                          </span>
+                        )}
+                      </div>
+                      <button 
+                        onClick={(e) => handleDeleteSession(session.sessionId, e)}
+                        className={`text-red-500 hover:bg-red-500/20 p-1 rounded transition-colors ${isDeleting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title="Sohbeti Sil"
+                        disabled={isDeleting}
+                      >
+                        <Trash2 size={12} />
+                      </button>
                     </div>
                   </button>
                 );

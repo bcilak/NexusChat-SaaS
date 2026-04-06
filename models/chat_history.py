@@ -13,6 +13,7 @@ class ChatHistory(Base):
     question = Column(Text, nullable=False)
     answer = Column(Text, nullable=False)
     sources = Column(Text, default="[]")  # JSON array of source references
+    platform = Column(String(50), nullable=False, default="web")
     
     # Analytics & Feedback
     is_liked = Column(Boolean, nullable=True)
