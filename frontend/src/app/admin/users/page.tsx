@@ -54,6 +54,8 @@ export default function UsersAdminPage() {
     if (!editingUser) return;
     try {
       const payload = {
+        role: editingUser.role,
+        plan: editingUser.plan,
         credits: editingUser.credits,
         can_use_api_tools: editingUser.can_use_api_tools,
         can_remove_branding: editingUser.can_remove_branding,
@@ -142,6 +144,31 @@ export default function UsersAdminPage() {
             </div>
 
             <div className="p-6 space-y-4 text-sm">
+              <div>
+                <label className="block text-gray-500 mb-1">Rol</label>
+                <select
+                  value={editingUser.role}
+                  onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}
+                  className="w-full bg-gray-50 dark:bg-[#0a0a1a] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2 outline-none"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-gray-500 mb-1">Plan</label>
+                <select
+                  value={editingUser.plan}
+                  onChange={e => setEditingUser({ ...editingUser, plan: e.target.value })}
+                  className="w-full bg-gray-50 dark:bg-[#0a0a1a] border border-gray-200 dark:border-white/10 rounded-lg px-4 py-2 outline-none"
+                >
+                  <option value="free">Free</option>
+                  <option value="pro">Pro</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-gray-500 mb-1">Kredi</label>
                 <input

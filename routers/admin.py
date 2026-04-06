@@ -47,6 +47,8 @@ def update_user(user_id: int, payload: dict, db: Session = Depends(get_db), admi
     
     if "plan" in payload:
         user.plan = payload["plan"]
+    if "role" in payload:
+        user.role = payload["role"]
     if "credits" in payload:
         user.credits = payload["credits"]
     if "can_use_api_tools" in payload:

@@ -802,7 +802,8 @@ export default function ToolsPage() {
           </div>
         )}
       </div>
-      </>}
+      </>
+      )}
     </div>
   );
 }
