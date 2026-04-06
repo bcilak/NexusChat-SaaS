@@ -13,7 +13,7 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     plan = Column(String(50), default="free")
     role = Column(String(50), default="user")
-    credits = Column(Integer, default=1000)
+    credits = Column(Integer, default=500)
     can_use_api_tools = Column(Boolean, default=False)
     can_remove_branding = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

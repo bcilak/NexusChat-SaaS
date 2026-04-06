@@ -33,7 +33,7 @@ export function Pricing() {
 
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />1 Chatbot</li>
-              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Aylık 1.000 Kredi</li>
+              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />500 Kredi (Deneme)</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />GPT-4o-mini & Hafif Modeller</li>
               <li className="flex gap-3 text-gray-600"><Check className="w-5 h-5 text-gray-600 shrink-0" />API Araçları Kullanımı Yok</li>
               <li className="flex gap-3 text-gray-600"><Check className="w-5 h-5 text-gray-600 shrink-0" />Markasız Kullanım (White-label) Yok</li>
@@ -61,7 +61,8 @@ export function Pricing() {
 
             <ul className="space-y-4 text-sm text-gray-300">
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-400 shrink-0" />3 Chatbot</li>
-              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-400 shrink-0" />Aylık 10.000 Kredi</li>
+              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-400 shrink-0" />5.000 Kredi / ay</li>
+              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-400 shrink-0" />Limit aşımında ek kredi paketi satın alma</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-400 shrink-0" />GPT-4o, Claude 3.5 & Tüm Modeller</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-400 shrink-0" />Canlı API Araçları Kullanımı</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-400 shrink-0" />Markasız Kullanım (White-label)</li>
@@ -85,7 +86,8 @@ export function Pricing() {
 
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Sınırsız Chatbot</li>
-              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Özel Kredi Paketi</li>
+              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />20.000+ Kredi / ay</li>
+              <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />İhtiyaca göre özel ek kredi paketleri</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Size Özel API Geliştirmeleri</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Özel (Dedicated) Sunucu Seçeneği</li>
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />7/24 Teknik Destek & SLA</li>
