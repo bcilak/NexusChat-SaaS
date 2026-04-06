@@ -10,6 +10,8 @@ interface User {
   plan: string;
   role: string;
   credits: number;
+  can_use_api_tools: boolean;
+  can_remove_branding: boolean;
 }
 
 interface AuthContextType {

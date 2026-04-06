@@ -207,7 +207,7 @@ export default function ToolsPage() {
   }, [botId]);
 
   useEffect(() => {
-    botsApi.get(botId).then((b: any) => setBotName(b.name)).catch(() => {});
+    botsApi.get(botId).then((b: any) => setBotName(b.name)).catch(() => { });
     loadTools();
   }, [botId, loadTools]);
 
@@ -411,398 +411,398 @@ export default function ToolsPage() {
         </div>
       ) : (
         <>
-      {/* ── How it works banner ── */}
-      <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start gap-4">
-        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
-          <Zap className="w-5 h-5 text-indigo-400" />
-        </div>
-        <div>
-          <h3 className="font-bold text-gray-900 dark:text-white mb-1">API Araçları Nasıl Çalışır?</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            Botunuza bir API aracı bağladığınızda, kullanıcı o konuda soru sorduğunda bot <strong className="text-indigo-400">otomatik olarak</strong> o API'yi çağırır ve gerçek zamanlı veriyi kullanarak cevap üretir.
-            Örneğin hava durumu aracı bağlarsanız, biri "İstanbul'da hava nasıl?" diye sorduğunda bot anlık hava bilgisini çekip cevap verir.
-          </p>
-          <div className="flex flex-wrap items-center gap-2 mt-3 text-xs font-medium text-gray-500">
-            <span className="bg-gray-200 dark:bg-white/10 px-2 py-1 rounded">1. API ekle</span>
-            <ArrowRight className="w-3 h-3" />
-            <span className="bg-gray-200 dark:bg-white/10 px-2 py-1 rounded">2. Kullanıcı soru sorar</span>
-            <ArrowRight className="w-3 h-3" />
-            <span className="bg-gray-200 dark:bg-white/10 px-2 py-1 rounded">3. Bot API'yi çağırır</span>
-            <ArrowRight className="w-3 h-3" />
-            <span className="bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded">4. Gerçek veriyle cevap verir</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Preset Templates ── */}
-      {!showForm && (
-        <div className="mb-8">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-400" /> Hazır Şablonlar (1 Tıkla Kur)
-          </h2>
-          <p className="text-sm text-gray-500 mb-4">Aşağıdaki hazır şablonlardan birine tıklayın; form otomatik dolar, sadece API Key'inizi girin.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {PRESETS.map((p, i) => (
-              <motion.button key={i} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                onClick={() => applyPreset(p)}
-                className="text-left p-5 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/5 transition-all group">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    {p.icon}
-                  </div>
-                  <div>
-                    <span className="font-bold text-gray-900 dark:text-white text-sm">{p.label}</span>
-                    <span className="block text-[10px] text-gray-500 mt-0.5">{p.apiNote}</span>
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 leading-relaxed">{p.description}</p>
-                <div className="flex items-center gap-1 mt-3 text-indigo-400 text-xs font-semibold">
-                  <Plus className="w-3 h-3" /> Bu şablonu kullan
-                </div>
-              </motion.button>
-            ))}
-
-            {/* Custom */}
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={openNew}
-              className="text-left p-5 bg-white dark:bg-white/[0.03] border border-dashed border-gray-300 dark:border-white/10 rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/5 transition-all group sm:col-span-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center">
-                  <Code2 className="w-5 h-5 text-gray-400" />
-                </div>
-                <div>
-                  <span className="font-bold text-gray-900 dark:text-white text-sm">🔧 Özel API — Sıfırdan Ekle</span>
-                  <span className="block text-xs text-gray-500 mt-0.5">Kendi API'nizi veya başka bir servisi manuel olarak tanımlayın.</span>
-                </div>
-              </div>
-            </motion.button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Tool Form ── */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div id="tool-form-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-3xl p-6 mb-8 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
-
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Plug className="w-5 h-5 text-indigo-400" />
-                {editingId ? "Aracı Düzenle" : "Yeni API Aracı Ekle"}
-              </h2>
-              <button onClick={() => setShowForm(false)} className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+          {/* ── How it works banner ── */}
+          <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5">
+              <Zap className="w-5 h-5 text-indigo-400" />
             </div>
-
-            <div className="space-y-6 relative z-10">
-
-              {/* 1. Display Name */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
-                  1. Araç Adı <span className="text-red-400">*</span>
-                </label>
-                <input type="text" placeholder="Örn: Hava Durumu, Döviz Kuru, Ürün Stok API..."
-                  value={form.display_name}
-                  onChange={e => setForm(f => ({ ...f, display_name: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm" />
-                <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" /> Bu araç ne işe yarar? Dashboard'da görünen isim.</p>
-              </div>
-
-              {/* 2. Description (CRITICAL) */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
-                  2. Bot Bu Aracı Ne Zaman Kullansın? <span className="text-red-400">*</span>
-                  <span className="ml-2 text-[10px] bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold">⭐ En Kritik Alan</span>
-                </label>
-                <textarea rows={3} placeholder={`Örn: Kullanıcı hava durumu, sıcaklık, yağmur, kar veya hava tahmini hakkında soru sorduğunda bu aracı kullan. Şehir veya bölge adını sorgu olarak gönder.`}
-                  value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm resize-none" />
-                <div className="mt-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
-                  <p className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1.5">
-                    <HelpCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span>Bot bu metni okuyarak hangi soruya hangi aracı kullanacağına karar verir. Ne kadar ayrıntılı olursa, bot o kadar doğru çağırır.
-                    Örneğin sadece "hava" yazmak yerine "hava durumu, sıcaklık, nem, rüzgar, yağmur, kar, hava tahmini gibi konular sorulduğunda" yazın.</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* 3. API URL */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
-                  3. API Adresi (URL) <span className="text-red-400">*</span>
-                </label>
-                <input type="url" placeholder="https://api.example.com/v1/endpoint"
-                  value={form.api_url}
-                  onChange={e => setForm(f => ({ ...f, api_url: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm font-mono" />
-                <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" /> Kullandığınız API servisinin belgelendirmesinden kopyalayın. URL içinde <code className="bg-gray-200 dark:bg-white/10 px-1 rounded">{"{query}"}</code> yazarsanız kullanıcı sorusundaki anahtar kelime oraya gelir.</p>
-              </div>
-
-              {/* 4. Method */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">4. İstek Yöntemi</label>
-                <div className="flex gap-3">
-                  {["GET", "POST"].map(m => (
-                    <button key={m} onClick={() => setForm(f => ({ ...f, method: m }))}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all ${form.method === m ? "bg-indigo-500 border-indigo-500 text-white" : "bg-gray-100 dark:bg-white/5 border-gray-300 dark:border-white/10 text-gray-600 dark:text-gray-400"}`}>
-                      {m === "GET" ? "GET — Veri Al (Çoğu API için)" : "POST — Veri Gönder"}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" /> Emin değilseniz GET seçin. API belgesi POST diyorsa POST seçin.</p>
-              </div>
-
-              {/* 5. Query Parameters */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">
-                  5. URL Parametreleri
-                  <span className="ml-2 text-[10px] text-gray-400 font-normal normal-case">(?anahtar=değer)</span>
-                </label>
-                <div className="space-y-2 mb-2">
-                  {paramRows.map((row, i) => (
-                    <ParamRow key={i} keyVal={row.key} value={row.value}
-                      onChange={(k, v) => setParamRows(rows => rows.map((r, ri) => ri === i ? { key: k, value: v } : r))}
-                      onDelete={() => setParamRows(rows => rows.filter((_, ri) => ri !== i))} />
-                  ))}
-                </div>
-                <button onClick={() => setParamRows(r => [...r, { key: "", value: "" }])}
-                  className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors px-2 py-1">
-                  <Plus className="w-4 h-4" /> Parametre Ekle
-                </button>
-                <div className="mt-3 p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl">
-                  <p className="text-xs text-blue-500 dark:text-blue-400 font-medium flex items-start gap-1.5">
-                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span>
-                      Değer alanına <code className="bg-blue-500/10 px-1 rounded">{"{query}"}</code> yazarsanız bot kullanıcının sorguladığı kelimeyi oraya koyar.
-                      <br />API Key gereken alanlara servisin size verdiği kodu girin (örn: <em>appid → abc123apikey</em>).
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              {/* 6. Response Path */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">6. API Yanıtından Okunacak Alanlar</label>
-                <input type="text" placeholder="main.temp,weather.0.description,main.humidity"
-                  value={form.response_path}
-                  onChange={e => setForm(f => ({ ...f, response_path: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm font-mono" />
-                <p className="text-xs text-gray-400 mt-1.5 flex items-start gap-1"><Info className="w-3 h-3 shrink-0 mt-0.5" />
-                  <span>API'nin döndürdüğü JSON'dan hangi alanları okuyacağınızı yazın. <strong>Nokta</strong> ile iç içe alanlara ulaşırsınız. Birden fazlaysa <strong>virgülle</strong> ayırın.
-                  <br/>Örn: OpenWeather için <code className="bg-gray-200 dark:bg-white/10 px-1 rounded">main.temp</code> = sıcaklık. Test butonu ile otomatik keşfedebilirsiniz.</span>
-                </p>
-              </div>
-
-              {/* 7. Response Template */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">7. Yanıt Şablonu</label>
-                <input type="text" placeholder="Sıcaklık: {main.temp}°C — Durum: {weather.0.description}"
-                  value={form.response_template}
-                  onChange={e => setForm(f => ({ ...f, response_template: e.target.value }))}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm font-mono" />
-                <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" />
-                  Süslü parantez içindeki alanlar gerçek değerlerle değiştirilir. Boş bırakırsanız ham değerler gösterilir.
-                </p>
-              </div>
-
-              {/* Advanced */}
-              <div>
-                <button onClick={() => setShowAdvanced(v => !v)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors">
-                  {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  Gelişmiş Ayarlar (Header, POST Body)
-                </button>
-                <AnimatePresence>
-                  {showAdvanced && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-                      <div className="space-y-4 mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">HTTP Header'ları <span className="text-xs font-normal text-gray-400">(Authorization, Bearer Token gibi)</span></label>
-                          <div className="space-y-2 mb-2">
-                            {headerRows.map((row, i) => (
-                              <ParamRow key={i} keyVal={row.key} value={row.value}
-                                onChange={(k, v) => setHeaderRows(rows => rows.map((r, ri) => ri === i ? { key: k, value: v } : r))}
-                                onDelete={() => setHeaderRows(rows => rows.filter((_, ri) => ri !== i))} />
-                            ))}
-                          </div>
-                          <button onClick={() => setHeaderRows(r => [...r, { key: "", value: "" }])} className="flex items-center gap-1.5 text-indigo-400 text-sm font-medium px-2 py-1">
-                            <Plus className="w-4 h-4" /> Header Ekle
-                          </button>
-                        </div>
-                        {form.method === "POST" && (
-                          <div>
-                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">POST Body Şablonu <span className="text-xs font-normal text-gray-400">({"{query}"} kullanabilirsiniz)</span></label>
-                            <textarea rows={4} placeholder={'{"question": "{query}", "context": "bot sorgusu"}'} value={form.body_template} onChange={e => setForm(f => ({ ...f, body_template: e.target.value }))}
-                              className="w-full font-mono text-sm px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none" />
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
-                <button onClick={() => setShowTest(true)}
-                  className="flex items-center justify-center gap-2 px-5 py-3 bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 hover:border-indigo-500/50 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-all">
-                  <FlaskConical className="w-4 h-4 text-indigo-400" /> API'yi Test Et
-                </button>
-                <button onClick={handleSave} disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-xl font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all disabled:opacity-50">
-                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
-                  {saving ? "Kaydediliyor..." : "Kaydet ve Aktif Et"}
-                </button>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white mb-1">API Araçları Nasıl Çalışır?</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                Botunuza bir API aracı bağladığınızda, kullanıcı o konuda soru sorduğunda bot <strong className="text-indigo-400">otomatik olarak</strong> o API'yi çağırır ve gerçek zamanlı veriyi kullanarak cevap üretir.
+                Örneğin hava durumu aracı bağlarsanız, biri "İstanbul'da hava nasıl?" diye sorduğunda bot anlık hava bilgisini çekip cevap verir.
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-3 text-xs font-medium text-gray-500">
+                <span className="bg-gray-200 dark:bg-white/10 px-2 py-1 rounded">1. API ekle</span>
+                <ArrowRight className="w-3 h-3" />
+                <span className="bg-gray-200 dark:bg-white/10 px-2 py-1 rounded">2. Kullanıcı soru sorar</span>
+                <ArrowRight className="w-3 h-3" />
+                <span className="bg-gray-200 dark:bg-white/10 px-2 py-1 rounded">3. Bot API'yi çağırır</span>
+                <ArrowRight className="w-3 h-3" />
+                <span className="bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded">4. Gerçek veriyle cevap verir</span>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
 
-      {/* ── Test Modal ── */}
-      <AnimatePresence>
-        {showTest && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white dark:bg-[#0d0d1a] border border-gray-200 dark:border-white/10 rounded-3xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <FlaskConical className="w-5 h-5 text-indigo-400" /> API Canlı Testi
-                </h3>
-                <button onClick={() => { setShowTest(false); setTestResult(null); }} className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <p className="text-sm text-gray-500 mb-4">Bir sorgu değeri girin ve API'nin nasıl cevap verdiğini görün. Bu, botun gerçek bir kullanıcı sorusunu işleyişini simüle eder.</p>
-
-              <div className="flex gap-2 mb-4">
-                <input type="text" placeholder="Örn: İstanbul, USD, kargo takip no..."
-                  value={testQuery} onChange={e => setTestQuery(e.target.value)}
-                  className="flex-1 px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm" />
-                <button onClick={handleTest} disabled={testing}
-                  className="flex items-center gap-2 px-5 py-3 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl font-bold transition-all disabled:opacity-50">
-                  {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-                  {testing ? "..." : "Test Et"}
-                </button>
-              </div>
-
-              <AnimatePresence>
-                {testResult && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                    {testResult.error ? (
-                      <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-4 text-sm font-mono">{testResult.error}</div>
-                    ) : (
-                      <>
-                        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold ${testResult.success ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"}`}>
-                          {testResult.success ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                          HTTP {testResult.status_code} — {testResult.success ? "Başarılı!" : "Hata"}
-                        </div>
-
-                        {testResult.formatted && (
-                          <div>
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">✅ Botun Ürettiği Cevap</p>
-                            <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 text-sm text-indigo-700 dark:text-indigo-300 font-medium">{testResult.formatted}</div>
-                          </div>
-                        )}
-
-                        {testResult.extracted && Object.keys(testResult.extracted).length > 0 && (
-                          <div>
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">📦 Okunan Alanlar</p>
-                            <div className="bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-xl p-4 space-y-1">
-                              {Object.entries(testResult.extracted).map(([k, v]) => (
-                                <div key={k} className="flex items-center gap-2 text-sm font-mono">
-                                  <span className="text-gray-400">{k}:</span>
-                                  <span className="text-emerald-500 font-bold">{String(v)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        <div>
-                          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">🔍 Ham API Yanıtı (JSON)</p>
-                          <pre className="bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/5 rounded-xl p-4 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto max-h-60 leading-relaxed">
-                            {JSON.stringify(testResult.raw_response, null, 2)}
-                          </pre>
-                          <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" /> Yukarıdaki JSON'dan hangi alanları okumak istediğinizi "Yanıt Alanları" bölümüne nokta notasyonuyla girin.</p>
-                        </div>
-                      </>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── Existing Tools List ── */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-            Kayıtlı Araçlar {tools.length > 0 && <span className="text-sm font-normal text-gray-500 ml-1">({tools.length})</span>}
-          </h2>
+          {/* ── Preset Templates ── */}
           {!showForm && (
-            <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)]">
-              <Plus className="w-4 h-4" /> Yeni Araç Ekle
-            </button>
-          )}
-        </div>
+            <div className="mb-8">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-yellow-400" /> Hazır Şablonlar (1 Tıkla Kur)
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">Aşağıdaki hazır şablonlardan birine tıklayın; form otomatik dolar, sadece API Key'inizi girin.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {PRESETS.map((p, i) => (
+                  <motion.button key={i} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => applyPreset(p)}
+                    className="text-left p-5 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/5 transition-all group">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        {p.icon}
+                      </div>
+                      <div>
+                        <span className="font-bold text-gray-900 dark:text-white text-sm">{p.label}</span>
+                        <span className="block text-[10px] text-gray-500 mt-0.5">{p.apiNote}</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">{p.description}</p>
+                    <div className="flex items-center gap-1 mt-3 text-indigo-400 text-xs font-semibold">
+                      <Plus className="w-3 h-3" /> Bu şablonu kullan
+                    </div>
+                  </motion.button>
+                ))}
 
-        {loading ? (
-          <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" /></div>
-        ) : tools.length === 0 ? (
-          <div className="text-center py-16 bg-gray-50 dark:bg-white/[0.02] border border-dashed border-gray-200 dark:border-white/10 rounded-2xl">
-            <Plug className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-40" />
-            <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-1">Henüz API aracı eklenmedi</h3>
-            <p className="text-sm text-gray-500">Yukarıdaki hazır şablonlardan birini seçin veya özel bir API ekleyin.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {tools.map(tool => (
-              <motion.div key={tool.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className={`group bg-white dark:bg-white/[0.03] border rounded-2xl p-5 transition-all ${tool.is_active ? "border-gray-200 dark:border-white/10 hover:border-indigo-500/30" : "border-gray-200 dark:border-white/5 opacity-60"}`}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${tool.is_active ? "bg-indigo-500/10 border-indigo-500/20" : "bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/5"}`}>
-                      <Globe className={`w-6 h-6 ${tool.is_active ? "text-indigo-400" : "text-gray-500"}`} />
+                {/* Custom */}
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={openNew}
+                  className="text-left p-5 bg-white dark:bg-white/[0.03] border border-dashed border-gray-300 dark:border-white/10 rounded-2xl hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/5 transition-all group sm:col-span-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                      <Code2 className="w-5 h-5 text-gray-400" />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-gray-900 dark:text-white">{tool.display_name}</h4>
-                        {tool.is_active
-                          ? <span className="text-[10px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Aktif</span>
-                          : <span className="text-[10px] bg-gray-500/10 text-gray-500 border border-gray-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Pasif</span>
-                        }
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1 max-w-md line-clamp-1">{tool.description}</p>
-                      <p className="text-[11px] text-gray-400 font-mono mt-0.5 truncate max-w-xs">{tool.api_url}</p>
+                      <span className="font-bold text-gray-900 dark:text-white text-sm">🔧 Özel API — Sıfırdan Ekle</span>
+                      <span className="block text-xs text-gray-500 mt-0.5">Kendi API'nizi veya başka bir servisi manuel olarak tanımlayın.</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => handleToggle(tool.id)} title={tool.is_active ? "Devre Dışı Bırak" : "Aktif Et"}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-colors">
-                      {tool.is_active ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5" />}
+                </motion.button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tool Form ── */}
+          <AnimatePresence>
+            {showForm && (
+              <motion.div id="tool-form-top" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+                className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-3xl p-6 mb-8 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <Plug className="w-5 h-5 text-indigo-400" />
+                    {editingId ? "Aracı Düzenle" : "Yeni API Aracı Ekle"}
+                  </h2>
+                  <button onClick={() => setShowForm(false)} className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-6 relative z-10">
+
+                  {/* 1. Display Name */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
+                      1. Araç Adı <span className="text-red-400">*</span>
+                    </label>
+                    <input type="text" placeholder="Örn: Hava Durumu, Döviz Kuru, Ürün Stok API..."
+                      value={form.display_name}
+                      onChange={e => setForm(f => ({ ...f, display_name: e.target.value }))}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm" />
+                    <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" /> Bu araç ne işe yarar? Dashboard'da görünen isim.</p>
+                  </div>
+
+                  {/* 2. Description (CRITICAL) */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
+                      2. Bot Bu Aracı Ne Zaman Kullansın? <span className="text-red-400">*</span>
+                      <span className="ml-2 text-[10px] bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full font-semibold">⭐ En Kritik Alan</span>
+                    </label>
+                    <textarea rows={3} placeholder={`Örn: Kullanıcı hava durumu, sıcaklık, yağmur, kar veya hava tahmini hakkında soru sorduğunda bu aracı kullan. Şehir veya bölge adını sorgu olarak gönder.`}
+                      value={form.description}
+                      onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm resize-none" />
+                    <div className="mt-2 p-3 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium flex items-start gap-1.5">
+                        <HelpCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <span>Bot bu metni okuyarak hangi soruya hangi aracı kullanacağına karar verir. Ne kadar ayrıntılı olursa, bot o kadar doğru çağırır.
+                          Örneğin sadece "hava" yazmak yerine "hava durumu, sıcaklık, nem, rüzgar, yağmur, kar, hava tahmini gibi konular sorulduğunda" yazın.</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 3. API URL */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">
+                      3. API Adresi (URL) <span className="text-red-400">*</span>
+                    </label>
+                    <input type="url" placeholder="https://api.example.com/v1/endpoint"
+                      value={form.api_url}
+                      onChange={e => setForm(f => ({ ...f, api_url: e.target.value }))}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm font-mono" />
+                    <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" /> Kullandığınız API servisinin belgelendirmesinden kopyalayın. URL içinde <code className="bg-gray-200 dark:bg-white/10 px-1 rounded">{"{query}"}</code> yazarsanız kullanıcı sorusundaki anahtar kelime oraya gelir.</p>
+                  </div>
+
+                  {/* 4. Method */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">4. İstek Yöntemi</label>
+                    <div className="flex gap-3">
+                      {["GET", "POST"].map(m => (
+                        <button key={m} onClick={() => setForm(f => ({ ...f, method: m }))}
+                          className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-all ${form.method === m ? "bg-indigo-500 border-indigo-500 text-white" : "bg-gray-100 dark:bg-white/5 border-gray-300 dark:border-white/10 text-gray-600 dark:text-gray-400"}`}>
+                          {m === "GET" ? "GET — Veri Al (Çoğu API için)" : "POST — Veri Gönder"}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" /> Emin değilseniz GET seçin. API belgesi POST diyorsa POST seçin.</p>
+                  </div>
+
+                  {/* 5. Query Parameters */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">
+                      5. URL Parametreleri
+                      <span className="ml-2 text-[10px] text-gray-400 font-normal normal-case">(?anahtar=değer)</span>
+                    </label>
+                    <div className="space-y-2 mb-2">
+                      {paramRows.map((row, i) => (
+                        <ParamRow key={i} keyVal={row.key} value={row.value}
+                          onChange={(k, v) => setParamRows(rows => rows.map((r, ri) => ri === i ? { key: k, value: v } : r))}
+                          onDelete={() => setParamRows(rows => rows.filter((_, ri) => ri !== i))} />
+                      ))}
+                    </div>
+                    <button onClick={() => setParamRows(r => [...r, { key: "", value: "" }])}
+                      className="flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors px-2 py-1">
+                      <Plus className="w-4 h-4" /> Parametre Ekle
                     </button>
-                    <button onClick={() => openEdit(tool)} title="Düzenle"
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-colors">
-                      <Edit3 className="w-4 h-4" />
+                    <div className="mt-3 p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+                      <p className="text-xs text-blue-500 dark:text-blue-400 font-medium flex items-start gap-1.5">
+                        <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <span>
+                          Değer alanına <code className="bg-blue-500/10 px-1 rounded">{"{query}"}</code> yazarsanız bot kullanıcının sorguladığı kelimeyi oraya koyar.
+                          <br />API Key gereken alanlara servisin size verdiği kodu girin (örn: <em>appid → abc123apikey</em>).
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* 6. Response Path */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">6. API Yanıtından Okunacak Alanlar</label>
+                    <input type="text" placeholder="main.temp,weather.0.description,main.humidity"
+                      value={form.response_path}
+                      onChange={e => setForm(f => ({ ...f, response_path: e.target.value }))}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm font-mono" />
+                    <p className="text-xs text-gray-400 mt-1.5 flex items-start gap-1"><Info className="w-3 h-3 shrink-0 mt-0.5" />
+                      <span>API'nin döndürdüğü JSON'dan hangi alanları okuyacağınızı yazın. <strong>Nokta</strong> ile iç içe alanlara ulaşırsınız. Birden fazlaysa <strong>virgülle</strong> ayırın.
+                        <br />Örn: OpenWeather için <code className="bg-gray-200 dark:bg-white/10 px-1 rounded">main.temp</code> = sıcaklık. Test butonu ile otomatik keşfedebilirsiniz.</span>
+                    </p>
+                  </div>
+
+                  {/* 7. Response Template */}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">7. Yanıt Şablonu</label>
+                    <input type="text" placeholder="Sıcaklık: {main.temp}°C — Durum: {weather.0.description}"
+                      value={form.response_template}
+                      onChange={e => setForm(f => ({ ...f, response_template: e.target.value }))}
+                      className="w-full px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm font-mono" />
+                    <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" />
+                      Süslü parantez içindeki alanlar gerçek değerlerle değiştirilir. Boş bırakırsanız ham değerler gösterilir.
+                    </p>
+                  </div>
+
+                  {/* Advanced */}
+                  <div>
+                    <button onClick={() => setShowAdvanced(v => !v)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors">
+                      {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      Gelişmiş Ayarlar (Header, POST Body)
                     </button>
-                    <button onClick={() => handleDelete(tool.id)} title="Sil"
-                      className="p-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors">
-                      <Trash2 className="w-4 h-4" />
+                    <AnimatePresence>
+                      {showAdvanced && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                          <div className="space-y-4 mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
+                            <div>
+                              <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">HTTP Header'ları <span className="text-xs font-normal text-gray-400">(Authorization, Bearer Token gibi)</span></label>
+                              <div className="space-y-2 mb-2">
+                                {headerRows.map((row, i) => (
+                                  <ParamRow key={i} keyVal={row.key} value={row.value}
+                                    onChange={(k, v) => setHeaderRows(rows => rows.map((r, ri) => ri === i ? { key: k, value: v } : r))}
+                                    onDelete={() => setHeaderRows(rows => rows.filter((_, ri) => ri !== i))} />
+                                ))}
+                              </div>
+                              <button onClick={() => setHeaderRows(r => [...r, { key: "", value: "" }])} className="flex items-center gap-1.5 text-indigo-400 text-sm font-medium px-2 py-1">
+                                <Plus className="w-4 h-4" /> Header Ekle
+                              </button>
+                            </div>
+                            {form.method === "POST" && (
+                              <div>
+                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">POST Body Şablonu <span className="text-xs font-normal text-gray-400">({"{query}"} kullanabilirsiniz)</span></label>
+                                <textarea rows={4} placeholder={'{"question": "{query}", "context": "bot sorgusu"}'} value={form.body_template} onChange={e => setForm(f => ({ ...f, body_template: e.target.value }))}
+                                  className="w-full font-mono text-sm px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 resize-none" />
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
+                    <button onClick={() => setShowTest(true)}
+                      className="flex items-center justify-center gap-2 px-5 py-3 bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 hover:border-indigo-500/50 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium transition-all">
+                      <FlaskConical className="w-4 h-4 text-indigo-400" /> API'yi Test Et
+                    </button>
+                    <button onClick={handleSave} disabled={saving}
+                      className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white rounded-xl font-bold shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-all disabled:opacity-50">
+                      {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                      {saving ? "Kaydediliyor..." : "Kaydet ve Aktif Et"}
                     </button>
                   </div>
                 </div>
               </motion.div>
-            ))}
+            )}
+          </AnimatePresence>
+
+          {/* ── Test Modal ── */}
+          <AnimatePresence>
+            {showTest && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white dark:bg-[#0d0d1a] border border-gray-200 dark:border-white/10 rounded-3xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl">
+                  <div className="flex items-center justify-between mb-5">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                      <FlaskConical className="w-5 h-5 text-indigo-400" /> API Canlı Testi
+                    </h3>
+                    <button onClick={() => { setShowTest(false); setTestResult(null); }} className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <p className="text-sm text-gray-500 mb-4">Bir sorgu değeri girin ve API'nin nasıl cevap verdiğini görün. Bu, botun gerçek bir kullanıcı sorusunu işleyişini simüle eder.</p>
+
+                  <div className="flex gap-2 mb-4">
+                    <input type="text" placeholder="Örn: İstanbul, USD, kargo takip no..."
+                      value={testQuery} onChange={e => setTestQuery(e.target.value)}
+                      className="flex-1 px-4 py-3 bg-gray-50 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500 text-sm" />
+                    <button onClick={handleTest} disabled={testing}
+                      className="flex items-center gap-2 px-5 py-3 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl font-bold transition-all disabled:opacity-50">
+                      {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                      {testing ? "..." : "Test Et"}
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {testResult && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                        {testResult.error ? (
+                          <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-4 text-sm font-mono">{testResult.error}</div>
+                        ) : (
+                          <>
+                            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold ${testResult.success ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"}`}>
+                              {testResult.success ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                              HTTP {testResult.status_code} — {testResult.success ? "Başarılı!" : "Hata"}
+                            </div>
+
+                            {testResult.formatted && (
+                              <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">✅ Botun Ürettiği Cevap</p>
+                                <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 text-sm text-indigo-700 dark:text-indigo-300 font-medium">{testResult.formatted}</div>
+                              </div>
+                            )}
+
+                            {testResult.extracted && Object.keys(testResult.extracted).length > 0 && (
+                              <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">📦 Okunan Alanlar</p>
+                                <div className="bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-xl p-4 space-y-1">
+                                  {Object.entries(testResult.extracted).map(([k, v]) => (
+                                    <div key={k} className="flex items-center gap-2 text-sm font-mono">
+                                      <span className="text-gray-400">{k}:</span>
+                                      <span className="text-emerald-500 font-bold">{String(v)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div>
+                              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">🔍 Ham API Yanıtı (JSON)</p>
+                              <pre className="bg-gray-50 dark:bg-black/30 border border-gray-200 dark:border-white/5 rounded-xl p-4 text-xs font-mono text-gray-700 dark:text-gray-300 overflow-x-auto max-h-60 leading-relaxed">
+                                {JSON.stringify(testResult.raw_response, null, 2)}
+                              </pre>
+                              <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Info className="w-3 h-3" /> Yukarıdaki JSON'dan hangi alanları okumak istediğinizi "Yanıt Alanları" bölümüne nokta notasyonuyla girin.</p>
+                            </div>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Existing Tools List ── */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                Kayıtlı Araçlar {tools.length > 0 && <span className="text-sm font-normal text-gray-500 ml-1">({tools.length})</span>}
+              </h2>
+              {!showForm && (
+                <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl text-sm font-bold transition-all shadow-[0_0_15px_rgba(99,102,241,0.3)]">
+                  <Plus className="w-4 h-4" /> Yeni Araç Ekle
+                </button>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" /></div>
+            ) : tools.length === 0 ? (
+              <div className="text-center py-16 bg-gray-50 dark:bg-white/[0.02] border border-dashed border-gray-200 dark:border-white/10 rounded-2xl">
+                <Plug className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-40" />
+                <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-1">Henüz API aracı eklenmedi</h3>
+                <p className="text-sm text-gray-500">Yukarıdaki hazır şablonlardan birini seçin veya özel bir API ekleyin.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tools.map(tool => (
+                  <motion.div key={tool.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    className={`group bg-white dark:bg-white/[0.03] border rounded-2xl p-5 transition-all ${tool.is_active ? "border-gray-200 dark:border-white/10 hover:border-indigo-500/30" : "border-gray-200 dark:border-white/5 opacity-60"}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${tool.is_active ? "bg-indigo-500/10 border-indigo-500/20" : "bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/5"}`}>
+                          <Globe className={`w-6 h-6 ${tool.is_active ? "text-indigo-400" : "text-gray-500"}`} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-gray-900 dark:text-white">{tool.display_name}</h4>
+                            {tool.is_active
+                              ? <span className="text-[10px] bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Aktif</span>
+                              : <span className="text-[10px] bg-gray-500/10 text-gray-500 border border-gray-500/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Pasif</span>
+                            }
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1 max-w-md line-clamp-1">{tool.description}</p>
+                          <p className="text-[11px] text-gray-400 font-mono mt-0.5 truncate max-w-xs">{tool.api_url}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button onClick={() => handleToggle(tool.id)} title={tool.is_active ? "Devre Dışı Bırak" : "Aktif Et"}
+                          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-colors">
+                          {tool.is_active ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5" />}
+                        </button>
+                        <button onClick={() => openEdit(tool)} title="Düzenle"
+                          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 hover:text-indigo-400 transition-colors">
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(tool.id)} title="Sil"
+                          className="p-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      </>
+        </>
       )}
     </div>
   );

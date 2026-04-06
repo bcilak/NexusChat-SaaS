@@ -66,6 +66,9 @@ class UserResponse(BaseModel):
     email: str
     plan: str
     role: str
+    credits: int
+    can_use_api_tools: bool
+    can_remove_branding: bool
 
 
 # --- Helpers ---
@@ -139,7 +142,7 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
     token = create_access_token({"sub": str(user.id)})
     return TokenResponse(
         access_token=token,
-        user={"id": user.id, "name": user.name, "email": user.email, "plan": user.plan, "role": user.role},
+        user={"id": user.id, "name": user.name, "email": user.email, "plan": user.plan, "role": user.role, "credits": user.credits, "can_use_api_tools": user.can_use_api_tools, "can_remove_branding": user.can_remove_branding},
     )
 
 
@@ -156,7 +159,7 @@ def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
     token = create_access_token({"sub": str(user.id)})
     return TokenResponse(
         access_token=token,
-        user={"id": user.id, "name": user.name, "email": user.email, "plan": user.plan, "role": user.role},
+        user={"id": user.id, "name": user.name, "email": user.email, "plan": user.plan, "role": user.role, "credits": user.credits, "can_use_api_tools": user.can_use_api_tools, "can_remove_branding": user.can_remove_branding},
     )
 
 
@@ -168,4 +171,7 @@ def get_me(current_user: User = Depends(get_current_user)):
         email=current_user.email,
         plan=current_user.plan,
         role=current_user.role,
+        credits=current_user.credits,
+        can_use_api_tools=current_user.can_use_api_tools,
+        can_remove_branding=current_user.can_remove_branding,
     )
