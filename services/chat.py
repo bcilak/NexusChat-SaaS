@@ -148,6 +148,11 @@ def rag_chat(
         
         # E-ticaret entegrasyon araçları (WooCommerce, IdeaSoft, Shopify, Ticimax)
         active_tools = []
+        
+        from services.tools import build_ticket_tools
+        ticket_tools = build_ticket_tools(bot.id, platform, session_id, db)
+        active_tools.extend(ticket_tools)
+
         ecommerce_tools = build_ecommerce_tools(bot.id, db)
         active_tools.extend(ecommerce_tools)
 
