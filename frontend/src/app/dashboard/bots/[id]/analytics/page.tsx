@@ -47,6 +47,8 @@ export default function AnalyticsPage() {
     { label: "🛠️ API Araçları", path: `/dashboard/bots/${botId}/tools` },
     { label: "💬 Chat Test", path: `/dashboard/bots/${botId}/chat` },
     { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
+    { label: "🎟️ Destek Talepleri", path: `/dashboard/bots/${botId}/tickets` },
+
   ];
 
   const containerVariants = {
