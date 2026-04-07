@@ -46,11 +46,20 @@ def _is_token_valid(cache_entry: Dict) -> bool:
     return time.time() < cache_entry.get("expires_at", 0) - 30
 
 
-def get_access_token(api_url: str, client_id: str, client_secret: str) -> str:
+def get_access_token(api_url: str, client_id: str, client_secret: str, meta_data_str: str = None) -> str:
     """
-    IdeaSoft OAuth2 client_credentials akışı ile access_token alır.
+    IdeaSoft OAuth2.
     Token önbellekte geçerliyse yeni istek atmaz.
+    Öncelikle veritabanı meta_data'daki token'a bakar.
     """
+    if meta_data_str:
+        try:
+            meta = json.loads(meta_data_str)
+            if "ideasoft_access_token" in meta:
+                return meta["ideasoft_access_token"]
+        except Exception:
+            pass
+
     key = _cache_key(api_url, client_id)
 
     # Önbellekte geçerli token varsa direkt döndür
@@ -111,12 +120,13 @@ def _api_request(
     method: str = "GET",
     body: Optional[Dict] = None,
     _retry: bool = True,
+    meta_data_str: str = None,
 ) -> Any:
     """
     Authenticated IdeaSoft API isteği yapar.
-    401 alırsa token'ı yeniler ve bir kez yeniden dener.
+    401 alırsa (ve client_credentials kullanılıyorsa) token'ı yeniler ve bir kez yeniden dener.
     """
-    token = get_access_token(api_url, client_id, client_secret)
+    token = get_access_token(api_url, client_id, client_secret, meta_data_str=meta_data_str)
     url = api_url.rstrip("/") + IDEASOFT_API_BASE + endpoint
     headers = {
         "Authorization": f"Bearer {token}",
@@ -156,10 +166,11 @@ def search_products(
     client_secret: str,
     query: str,
     limit: int = 5,
+    meta_data_str: str = None,
 ) -> List[Dict]:
     """
     Ürün adına göre arama yapar.
-    Dönen liste: [{"name", "price", "stock", "sku", "url", "category"}]
+    Dönen liste: [{"name", "price", "stock", "sku", "url", "category"}]        
     """
     params = {
         "name": query,
@@ -167,7 +178,7 @@ def search_products(
         "status": 1,  # Aktif ürünler
     }
     try:
-        data = _api_request(api_url, client_id, client_secret, "/products", params=params)
+        data = _api_request(api_url, client_id, client_secret, "/products", params=params, meta_data_str=meta_data_str)
     except IdeaSoftError:
         raise
 
@@ -200,11 +211,12 @@ def get_product_by_sku(
     client_id: str,
     client_secret: str,
     sku: str,
+    meta_data_str: str = None,
 ) -> Optional[Dict]:
     """SKU / stok koduna göre tek ürün getirir."""
     params = {"sku": sku, "limit": 1}
     try:
-        data = _api_request(api_url, client_id, client_secret, "/products", params=params)
+        data = _api_request(api_url, client_id, client_secret, "/products", params=params, meta_data_str=meta_data_str)
         products = data if isinstance(data, list) else data.get("data", [])
         if products:
             p = products[0]
@@ -258,6 +270,7 @@ def get_recent_orders(
     client_secret: str,
     limit: int = 5,
     customer_email: Optional[str] = None,
+    meta_data_str: str = None,
 ) -> List[Dict]:
     """Son siparişleri listeler, isteğe bağlı müşteri e-postasına göre filtreler."""
     params: Dict = {"limit": limit, "sort": "id", "direction": "DESC"}
@@ -265,7 +278,7 @@ def get_recent_orders(
         params["email"] = customer_email
 
     try:
-        data = _api_request(api_url, client_id, client_secret, "/orders", params=params)
+        data = _api_request(api_url, client_id, client_secret, "/orders", params=params, meta_data_str=meta_data_str)
     except IdeaSoftError:
         raise
 
@@ -296,10 +309,11 @@ def get_order_by_number(
     client_id: str,
     client_secret: str,
     order_number: str,
+    meta_data_str: str = None,
 ) -> Optional[Dict]:
     """Sipariş numarasına göre tek sipariş getirir."""
     try:
-        data = _api_request(api_url, client_id, client_secret, f"/orders/{order_number}")
+        data = _api_request(api_url, client_id, client_secret, f"/orders/{order_number}", meta_data_str=meta_data_str)
         if isinstance(data, dict):
             status_code = int(data.get("status", data.get("orderStatus", 0)))
             return {
@@ -347,6 +361,7 @@ def test_connection(
     api_url: str,
     client_id: str,
     client_secret: str,
+    meta_data_str: str = None,
 ) -> Dict[str, Any]:
     """
     Bağlantıyı doğrular. Token alır ve basit bir endpoint çağırır.
@@ -354,14 +369,14 @@ def test_connection(
     """
     try:
         # 1. Token al
-        token = get_access_token(api_url, client_id, client_secret)
+        token = get_access_token(api_url, client_id, client_secret, meta_data_str=meta_data_str)
 
         # 2. Mağaza bilgisi çek (/settings veya /products ile sayım)
         store_name = ""
         product_count = 0
 
         try:
-            settings = _api_request(api_url, client_id, client_secret, "/settings")
+            settings = _api_request(api_url, client_id, client_secret, "/settings", meta_data_str=meta_data_str)
             if isinstance(settings, dict):
                 store_name = (
                     settings.get("storeName")

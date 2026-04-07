@@ -27,6 +27,7 @@ class ECommerceProductSearchTool(BaseTool):
     api_key: str = ""
     api_secret: str = ""
     provider: str = ""
+    meta_data_str: str = ""
     
     def _run(self, query: str) -> str:
         # ── WooCommerce ───────────────────────────────────────────────────────
@@ -66,6 +67,7 @@ class ECommerceProductSearchTool(BaseTool):
                     client_secret=self.api_secret,
                     query=query,
                     limit=5,
+                    meta_data_str=self.meta_data_str,
                 )
                 return format_products_for_chat(products)
             except IdeaSoftError as e:
@@ -146,6 +148,7 @@ class IdeaSoftOrderSearchTool(BaseTool):
     api_url: str = ""
     api_key: str = ""       # client_id
     api_secret: str = ""    # client_secret
+    meta_data_str: str = ""
 
     def _run(self, query: str) -> str:
         try:
@@ -159,6 +162,7 @@ class IdeaSoftOrderSearchTool(BaseTool):
                     client_id=self.api_key,
                     client_secret=self.api_secret,
                     order_number=order_no,
+                    meta_data_str=self.meta_data_str,
                 )
                 if order:
                     lines = [f"**Sipariş #{order['order_no']} Detayları:**\n"]
@@ -181,6 +185,7 @@ class IdeaSoftOrderSearchTool(BaseTool):
                     client_id=self.api_key,
                     client_secret=self.api_secret,
                     limit=5,
+                    meta_data_str=self.meta_data_str,
                 )
                 return format_orders_for_chat(orders)
         except IdeaSoftError as e:
@@ -212,6 +217,7 @@ def build_ecommerce_tools(bot_id: int, db) -> list:
                 api_key=intg.api_key,
                 api_secret=intg.api_secret or "",
                 provider=intg.provider,
+                meta_data_str=intg.meta_data or "",
             ))
             # Sipariş sorgulama sadece IdeaSoft'ta (diğerleri için ayrı tool eklenebilir)
             if intg.provider == "ideasoft":
@@ -219,6 +225,7 @@ def build_ecommerce_tools(bot_id: int, db) -> list:
                     api_url=intg.api_url,
                     api_key=intg.api_key,
                     api_secret=intg.api_secret or "",
+                    meta_data_str=intg.meta_data or "",
                 ))
     return tools
 

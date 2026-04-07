@@ -72,6 +72,112 @@ def integration_to_response(intg: BotIntegration) -> IntegrationResponse:
     )
 
 
+# ─── Auth Callback & Setup ────────────────────────────────────────────────────
+
+import requests
+
+@router.get("/ideasoft/auth-url")
+def get_ideasoft_auth_url(
+    bot_id: int,
+    api_url: str,
+    client_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Ideasoft yetkilendirme URL'sini oluşturup döner.
+    Front-end'in buraya yönlendirmesi için kullanılır.
+    """
+    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
+    if not bot:
+        raise HTTPException(status_code=403, detail="Yetkisiz erişim")
+
+    shop_url = api_url.rstrip("/")
+    redirect_uri = "https://chatbot.altikodtech.com.tr/api/integrations/ideasoft/callback"
+    state = f"{bot_id}" # Callbackte botu bulmak için
+
+    auth_url = f"{shop_url}/admin/user/auth?client_id={client_id}&response_type=code&state={state}&redirect_uri={redirect_uri}"
+    return {"url": auth_url}
+
+
+@router.post("/ideasoft/callback-exchange")
+def ideasoft_callback_exchange(
+    req: dict, # Beklenen { code, bot_id, api_url, client_id, client_secret }
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Ideasoft'tan dönen kodu (authorization_code) alıp access token'a çevirir,
+    sonrasında sisteme entegrasyonu kaydeder.
+    """
+    import json
+    
+    bot_id = req.get("bot_id")
+    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
+    if not bot:
+        raise HTTPException(status_code=403, detail="Yetkisiz erişim")
+
+    shop_url = req.get("api_url", "").rstrip("/")
+    token_url = f"{shop_url}/oauth/v2/token"
+    
+    payload = {
+        "grant_type": "authorization_code",
+        "client_id": req.get("client_id"),
+        "client_secret": req.get("client_secret"),
+        "code": req.get("code"),
+        "redirect_uri": "https://chatbot.altikodtech.com.tr/api/integrations/ideasoft/callback"
+    }
+
+    try:
+        resp = requests.post(token_url, data=payload, timeout=15)
+        if not resp.ok:
+            raise HTTPException(status_code=resp.status_code, detail=f"Token alınamadı: {resp.text}")
+        
+        token_data = resp.json()
+        access_token = token_data.get("access_token")
+        refresh_token = token_data.get("refresh_token")
+        
+        if not access_token:
+            raise HTTPException(status_code=400, detail="Token yanıtı geçersiz.")
+
+        meta_data = {
+            "ideasoft_access_token": access_token,
+            "ideasoft_refresh_token": refresh_token,
+            "expires_in": token_data.get("expires_in")
+        }
+
+        # Mevcut var mı?
+        existing = db.query(BotIntegration).filter(
+            BotIntegration.bot_id == bot_id,
+            BotIntegration.provider == "ideasoft"
+        ).first()
+
+        if existing:
+            existing.api_url = shop_url
+            existing.api_key = req.get("client_id")
+            existing.api_secret = req.get("client_secret")
+            existing.meta_data = json.dumps(meta_data)
+            db.commit()
+            db.refresh(existing)
+            return integration_to_response(existing)
+        else:
+            integration = BotIntegration(
+                bot_id=bot_id,
+                provider="ideasoft",
+                api_url=shop_url,
+                api_key=req.get("client_id"),
+                api_secret=req.get("client_secret"),
+                meta_data=json.dumps(meta_data),
+            )
+            db.add(integration)
+            db.commit()
+            db.refresh(integration)
+            return integration_to_response(integration)
+
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Ağ hatası: {str(e)}")
+
+
 # ─── CRUD Endpoint'leri ───────────────────────────────────────────────────────
 
 @router.post("", response_model=IntegrationResponse)
