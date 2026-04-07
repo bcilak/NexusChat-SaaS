@@ -122,10 +122,6 @@ def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
 # --- Endpoints ---
 @router.post("/register", response_model=TokenResponse)
 def register(request: Request, req: RegisterRequest, db: Session = Depends(get_db)):
-    # Apply rate limiting if available
-    if RATE_LIMITING_ENABLED and limiter:
-        limiter.limit("3/minute")(register)(request, req, db)
-    
     existing = db.query(User).filter(User.email == req.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Bu e-posta zaten kayıtlı")
@@ -148,10 +144,6 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
 
 @router.post("/login", response_model=TokenResponse)
 def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
-    # Apply rate limiting if available
-    if RATE_LIMITING_ENABLED and limiter:
-        limiter.limit("5/minute")(login)(request, req, db)
-    
     user = db.query(User).filter(User.email == req.email).first()
     if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="E-posta veya şifre hatalı")
