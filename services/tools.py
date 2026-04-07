@@ -350,4 +350,6 @@ def build_dynamic_tools_from_db(bot_id: int, db) -> list:
             params_json=t.query_params or "{}",
             body_template=t.body_template or "",
             response_path=t.response_path or "",
-            response_template=t.response_template or 
+            response_template=t.response_template or ""
+        ))
+    return tools 
