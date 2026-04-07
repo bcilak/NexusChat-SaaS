@@ -352,4 +352,22 @@ def build_dynamic_tools_from_db(bot_id: int, db) -> list:
             response_path=t.response_path or "",
             response_template=t.response_template or ""
         ))
-    return tools 
+    return tools
+
+# ─────────────────────────── Ticket Tool ───────────────────────────
+
+class TicketCreateInput(BaseModel):
+    query: str = Field(description="Kullanıcının hasarlı, eksik ürün destek talebi veya kargo şikayeti özeti.")
+
+class TicketCreateTool(BaseTool):
+    name: str = "create_ticket"
+    description: str = "Kullanıcı kargonuzun hasarlı, patlak, kırık, eksik veya yanlış geldiğini söylediğinde ya da destek talebi / şikayet oluşturmak istediğinde ÇAĞRILACAKTIR. Bu araç çağrıldığında sisteme ticket formunu oluşturacak kod döner."
+    args_schema: Type[BaseModel] = TicketCreateInput
+
+    def _run(self, query: str) -> str:
+        return "Lütfen yanıtında ŞU METNİ birebir DÖNDÜR (noktalama değiştirmeden, [TICKET_FORM_RENDER] kodunu kesinlikle ekleyerek yanıtla, böylelikle kullanıcı ekranında form çıkacaktır): 'Destek talebinizi oluşturmak için aşağıdaki formu doldurunuz: [TICKET_FORM_RENDER]'"
+
+def build_ticket_tools(bot_id: int, platform: str, session_id: str, db) -> list:
+    """Chat üzerinde Ticket (Hasar/Eksik vs) formunu tetikleyecek aracı döner."""
+    return [TicketCreateTool()]
+ 
