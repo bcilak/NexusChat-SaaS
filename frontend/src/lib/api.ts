@@ -277,4 +277,9 @@ export const toolsApi = {
     }),
 };
 
+// --- Tickets ---
+export const ticketsApi = {
+  getTickets: (botId: number) => apiFetch(`/api/bots/${botId}/tickets`),
+};
+
 export { API_BASE };
