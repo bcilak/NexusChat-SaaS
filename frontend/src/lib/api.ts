@@ -175,6 +175,7 @@ export const integrationsApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  exchangeIdeasoft: (data: Record<string, unknown>) => apiFetch(`/api/integrations/ideasoft/callback-exchange`, { method: "POST", body: JSON.stringify(data) }),
 };
 
 // --- Analytics ---

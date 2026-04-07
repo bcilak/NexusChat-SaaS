@@ -84,6 +84,43 @@ export default function IntegrationsPage() {
     setTestResult(null);
   }, [provider]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // Check for Ideasoft OAuth callback
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+    
+    if (code && state && Number(state) === botId) {
+      // Reconstitute from localStorage
+      const tempConfigStr = localStorage.getItem("ideasoft_temp_config");
+      if (tempConfigStr) {
+        setConnecting(true);
+        setMessage({ text: "IdeaSoft yetkilendirmesi tamamlanıyor...", type: "success" });
+        const cfg = JSON.parse(tempConfigStr);
+        
+        integrationsApi.exchangeIdeasoft({
+          bot_id: botId,
+          code,
+          api_url: cfg.apiUrl,
+          client_id: cfg.apiKey,
+          client_secret: cfg.apiSecret,
+          redirect_uri: window.location.href.split('?')[0]
+        }).then(() => {
+           setMessage({ text: `IDEASOFT entegrasyonu başarıyla eklendi!`, type: "success" });
+           fetchIntegrations();
+           localStorage.removeItem("ideasoft_temp_config");
+           router.replace(`/dashboard/bots/${botId}/integrations`);
+        }).catch((err: any) => {
+           setMessage({ text: err.message || "Yetkilendirme değiş-tokuşu başarısız oldu.", type: "error" });
+           localStorage.removeItem("ideasoft_temp_config");
+        }).finally(() => {
+           setConnecting(false);
+        });
+      }
+    }
+  }, [botId, router]);
+
   const fetchIntegrations = async () => {
     try {
       const data = await integrationsApi.list(botId);
@@ -123,6 +160,16 @@ export default function IntegrationsPage() {
     const cfg = PROVIDER_LABELS[provider];
     if (!apiUrl || !apiKey || (cfg?.secretRequired && !apiSecret)) {
       setMessage({ text: "Lütfen zorunlu tüm alanları doldurun.", type: "error" });
+      return;
+    }
+
+    if (provider === "ideasoft") {
+      localStorage.setItem("ideasoft_temp_config", JSON.stringify({ apiUrl, apiKey, apiSecret }));
+      const shopUrl = apiUrl.replace(/\/$/, "");
+      const redirectUri = typeof window !== 'undefined' ? window.location.href.split('?')[0] : "";
+      const state = String(botId);
+      const authUrl = `${shopUrl}/admin/user/auth?client_id=${apiKey}&response_type=code&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      window.location.href = authUrl;
       return;
     }
 
