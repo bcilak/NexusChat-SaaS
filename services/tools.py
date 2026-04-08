@@ -61,7 +61,7 @@ class ECommerceProductSearchTool(BaseTool):
         # ── IdeaSoft ─────────────────────────────────────────────────────────
         elif self.provider == "ideasoft":
             try:
-                products = ideasoft_search_products(
+                res = ideasoft_search_products(
                     api_url=self.api_url,
                     client_id=self.api_key,
                     client_secret=self.api_secret,
@@ -69,6 +69,7 @@ class ECommerceProductSearchTool(BaseTool):
                     limit=5,
                     meta_data_str=self.meta_data_str,
                 )
+                products = res.get("products", [])
                 return format_products_for_chat(products)
             except IdeaSoftError as e:
                 return f"IdeaSoft ürün arama hatası: {str(e)}"
@@ -157,21 +158,22 @@ class IdeaSoftOrderSearchTool(BaseTool):
             # Eğer sadece rakam içeriyorsa sipariş numarası kabul et
             if query_stripped.isdigit() or (query_stripped.startswith("#") and query_stripped[1:].isdigit()):
                 order_no = query_stripped.lstrip("#")
-                order = ideasoft_get_order_by_number(
+                res = ideasoft_get_order_by_number(
                     api_url=self.api_url,
                     client_id=self.api_key,
                     client_secret=self.api_secret,
                     order_number=order_no,
                     meta_data_str=self.meta_data_str,
                 )
+                order = res.get("order")
                 if order:
                     lines = [f"**Sipariş #{order['order_no']} Detayları:**\n"]
                     if order.get("date"):
                         lines.append(f"- 📅 Tarih: {order['date']}")
                     lines.append(f"- 🔄 Durum: {order['status']}")
                     lines.append(f"- 💰 Toplam: {order['total']}")
-                    if order.get("cargo"):
-                        lines.append(f"- 🚚 Kargo Takip No: {order['cargo']}")
+                    if order.get("cargo_tracking_no"):
+                        lines.append(f"- 🚚 Kargo Takip No: {order['cargo_tracking_no']}")
                     if order.get("items"):
                         lines.append("\n**Ürünler:**")
                         for item in order["items"]:
@@ -180,13 +182,14 @@ class IdeaSoftOrderSearchTool(BaseTool):
                 return f"#{order_no} numaralı sipariş bulunamadı."
             else:
                 # Genel sorgu — son siparişleri listele
-                orders = ideasoft_get_orders(
+                res = ideasoft_get_orders(
                     api_url=self.api_url,
                     client_id=self.api_key,
                     client_secret=self.api_secret,
                     limit=5,
                     meta_data_str=self.meta_data_str,
                 )
+                orders = res.get("orders", [])
                 return format_orders_for_chat(orders)
         except IdeaSoftError as e:
             return f"IdeaSoft sipariş sorgulama hatası: {str(e)}"
