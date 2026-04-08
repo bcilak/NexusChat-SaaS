@@ -143,7 +143,6 @@ def build_authorization_url(
         "response_type": "code",
         "state": generated_state,
         "redirect_uri": redirect_uri,
-        "scope": "",
     })
 
     return {
