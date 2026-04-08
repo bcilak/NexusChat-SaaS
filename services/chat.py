@@ -187,7 +187,9 @@ def rag_chat(
             # Fallback to simple chain if no tools
             response = llm.invoke(messages_input)
             answer = response.content
-        is_fallback = False
+            
+        fallback_keywords = ["bilgim yok", "bilgi yok", "bilmiyorum", "bulamadım", "bilinmiyor", "maalesef", "üzgünüm", "yardımcı olamam", "yardımcı olamayacağım", "bilgi bulunmuyor"]
+        is_fallback = any(k in answer.lower() for k in fallback_keywords)
 
     # 4. Save to chat history
     save_question = question

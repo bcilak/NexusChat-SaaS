@@ -144,11 +144,12 @@ async def receive_webhook(request: Request, background_tasks: BackgroundTasks, d
                                 text = f"[Desteklenmeyen mesaj tipi: {msg_type}]"
                             
                             process_whatsapp_message(
-                                from_number, text, phone_number_id, 
+                                from_number, text, phone_number_id,
                                 db, background_tasks, msg_type,
-                                msg_id=msg.get("id")
+                                msg_id=msg.get("id"),
+                                media_id=msg.get("image", {}).get("id") if msg_type == "image" else None
                             )
-                            
+
         return {"status": "ok"}
     except Exception as e:
         print(f"Webhook processing error: {e}")
@@ -159,9 +160,9 @@ async def receive_webhook(request: Request, background_tasks: BackgroundTasks, d
 
 
 def process_whatsapp_message(
-    phone_number: str, text: str, phone_number_id: str, 
+    phone_number: str, text: str, phone_number_id: str,
     db: Session, background_tasks: BackgroundTasks,
-    msg_type: str = "text", msg_id: str = None
+    msg_type: str = "text", msg_id: str = None, media_id: str = None
 ):
     """Process an incoming WhatsApp message: save, RAG respond, and relay back."""
     if not phone_number_id:
@@ -172,6 +173,19 @@ def process_whatsapp_message(
         bot = db.query(Bot).filter(Bot.id == DEFAULT_BOT_ID).first()
         if not bot:
             return
+
+    attachment_url = None
+    if media_id and bot.whatsapp_token:
+        from services.whatsapp import download_whatsapp_media
+        import os
+        media_data = download_whatsapp_media(media_id, bot.whatsapp_token)
+        if media_data:
+            os.makedirs(f"uploads/{bot.id}", exist_ok=True)
+            filepath = f"uploads/{bot.id}/{media_id}.jpg"
+            with open(filepath, "wb") as f:
+                f.write(media_data)
+            attachment_url = f"/{filepath}"
+            text = f"![Resim]({attachment_url})\n{text}"
         
     # Get or Create Conversation
     conv = db.query(InboxConversation).filter(
@@ -248,9 +262,9 @@ def process_whatsapp_message(
     })
     
     # Only process AI response for text-type messages when AI is active
-    if conv.is_ai_active and msg_type == "text":
+    if conv.is_ai_active and msg_type in ["text", "image"]:
         session_id = f"wa_{phone_number}"
-        rag_response = rag_chat(bot, text, session_id, db, platform="whatsapp")
+        rag_response = rag_chat(bot, text, session_id, db, attachment_url=attachment_url, platform="whatsapp")
         answer = rag_response.get("answer", "Üzgünüm, yanıt veremiyorum.")
         
         # Check 24-hour window: if the conversation's last user message is older than 24h,
@@ -283,10 +297,10 @@ def process_whatsapp_message(
         # Send back to WhatsApp
         send_whatsapp_message(phone_number, answer, bot.whatsapp_token, bot.whatsapp_phone_id)
     
-    elif conv.is_ai_active and msg_type != "text":
+    elif conv.is_ai_active and msg_type not in ["text", "image"]:
         # Non-text message received while AI is active — send a helpful response
         fallback_msg = "Bu tür mesajları henüz işleyemiyorum. Lütfen metin olarak yazın veya daha sonra tekrar deneyin."
-        
+
         ai_msg = InboxMessage(
             conversation_id=conv.id,
             sender_type="ai",
