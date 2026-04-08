@@ -366,23 +366,37 @@ def build_dynamic_tools_from_db(bot_id: int, db) -> list:
 
 # ─────────────────────────── Ticket Tool ───────────────────────────
 
+from langchain_core.tools import StructuredTool
+
 class TicketCreateInput(BaseModel):
-    query: str = Field(description="Kullanıcının hasarlı, eksik ürün destek talebi veya kargo şikayeti özeti.")
-
-class TicketCreateTool(BaseTool):
-    name: str = "create_ticket"
-    description: str = "Kullanıcı kargonuzun hasarlı, patlak, kırık, eksik veya yanlış geldiğini söylediğinde ya da destek talebi / şikayet oluşturmak istediğinde ÇAĞRILACAKTIR. Bu araç çağrıldığında sisteme ticket formunu oluşturacak kod döner."
-    args_schema: Type[BaseModel] = TicketCreateInput
-
-    platform: str = "web"
-
-    def _run(self, query: str) -> str:
-        if self.platform == "whatsapp" or self.platform == "wa":
-            return "Lütfen yanıtında ŞU METNİ DÖNDÜR: 'Yaşadığınız sorun için çok üzgünüz. Destek talebiniz için lütfen şikayetinizi ve varsa ürün fotoğraflarını direkt olarak bu sohbete yazın. Müşteri temsilcilerimiz mesajınızı inceleyip en kısa sürede size dönüş yapacaktır.'"
-        else:
-            return "Lütfen yanıtında ŞU METNİ birebir DÖNDÜR (noktalama değiştirmeden, [TICKET_FORM_RENDER] kodunu kesinlikle ekleyerek yanıtla, böylelikle kullanıcı ekranında form çıkacaktır): 'Destek talebinizi oluşturmak için aşağıdaki formu doldurunuz: [TICKET_FORM_RENDER]'"
+    damage_summary: str = Field(description="Kullanıcının hasarlı, eksik ürün destek talebi veya kargo şikayetinin çok detaylı özeti.")
+    order_number: Optional[str] = Field(default=None, description="Kullanıcı sipariş numarası (veya ID) belirttiyse buraya yaz.")
 
 def build_ticket_tools(bot_id: int, platform: str, session_id: str, db) -> list:
     """Chat üzerinde Ticket (Hasar/Eksik vs) formunu tetikleyecek aracı döner."""
-    return [TicketCreateTool(platform=platform)]
+    
+    def _create_ticket(damage_summary: str, order_number: Optional[str] = None) -> str:
+        if platform in ("whatsapp", "wa"):
+            from models.ticket import Ticket
+            ticket = Ticket(
+                bot_id=bot_id,
+                platform="whatsapp",
+                contact_id=session_id,
+                order_number=order_number,
+                damage_summary=damage_summary,
+                status="open"
+            )
+            db.add(ticket)
+            db.commit()
+            return "Kullanıcıya talebinin destek ekibimize ulaştığını ve hızlı şekilde çözüleceğini samimi bir dille ilet."
+        else:
+            return "Lütfen yanıtında ŞU METNİ birebir DÖNDÜR (noktalama değiştirmeden, [TICKET_FORM_RENDER] kodunu kesinlikle ekleyerek yanıtla, böylelikle kullanıcı ekranında form çıkacaktır): 'Destek talebinizi oluşturmak için aşağıdaki formu doldurunuz: [TICKET_FORM_RENDER]'"
+
+    ticket_tool = StructuredTool.from_function(
+        func=_create_ticket,
+        name="create_ticket",
+        description="Kullanıcı kargonuzun hasarlı, eksik veya yanlış geldiğini söylediğinde, ya da iade / destek talebi oluşturmak istediğinde ÇAĞRILACAKTIR.",
+        args_schema=TicketCreateInput,
+    )
+    return [ticket_tool]
  

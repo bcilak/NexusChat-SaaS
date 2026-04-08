@@ -6,7 +6,7 @@ import { ticketsApi } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { Package, MessageSquare, ExternalLink, Calendar, AlertCircle } from "lucide-react"
+import { Package, MessageSquare, ExternalLink, Calendar, AlertCircle, MessageCircle, Globe } from "lucide-react"
 
 interface Ticket {
     id: number
@@ -97,12 +97,12 @@ export default function BotTicketsPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 {ticket.platform === "whatsapp" ? (
-                                                    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
-                                                        WhatsApp
+                                                    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 flex items-center gap-1">
+                                                        <MessageCircle className="w-3 h-3" /> WhatsApp
                                                     </Badge>
                                                 ) : ticket.platform === "web" ? (
-                                                    <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
-                                                        Web Form
+                                                    <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex items-center gap-1">
+                                                        <Globe className="w-3 h-3" /> Web Form
                                                     </Badge>
                                                 ) : (
                                                     <Badge variant="outline">{ticket.platform}</Badge>
@@ -113,10 +113,7 @@ export default function BotTicketsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={
-                                                ticket.status === 'resolved' ? "success" :
-                                                    ticket.status === 'in_progress' ? "default" : "secondary"
-                                            }>
+                                            <Badge variant={ticket.status === 'resolved' ? "default" : ticket.status === 'in_progress' ? "default" : "secondary"} className={ticket.status === 'resolved' ? "bg-green-500 hover:bg-green-600" : ""}>
                                                 {ticket.status === 'resolved' ? "Çözüldü" :
                                                     ticket.status === 'in_progress' ? "İnceleniyor" : "Yeni"}
                                             </Badge>
