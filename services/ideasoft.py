@@ -562,6 +562,19 @@ _ORDER_STATUS_MAP = {
     4: "Teslim Edildi",
     5: "İptal Edildi",
     6: "İade Edildi",
+    "deleted": "Silindi",
+    "waiting_for_approval": "Onay Bekliyor",
+    "approved": "Onaylandı",
+    "fulfilled": "Kargoya Verildi",
+    "cancelled": "İptal Edildi",
+    "delivered": "Teslim Edildi",
+    "on_accumulation": "Hazırlanıyor / Toplanıyor",
+    "waiting_for_payment": "Ödeme Bekliyor",
+    "being_prepared": "Hazırlanıyor",
+    "refunded": "İade Edildi",
+    "personal_status_1": "Özel Durum 1",
+    "personal_status_2": "Özel Durum 2",
+    "personal_status_3": "Özel Durum 3",
 }
 
 
@@ -595,7 +608,7 @@ def get_recent_orders(
     mapped: List[Dict[str, Any]] = []
 
     for o in orders[:limit]:
-        status_code = _safe_int(o.get("status", o.get("orderStatus", 0)), default=0)
+        status_raw = o.get("status", o.get("orderStatus", 0))
         total = _safe_float(o.get("finalAmount", o.get("amount", o.get("totalPrice", o.get("total", 0)))), default=0.0)
 
         customer_name = ""
@@ -615,8 +628,8 @@ def get_recent_orders(
         mapped.append({
             "order_no": o.get("id", "?"),
             "date": str(created_raw)[:10] if created_raw else "",
-            "status_code": status_code,
-            "status": _ORDER_STATUS_MAP.get(status_code, f"Durum:{status_code}"),
+            "status_code": status_raw,
+            "status": _ORDER_STATUS_MAP.get(status_raw, f"Durum:{status_raw}"),
             "total": f"{total:.2f} TL",
             "total_value": total,
             "customer": customer_name,
@@ -652,7 +665,7 @@ def get_order_by_number(
             "updated_meta_data_str": result["updated_meta_data_str"],
         }
 
-    status_code = _safe_int(data.get("status", data.get("orderStatus", 0)), default=0)
+    status_raw = data.get("status", data.get("orderStatus", 0))
     total = _safe_float(data.get("finalAmount", data.get("amount", data.get("totalPrice", data.get("total", 0)))), default=0.0)
     created_raw = data.get("createdAt", data.get("created_at", ""))
 
@@ -676,8 +689,8 @@ def get_order_by_number(
     order = {
         "order_no": data.get("id"),
         "date": str(created_raw)[:10] if created_raw else "",
-        "status_code": status_code,
-        "status": _ORDER_STATUS_MAP.get(status_code, f"Durum:{status_code}"),
+        "status_code": status_raw,
+        "status": _ORDER_STATUS_MAP.get(status_raw, f"Durum:{status_raw}"),
         "total": f"{total:.2f} TL",
         "total_value": total,
         "customer": customer_name or data.get("customerName", "Bilinmiyor"),
