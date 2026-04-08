@@ -10,6 +10,7 @@ import {
 import Link from "next/link";
 import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import ReactMarkdown from "react-markdown";
 
 interface Conversation {
   id: number;
@@ -469,7 +470,9 @@ export default function InboxPage() {
                                 ? "bg-purple-500 text-white rounded-br-sm shadow-md shadow-purple-500/20"
                                 : "bg-indigo-500 text-white rounded-br-sm shadow-md shadow-indigo-500/20"
                             }`}>
-                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                            <div className={`text-sm leading-relaxed whitespace-pre-wrap break-words max-w-full prose prose-sm ${isUser ? 'dark:prose-invert' : 'prose-invert text-white'} prose-p:my-0 prose-img:rounded-xl prose-img:max-w-full prose-img:max-h-[300px] prose-img:object-cover prose-img:my-2 prose-a:underline`}>
+                              <ReactMarkdown>{msg.content || ""}</ReactMarkdown>
+                            </div>
                           </div>
 
                           {!isUser && (

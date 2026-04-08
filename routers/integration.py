@@ -102,7 +102,7 @@ def get_ideasoft_auth_url(
 
 @router.post("/ideasoft/callback-exchange")
 def ideasoft_callback_exchange(
-    req: dict, # Beklenen { code, bot_id, api_url, client_id, client_secret }
+    req: dict, # Beklenen { code, bot_id, api_url, client_id, client_secret, redirect_uri }
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -125,7 +125,7 @@ def ideasoft_callback_exchange(
         "client_id": req.get("client_id"),
         "client_secret": req.get("client_secret"),
         "code": req.get("code"),
-        "redirect_uri": "https://chatbot.altikodtech.com.tr/api/integrations/ideasoft/callback"
+        "redirect_uri": req.get("redirect_uri", f"https://chatbot.altikodtech.com.tr/dashboard/bots/{bot_id}/integrations")
     }
 
     try:
