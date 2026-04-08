@@ -46,34 +46,46 @@ def _is_token_valid(cache_entry: Dict) -> bool:
     return time.time() < cache_entry.get("expires_at", 0) - 30
 
 
-def get_access_token(api_url: str, client_id: str, client_secret: str, meta_data_str: str = None) -> str:
+def get_access_token(api_url: str, client_id: str, client_secret: str, meta_data_str: str = None, force_refresh: bool = False) -> str:
     """
     IdeaSoft OAuth2.
     Token önbellekte geçerliyse yeni istek atmaz.
     Öncelikle veritabanı meta_data'daki token'a bakar.
     """
+    meta = {}
     if meta_data_str:
         try:
             meta = json.loads(meta_data_str)
-            if "ideasoft_access_token" in meta:
+            if not force_refresh and "ideasoft_access_token" in meta:
+                # Still checking cache
+                key = _cache_key(api_url, client_id)
+                cached = _TOKEN_CACHE.get(key)
+                if cached and _is_token_valid(cached):
+                    return cached["access_token"]
                 return meta["ideasoft_access_token"]
         except Exception:
             pass
 
     key = _cache_key(api_url, client_id)
 
-    # Önbellekte geçerli token varsa direkt döndür
+    # Önbellekte geçerli token varsa
     cached = _TOKEN_CACHE.get(key)
-    if cached and _is_token_valid(cached):
+    if cached and _is_token_valid(cached) and not force_refresh:
         return cached["access_token"]
 
     # Yeni token al
     token_url = api_url.rstrip("/") + IDEASOFT_TOKEN_ENDPOINT
-    payload = {
-        "grant_type": "client_credentials",
-        "client_id": client_id,
-        "client_secret": client_secret,
-    }
+    
+    current_refresh_token = meta.get("ideasoft_refresh_token")
+    if current_refresh_token:
+        payload = {
+            "grant_type": "refresh_token",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "refresh_token": current_refresh_token,
+        }
+    else:
+        raise IdeaSoftError("IdeaSoft entegrasyonu izin gerektirir. Lütfen 'Entegrasyonu Kaydet' butonuna basarak IdeaSoft üzerinden onay verin.")
 
     try:
         resp = requests.post(token_url, data=payload, timeout=10)
@@ -124,9 +136,9 @@ def _api_request(
 ) -> Any:
     """
     Authenticated IdeaSoft API isteği yapar.
-    401 alırsa (ve client_credentials kullanılıyorsa) token'ı yeniler ve bir kez yeniden dener.
+    401 alırsa token'ı yeniler ve bir kez yeniden dener.
     """
-    token = get_access_token(api_url, client_id, client_secret, meta_data_str=meta_data_str)
+    token = get_access_token(api_url, client_id, client_secret, meta_data_str=meta_data_str, force_refresh=(not _retry))
     url = api_url.rstrip("/") + IDEASOFT_API_BASE + endpoint
     headers = {
         "Authorization": f"Bearer {token}",
@@ -147,7 +159,7 @@ def _api_request(
     if resp.status_code == 401 and _retry:
         # Token geçersiz, yenile ve tekrar dene
         invalidate_token(api_url, client_id)
-        return _api_request(api_url, client_id, client_secret, endpoint, params, method, body, _retry=False)
+        return _api_request(api_url, client_id, client_secret, endpoint, params, method, body, _retry=False, meta_data_str=meta_data_str)
 
     if not resp.ok:
         raise IdeaSoftError(f"IdeaSoft API hatası (HTTP {resp.status_code}): {resp.text[:300]}")
@@ -367,6 +379,14 @@ def test_connection(
     Bağlantıyı doğrular. Token alır ve basit bir endpoint çağırır.
     Döner: {"success": bool, "message": str, "store_name": str, "product_count": int}
     """
+    if not meta_data_str:
+        return {
+            "success": True,
+            "message": "IdeaSoft OAuth yetkisi gerekiyor. Lütfen 'Entegrasyonu Kaydet' butonuna basarak IdeaSoft üzerinden onay verin.",
+            "store_name": "",
+            "product_count": 0,
+        }
+        
     try:
         # 1. Token al
         token = get_access_token(api_url, client_id, client_secret, meta_data_str=meta_data_str)
