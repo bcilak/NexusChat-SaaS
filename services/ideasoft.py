@@ -30,9 +30,9 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-IDEASOFT_AUTH_ENDPOINT = "/panel/auth"
+IDEASOFT_AUTH_ENDPOINT = "/oauth/v2/auth"
 IDEASOFT_TOKEN_ENDPOINT = "/oauth/v2/token"
-IDEASOFT_API_BASE = "/api/v2"
+IDEASOFT_API_BASE = "/api"
 
 REQUEST_TIMEOUT = 15
 TOKEN_SAFETY_MARGIN_SECONDS = 30
@@ -143,6 +143,7 @@ def build_authorization_url(
         "response_type": "code",
         "state": generated_state,
         "redirect_uri": redirect_uri,
+        "scope": "",
     })
 
     return {

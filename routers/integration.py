@@ -76,6 +76,7 @@ def integration_to_response(intg: BotIntegration) -> IntegrationResponse:
 # ─── Auth Callback & Setup ────────────────────────────────────────────────────
 
 import requests
+import json
 
 @router.get("/ideasoft/auth-url")
 def get_ideasoft_auth_url(
@@ -88,75 +89,84 @@ def get_ideasoft_auth_url(
     """
     Ideasoft yetkilendirme URL'sini oluşturup döner.
     Front-end'in buraya yönlendirmesi için kullanılır.
+    State olarak bot_id kullanılır ve metadata'ya kaydedilir.
     """
     bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
     if not bot:
         raise HTTPException(status_code=403, detail="Yetkisiz erişim")
 
     from services.ideasoft import build_authorization_url
-    redirect_uri = "https://chatbot.altikodtech.com.tr/api/integrations/ideasoft/callback"
-    
-    # Mevcut meta_data_str'yi veritabanından alalım (varsa)
+
+    # Mevcut entegrasyonu bul (varsa mevcut metadata'yı koru)
     existing = db.query(BotIntegration).filter(
         BotIntegration.bot_id == bot_id,
         BotIntegration.provider == "ideasoft"
     ).first()
     meta_data_str = existing.meta_data if existing else None
 
-    # State'e bot_id'yi de gömelim mi? exchange aşamasında bot_id gerekecek.
-    # State validation'ı exchange_code_for_token yapıyor.
-    # Frontend şu an nasıl exchange yapıyor? Callback gelince frontend kendi çağırıyor muhtemelen?
+    # State olarak bot_id kullan; build_authorization_url bunu meta'ya da kaydeder
     auth_res = build_authorization_url(
         api_url=api_url,
         client_id=client_id,
-        redirect_uri=redirect_uri,
+        redirect_uri="",  # Frontend kendi redirect_uri'sini kullanacak; backend endpoint'i burada sadece URL üretir
         meta_data_str=meta_data_str,
-        state=f"{bot_id}" # State olarak bot_id'yi kullandığımızı varsayalım
+        state=str(bot_id),
     )
-    
-    return {"url": auth_res["authorization_url"], "updated_meta_data_str": auth_res["updated_meta_data_str"]}
+
+    # State'i (bot_id) DB'deki metadata'ya kaydet ki callback-exchange doğrulayabilsin
+    updated_meta = auth_res["updated_meta_data_str"]
+    if existing:
+        existing.meta_data = updated_meta
+        db.commit()
+    else:
+        # Henüz entegrasyon yok; sadece state'i tutmak için geçici kayıt oluştur
+        integration = BotIntegration(
+            bot_id=bot_id,
+            provider="ideasoft",
+            api_url=api_url,
+            api_key=client_id,
+            api_secret="",
+            meta_data=updated_meta,
+        )
+        db.add(integration)
+        db.commit()
+
+    return {"url": auth_res["authorization_url"], "updated_meta_data_str": updated_meta}
 
 
 @router.post("/ideasoft/callback-exchange")
 def ideasoft_callback_exchange(
-    req: dict, # Beklenen { code, bot_id, api_url, client_id, client_secret, redirect_uri }
+    req: dict,  # Beklenen: { code, bot_id, api_url, client_id, client_secret, redirect_uri, state? }
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
     Ideasoft'tan dönen kodu (authorization_code) alıp access token'a çevirir,
     sonrasında sisteme entegrasyonu kaydeder.
+    Frontend doğrudan window.location ile yönlendirildiğinden state = bot_id olarak gelir.
     """
-    import json
     from services.ideasoft import exchange_code_for_token, IdeaSoftError
-    
+
     bot_id = req.get("bot_id")
     bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
     if not bot:
         raise HTTPException(status_code=403, detail="Yetkisiz erişim")
 
     shop_url = req.get("api_url", "")
-    redirect_uri = req.get("redirect_uri", f"https://chatbot.altikodtech.com.tr/api/integrations/ideasoft/callback")
+    redirect_uri = req.get("redirect_uri", "")
+    returned_state = req.get("state", str(bot_id))
 
-    # Mevcut var mı?
+    # DB'deki mevcut entegrasyon kaydını bul
     existing = db.query(BotIntegration).filter(
         BotIntegration.bot_id == bot_id,
         BotIntegration.provider == "ideasoft"
     ).first()
-    
-    meta_data_str = existing.meta_data if existing else "{}"
 
-    # Test vs validation sırasında `state` olarak `bot_id` yi kullandık:
-    # `state=f"{bot_id}"`. Geri dönüşte req.get("state") alınamıyorsa kendi verdiğimiz f"{bot_id}" değerini kullanmalıyız.
-    # Veya frontend req.get("state") olarak yollamamış olabilir. Şimdilik state'i de yollamışlarsa onu alıyor gibiyiz.
-    returned_state = req.get("state", str(bot_id))
-    
-    # State kontrolünü ideasoft modülü beklentisiyle uyumlu hale getirmek için mevcut metadata'yı düzenliyoruz
-    # build_authorization_url içinde ideasoft_state eklendi ama DB ye kaydedilmediyse sorun olur.
-    # O yüzden burası şöyle: frontend state'i kendisi yolladıysa, veya bot_id ile biz oluşturduysak.
-    meta = json.loads(meta_data_str) if meta_data_str else {}
+    # Meta'yı hazırla: DB'de kayıtlı state varsa onu kullan, yoksa returned_state ile doldur
+    meta = json.loads(existing.meta_data) if existing and existing.meta_data else {}
     if not meta.get("ideasoft_state"):
-        # `auth-url` çağrısı DB'ye metadata kaydetmiyordu. O yüzden state'i `bot_id` olarak dolduralım ki validation geçsin.
+        # auth-url endpoint'i çağrılmadıysa (frontend doğrudan yönlendiriyorsa)
+        # state = bot_id olarak güvenle kabul et
         meta["ideasoft_state"] = str(bot_id)
 
     try:
@@ -169,7 +179,7 @@ def ideasoft_callback_exchange(
             returned_state=returned_state,
             meta_data_str=json.dumps(meta),
         )
-        
+
         updated_meta_data_str = token_res["updated_meta_data_str"]
 
         if existing:
@@ -177,6 +187,7 @@ def ideasoft_callback_exchange(
             existing.api_key = req.get("client_id")
             existing.api_secret = req.get("client_secret")
             existing.meta_data = updated_meta_data_str
+            existing.is_active = True
             db.commit()
             db.refresh(existing)
             return integration_to_response(existing)
@@ -188,6 +199,7 @@ def ideasoft_callback_exchange(
                 api_key=req.get("client_id"),
                 api_secret=req.get("client_secret"),
                 meta_data=updated_meta_data_str,
+                is_active=True,
             )
             db.add(integration)
             db.commit()

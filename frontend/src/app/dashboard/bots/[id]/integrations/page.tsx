@@ -75,7 +75,7 @@ export default function IntegrationsPage() {
   const providerConfig = PROVIDER_LABELS[provider] || PROVIDER_LABELS["woocommerce"];
 
   useEffect(() => {
-    botsApi.get(botId).then((b: BotInfo) => { setBotName(b.name); setBotInfo(b); }).catch(() => {});
+    botsApi.get(botId).then((b: BotInfo) => { setBotName(b.name); setBotInfo(b); }).catch(() => { });
     fetchIntegrations();
   }, [botId]);
 
@@ -90,7 +90,7 @@ export default function IntegrationsPage() {
     const searchParams = new URLSearchParams(window.location.search);
     const code = searchParams.get('code');
     const state = searchParams.get('state');
-    
+
     if (code && state && Number(state) === botId) {
       // Reconstitute from localStorage
       const tempConfigStr = localStorage.getItem("ideasoft_temp_config");
@@ -98,24 +98,25 @@ export default function IntegrationsPage() {
         setConnecting(true);
         setMessage({ text: "IdeaSoft yetkilendirmesi tamamlanıyor...", type: "success" });
         const cfg = JSON.parse(tempConfigStr);
-        
+
         integrationsApi.exchangeIdeasoft({
           bot_id: botId,
           code,
+          state,
           api_url: cfg.apiUrl,
           client_id: cfg.apiKey,
           client_secret: cfg.apiSecret,
           redirect_uri: window.location.href.split('?')[0]
         }).then(() => {
-           setMessage({ text: `IDEASOFT entegrasyonu başarıyla eklendi!`, type: "success" });
-           fetchIntegrations();
-           localStorage.removeItem("ideasoft_temp_config");
-           router.replace(`/dashboard/bots/${botId}/integrations`);
+          setMessage({ text: `IDEASOFT entegrasyonu başarıyla eklendi!`, type: "success" });
+          fetchIntegrations();
+          localStorage.removeItem("ideasoft_temp_config");
+          router.replace(`/dashboard/bots/${botId}/integrations`);
         }).catch((err: any) => {
-           setMessage({ text: err.message || "Yetkilendirme değiş-tokuşu başarısız oldu.", type: "error" });
-           localStorage.removeItem("ideasoft_temp_config");
+          setMessage({ text: err.message || "Yetkilendirme değiş-tokuşu başarısız oldu.", type: "error" });
+          localStorage.removeItem("ideasoft_temp_config");
         }).finally(() => {
-           setConnecting(false);
+          setConnecting(false);
         });
       }
     }
@@ -168,7 +169,7 @@ export default function IntegrationsPage() {
       const shopUrl = apiUrl.replace(/\/$/, "");
       const redirectUri = typeof window !== 'undefined' ? window.location.href.split('?')[0] : "";
       const state = String(botId);
-      const authUrl = `${shopUrl}/panel/auth?client_id=${apiKey}&response_type=code&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      const authUrl = `${shopUrl}/oauth/v2/auth?client_id=${encodeURIComponent(apiKey)}&response_type=code&state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=`;
       window.location.href = authUrl;
       return;
     }
@@ -278,9 +279,8 @@ export default function IntegrationsPage() {
             <Link
               key={tab.path}
               href={tab.path}
-              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${
-                isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
-              }`}
+              className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
+                }`}
             >
               {tab.label}
               {isActive && (
@@ -301,11 +301,10 @@ export default function IntegrationsPage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className={`flex items-center gap-3 p-4 rounded-xl mb-6 border ${
-              message.type === "success"
+            className={`flex items-center gap-3 p-4 rounded-xl mb-6 border ${message.type === "success"
                 ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
                 : "bg-red-500/10 border-red-500/20 text-red-400"
-            }`}
+              }`}
           >
             {message.type === "success" ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
             <p className="text-sm font-medium">{message.text}</p>
@@ -450,11 +449,10 @@ export default function IntegrationsPage() {
                   <button
                     key={p}
                     onClick={() => setProvider(p)}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-sm font-bold ${
-                      provider === p
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-sm font-bold ${provider === p
                         ? "border-indigo-500 bg-indigo-500/10 text-indigo-400"
                         : "border-gray-200 dark:border-white/10 bg-white dark:bg-black/20 text-gray-500 hover:border-indigo-500/40 hover:text-gray-300"
-                    }`}
+                      }`}
                   >
                     {getProviderIcon(p)}
                     <span className="capitalize">{p}</span>
@@ -484,8 +482,8 @@ export default function IntegrationsPage() {
                   provider === "ideasoft"
                     ? "https://maganizin-adi.com"
                     : provider === "shopify"
-                    ? "https://magazaadi.myshopify.com"
-                    : "https://siteniz.com"
+                      ? "https://magazaadi.myshopify.com"
+                      : "https://siteniz.com"
                 }
                 className="w-full px-4 py-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all font-mono text-sm"
               />
@@ -531,11 +529,10 @@ export default function IntegrationsPage() {
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  className={`md:col-span-2 flex items-start gap-3 p-4 rounded-xl border ${
-                    testResult.success
+                  className={`md:col-span-2 flex items-start gap-3 p-4 rounded-xl border ${testResult.success
                       ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
                       : "bg-red-500/10 border-red-500/20 text-red-400"
-                  }`}
+                    }`}
                 >
                   {testResult.success ? (
                     <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />

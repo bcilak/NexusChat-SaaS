@@ -344,8 +344,8 @@ export default function InboxPage() {
                   key={conv.id}
                   onClick={() => setActiveConvId(conv.id)}
                   className={`w-full text-left p-4 rounded-2xl transition-all border ${activeConvId === conv.id
-                      ? "bg-indigo-500/10 border-indigo-500/30"
-                      : "bg-white dark:bg-white/5 border-transparent hover:border-white/10"
+                    ? "bg-indigo-500/10 border-indigo-500/30"
+                    : "bg-white dark:bg-white/5 border-transparent hover:border-white/10"
                     }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
@@ -429,8 +429,8 @@ export default function InboxPage() {
                   onClick={handleToggleAi}
                   disabled={toggling}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border ${activeConv.is_ai_active
-                      ? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
-                      : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20"
+                    ? "bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500/20"
+                    : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20"
                     }`}
                 >
                   {toggling ? (
@@ -465,10 +465,10 @@ export default function InboxPage() {
                           {isUser && <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-white/10 flex items-center justify-center text-xs text-gray-500 shrink-0"><User className="w-3 h-3" /></div>}
 
                           <div className={`px-4 py-3 rounded-2xl ${isUser
-                              ? "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-bl-sm"
-                              : isAdmin
-                                ? "bg-purple-500 text-white rounded-br-sm shadow-md shadow-purple-500/20"
-                                : "bg-indigo-500 text-white rounded-br-sm shadow-md shadow-indigo-500/20"
+                            ? "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white rounded-bl-sm"
+                            : isAdmin
+                              ? "bg-purple-500 text-white rounded-br-sm shadow-md shadow-purple-500/20"
+                              : "bg-indigo-500 text-white rounded-br-sm shadow-md shadow-indigo-500/20"
                             }`}>
                             <div className={`text-sm leading-relaxed whitespace-pre-wrap break-words max-w-full prose prose-sm ${isUser ? 'dark:prose-invert' : 'prose-invert text-white'} prose-p:my-0 prose-img:rounded-xl prose-img:max-w-full prose-img:max-h-[300px] prose-img:object-cover prose-img:my-2 prose-a:underline`}>
                               <ReactMarkdown>{msg.content || ""}</ReactMarkdown>
