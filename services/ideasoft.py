@@ -459,9 +459,8 @@ def search_products(
     meta_data_str: Optional[str] = None,
 ) -> Dict[str, Any]:
     params = {
-        "name": query,
+        "q": query,
         "limit": limit,
-        "status": 1,
     }
 
     result = _api_request(
