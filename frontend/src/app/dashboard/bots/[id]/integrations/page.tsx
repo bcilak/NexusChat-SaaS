@@ -168,7 +168,7 @@ export default function IntegrationsPage() {
       const shopUrl = apiUrl.replace(/\/$/, "");
       const redirectUri = typeof window !== 'undefined' ? window.location.href.split('?')[0] : "";
       const state = String(botId);
-      const authUrl = `${shopUrl}/admin/user/auth?client_id=${apiKey}&response_type=code&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      const authUrl = `${shopUrl}/panel/auth?client_id=${apiKey}&response_type=code&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
       window.location.href = authUrl;
       return;
     }
