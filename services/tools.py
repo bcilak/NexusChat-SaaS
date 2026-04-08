@@ -374,10 +374,15 @@ class TicketCreateTool(BaseTool):
     description: str = "Kullanıcı kargonuzun hasarlı, patlak, kırık, eksik veya yanlış geldiğini söylediğinde ya da destek talebi / şikayet oluşturmak istediğinde ÇAĞRILACAKTIR. Bu araç çağrıldığında sisteme ticket formunu oluşturacak kod döner."
     args_schema: Type[BaseModel] = TicketCreateInput
 
+    platform: str = "web"
+
     def _run(self, query: str) -> str:
-        return "Lütfen yanıtında ŞU METNİ birebir DÖNDÜR (noktalama değiştirmeden, [TICKET_FORM_RENDER] kodunu kesinlikle ekleyerek yanıtla, böylelikle kullanıcı ekranında form çıkacaktır): 'Destek talebinizi oluşturmak için aşağıdaki formu doldurunuz: [TICKET_FORM_RENDER]'"
+        if self.platform == "whatsapp" or self.platform == "wa":
+            return "Lütfen yanıtında ŞU METNİ DÖNDÜR: 'Yaşadığınız sorun için çok üzgünüz. Destek talebiniz için lütfen şikayetinizi ve varsa ürün fotoğraflarını direkt olarak bu sohbete yazın. Müşteri temsilcilerimiz mesajınızı inceleyip en kısa sürede size dönüş yapacaktır.'"
+        else:
+            return "Lütfen yanıtında ŞU METNİ birebir DÖNDÜR (noktalama değiştirmeden, [TICKET_FORM_RENDER] kodunu kesinlikle ekleyerek yanıtla, böylelikle kullanıcı ekranında form çıkacaktır): 'Destek talebinizi oluşturmak için aşağıdaki formu doldurunuz: [TICKET_FORM_RENDER]'"
 
 def build_ticket_tools(bot_id: int, platform: str, session_id: str, db) -> list:
     """Chat üzerinde Ticket (Hasar/Eksik vs) formunu tetikleyecek aracı döner."""
-    return [TicketCreateTool()]
+    return [TicketCreateTool(platform=platform)]
  
