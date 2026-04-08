@@ -369,13 +369,14 @@ def build_dynamic_tools_from_db(bot_id: int, db) -> list:
 from langchain_core.tools import StructuredTool
 
 class TicketCreateInput(BaseModel):
-    damage_summary: str = Field(description="Kullanıcının hasarlı, eksik ürün destek talebi veya kargo şikayetinin çok detaylı özeti.")
-    order_number: Optional[str] = Field(default=None, description="Kullanıcı sipariş numarası (veya ID) belirttiyse buraya yaz.")
+    damage_summary: str = Field(description="Müşterinin şikayetinin ASIL özeti (Örn: 'Ürün ezik geldi, faturası yoktu'). Buraya ASLA sipariş veya ürün adını yazma!")
+    order_number: Optional[str] = Field(default=None, description="Müşterinin belirttiği sipariş numarası (Eğer varsa kesinlikle buraya ayır).")
+    product_name: Optional[str] = Field(default=None, description="Müşterinin sorun yaşadığı ürünün adı (Eğer belirttiyse mutlaka buraya ayır).")
 
 def build_ticket_tools(bot_id: int, platform: str, session_id: str, db) -> list:
     """Chat üzerinde Ticket (Hasar/Eksik vs) formunu tetikleyecek aracı döner."""
     
-    def _create_ticket(damage_summary: str, order_number: Optional[str] = None) -> str:
+    def _create_ticket(damage_summary: str, order_number: Optional[str] = None, product_name: Optional[str] = None) -> str:
         if platform in ("whatsapp", "wa"):
             from models.ticket import Ticket
             ticket = Ticket(
@@ -383,6 +384,7 @@ def build_ticket_tools(bot_id: int, platform: str, session_id: str, db) -> list:
                 platform="whatsapp",
                 contact_id=session_id,
                 order_number=order_number,
+                product_name=product_name,
                 damage_summary=damage_summary,
                 status="open"
             )
@@ -395,7 +397,7 @@ def build_ticket_tools(bot_id: int, platform: str, session_id: str, db) -> list:
     ticket_tool = StructuredTool.from_function(
         func=_create_ticket,
         name="create_ticket",
-        description="Kullanıcı kargonuzun hasarlı, eksik veya yanlış geldiğini söylediğinde, ya da iade / destek talebi oluşturmak istediğinde ÇAĞRILACAKTIR.",
+        description="Kullanıcı bir kargo hasarı, eksik ürün, kırık/patlak paket beya şikayetinden bahsettiğinde kesinlikle ÇAĞRILACAKTIR. Önemli: Sipariş numarası ve ürün adını 'damage_summary' içine SIKIŞTIRMA, bunları kendi ayrı alanlarına (order_number, product_name) koy.",
         args_schema=TicketCreateInput,
     )
     return [ticket_tool]

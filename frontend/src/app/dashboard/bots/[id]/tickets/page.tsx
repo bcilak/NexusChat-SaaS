@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Package, MessageSquare, ExternalLink, Calendar, AlertCircle, MessageCircle, Globe } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Ticket {
     id: number
@@ -24,6 +27,9 @@ export default function BotTicketsPage() {
     const botId = params.id as string
     const [tickets, setTickets] = useState<Ticket[]>([])
     const [loading, setLoading] = useState(true)
+    const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+    const [statusUpdate, setStatusUpdate] = useState<string>("")
+    const [updating, setUpdating] = useState(false)
 
     useEffect(() => {
         const fetchTickets = async () => {
@@ -38,6 +44,20 @@ export default function BotTicketsPage() {
         }
         fetchTickets()
     }, [botId])
+
+    const handleUpdateStatus = async () => {
+        if (!selectedTicket || !statusUpdate) return
+        setUpdating(true)
+        try {
+            await ticketsApi.updateTicketStatus(Number(botId), selectedTicket.id, statusUpdate)
+            setTickets(tickets.map(t => t.id === selectedTicket.id ? { ...t, status: statusUpdate } : t))
+            setSelectedTicket(null)
+        } catch (error) {
+            console.error("Durum güncellenirken hata:", error)
+        } finally {
+            setUpdating(false)
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -81,7 +101,14 @@ export default function BotTicketsPage() {
                                 </TableRow>
                             ) : (
                                 tickets.map((ticket) => (
-                                    <TableRow key={ticket.id}>
+                                    <TableRow 
+                                        key={ticket.id} 
+                                        className="cursor-pointer hover:bg-muted/50" 
+                                        onClick={() => {
+                                            setSelectedTicket(ticket)
+                                            setStatusUpdate(ticket.status)
+                                        }}
+                                    >
                                         <TableCell className="whitespace-nowrap">
                                             {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString("tr-TR") : "-"}
                                         </TableCell>
@@ -125,6 +152,64 @@ export default function BotTicketsPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            <Dialog open={!!selectedTicket} onOpenChange={(open: boolean) => !open && setSelectedTicket(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Destek Talebi Detayı</DialogTitle>
+                        <DialogDescription>
+                            Talebe ait detayları buradan görüntüleyebilir ve durumu güncelleyebilirsiniz.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedTicket && (
+                        <div className="space-y-4 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">İletişim / Kullanıcı ID</p>
+                                    <p className="text-sm font-semibold">{selectedTicket.contact_id}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Tarih</p>
+                                    <p className="text-sm font-semibold">{selectedTicket.created_at ? new Date(selectedTicket.created_at).toLocaleString("tr-TR") : "-"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Sipariş Numarası</p>
+                                    <p className="text-sm font-semibold">{selectedTicket.order_number || "Belirtilmemiş"}</p>
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Ürün Adı</p>
+                                    <p className="text-sm font-semibold">{selectedTicket.product_name || "Belirtilmemiş"}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-1 bg-muted/50 p-4 rounded-lg border">
+                                <p className="text-sm font-medium text-muted-foreground mb-2">Sorun Özeti</p>
+                                <p className="text-sm whitespace-pre-wrap leading-relaxed">{selectedTicket.damage_summary || "Belirtilmemiş"}</p>
+                            </div>
+
+                            <div className="space-y-1 pt-4">
+                                <p className="text-sm font-medium">Bilet Durumu</p>
+                                <Select value={statusUpdate} onValueChange={setStatusUpdate}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="open">Yeni (Açık)</SelectItem>
+                                        <SelectItem value="in_progress">İnceleniyor</SelectItem>
+                                        <SelectItem value="resolved">Çözüldü / Dönüş Yapıldı</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setSelectedTicket(null)}>Kapat</Button>
+                        <Button onClick={handleUpdateStatus} disabled={updating}>
+                            {updating ? "Güncelleniyor..." : "Durumu Güncelle"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

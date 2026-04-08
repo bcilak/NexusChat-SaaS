@@ -204,3 +204,26 @@ def list_bot_tickets(
         }
         for t in tickets
     ]
+
+
+class TicketUpdateStatus(BaseModel):
+    status: str
+
+@router.patch("/{bot_id}/tickets/{ticket_id}")
+def update_ticket_status(
+    bot_id: int,
+    ticket_id: int,
+    req: TicketUpdateStatus,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from models.ticket import Ticket
+    bot = get_user_bot(bot_id, current_user, db)
+    ticket = db.query(Ticket).filter(Ticket.id == ticket_id, Ticket.bot_id == bot.id).first()
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Destek talebi bulunamadı.")
+    
+    ticket.status = req.status
+    db.commit()
+    db.refresh(ticket)
+    return {"status": "success", "ticket_id": ticket.id, "new_status": ticket.status}

@@ -281,6 +281,11 @@ export const toolsApi = {
 // --- Tickets ---
 export const ticketsApi = {
   getTickets: (botId: number) => apiFetch(`/api/bots/${botId}/tickets`),
+  updateTicketStatus: (botId: number, ticketId: number, status: string) =>
+    apiFetch(`/api/bots/${botId}/tickets/${ticketId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    })
 };
 
 export { API_BASE };
