@@ -469,6 +469,15 @@ export default function IntegrationsPage() {
               </div>
             )}
 
+            {/* IdeaSoft İpucu */}
+            {provider === "ideasoft" && (
+              <div className="md:col-span-2 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                <p className="text-sm text-blue-400">
+                  <strong>Önemli Not:</strong> IdeaSoft entegrasyonu için Mağaza URL'si alanına ana alan adınızı (<code className="text-blue-300">siteniz.com.tr</code>) <strong>değil</strong>, IdeaSoft yönetim paneli alan adınızı (<code className="text-blue-300">siteniz.myideasoft.com</code>) yazmalısınız. Aksi halde onay ekranında yetki parametreleri kaybolur.
+                </p>
+              </div>
+            )}
+
             {/* Mağaza URL */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
