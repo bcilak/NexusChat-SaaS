@@ -596,26 +596,31 @@ def get_recent_orders(
 
     for o in orders[:limit]:
         status_code = _safe_int(o.get("status", o.get("orderStatus", 0)), default=0)
-        total = _safe_float(o.get("totalPrice", o.get("total", 0)), default=0.0)
+        total = _safe_float(o.get("finalAmount", o.get("amount", o.get("totalPrice", o.get("total", 0)))), default=0.0)
 
         customer_name = ""
-        customer_obj = o.get("customer")
-        if isinstance(customer_obj, dict):
-            customer_name = customer_obj.get("fullName", "") or customer_obj.get("name", "")
-        if not customer_name:
-            customer_name = o.get("customerName", "")
+        fname = o.get("customerFirstname", "")
+        sname = o.get("customerSurname", "")
+        if fname or sname:
+            customer_name = f"{fname} {sname}".strip()
+        else:
+            customer_obj = o.get("customer")
+            if isinstance(customer_obj, dict):
+                customer_name = customer_obj.get("fullName", "") or customer_obj.get("name", "")
+            if not customer_name:
+                customer_name = o.get("customerName", "")
 
         created_raw = o.get("createdAt", o.get("created_at", ""))
 
         mapped.append({
-            "order_no": o.get("orderNumber", o.get("id", "?")),
+            "order_no": o.get("id", "?"),
             "date": str(created_raw)[:10] if created_raw else "",
             "status_code": status_code,
             "status": _ORDER_STATUS_MAP.get(status_code, f"Durum:{status_code}"),
             "total": f"{total:.2f} TL",
             "total_value": total,
             "customer": customer_name,
-            "cargo_tracking_no": o.get("cargoTrackingNumber", o.get("trackingNumber", "")),
+            "cargo_tracking_no": o.get("shippingTrackingCode", o.get("cargoTrackingNumber", o.get("trackingNumber", ""))),
             "raw": o,
         })
 
@@ -648,7 +653,7 @@ def get_order_by_number(
         }
 
     status_code = _safe_int(data.get("status", data.get("orderStatus", 0)), default=0)
-    total = _safe_float(data.get("totalPrice", data.get("total", 0)), default=0.0)
+    total = _safe_float(data.get("finalAmount", data.get("amount", data.get("totalPrice", data.get("total", 0)))), default=0.0)
     created_raw = data.get("createdAt", data.get("created_at", ""))
 
     raw_items = data.get("orderItems", data.get("items", []))
@@ -656,20 +661,27 @@ def get_order_by_number(
     if isinstance(raw_items, list):
         for item in raw_items:
             items.append({
-                "name": item.get("name", ""),
-                "qty": _safe_int(item.get("quantity", item.get("qty", 1)), default=1),
-                "price": _safe_float(item.get("price", 0), default=0.0),
+                "name": item.get("productName", item.get("name", "")),
+                "qty": _safe_int(item.get("productQuantity", item.get("quantity", item.get("qty", 1))), default=1),
+                "price": _safe_float(item.get("productPrice", item.get("price", 0)), default=0.0),
                 "raw": item,
             })
 
+    customer_name = ""
+    fname = data.get("customerFirstname", "")
+    sname = data.get("customerSurname", "")
+    if fname or sname:
+        customer_name = f"{fname} {sname}".strip()
+
     order = {
-        "order_no": data.get("orderNumber", order_number),
+        "order_no": data.get("id"),
         "date": str(created_raw)[:10] if created_raw else "",
         "status_code": status_code,
         "status": _ORDER_STATUS_MAP.get(status_code, f"Durum:{status_code}"),
         "total": f"{total:.2f} TL",
         "total_value": total,
-        "cargo_tracking_no": data.get("cargoTrackingNumber", data.get("trackingNumber", "")),
+        "customer": customer_name or data.get("customerName", "Bilinmiyor"),
+        "cargo_tracking_no": data.get("shippingTrackingCode", data.get("cargoTrackingNumber", data.get("trackingNumber", ""))),
         "items": items,
         "raw": data,
     }
