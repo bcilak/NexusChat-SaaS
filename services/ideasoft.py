@@ -30,7 +30,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-IDEASOFT_AUTH_ENDPOINT = "/oauth/v2/auth"
+IDEASOFT_AUTH_ENDPOINT = "/panel/auth"
 IDEASOFT_TOKEN_ENDPOINT = "/oauth/v2/token"
 IDEASOFT_API_BASE = "/api"
 
