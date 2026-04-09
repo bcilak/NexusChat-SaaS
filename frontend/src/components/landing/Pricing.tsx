@@ -30,7 +30,7 @@ function ContactDialog({ children, defaultPlan = "Başlangıç" }: { children: R
     setLoading(true);
     setError("");
     try {
-      await apiFetch("/api/contact/", {
+      await apiFetch("/api/contact", {
         method: "POST",
         body: JSON.stringify(formData)
       });
@@ -66,7 +66,7 @@ function ContactDialog({ children, defaultPlan = "Başlangıç" }: { children: R
         ) : (
           <form className="space-y-4" onSubmit={handleSubmit}>
             {error && <div className="text-red-500 text-sm whitespace-pre-wrap">{error}</div>}
-            
+
             <div className="space-y-1">
               <label className="text-sm font-medium">Ad Soyad</label>
               <input required name="name" value={formData.name} onChange={handleChange} className="w-full flex h-10 rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500" placeholder="Adınız Soyadınız" />
@@ -133,7 +133,7 @@ export function Pricing() {
             className="card bg-[#0f0f2a] border-white/5"
           >
             <h3 className="text-xl font-semibold mb-2 text-gray-300">Başlangıç</h3>
-            
+
             <p className="text-sm text-gray-400 mb-6">Sistemi denemek ve küçük projelerinizin potansiyelini görmek için ideal.</p>
             <ContactDialog defaultPlan="Başlangıç">
               <button className="btn btn-secondary w-full mb-8">Demo İste</button>
@@ -160,7 +160,7 @@ export function Pricing() {
               POPÜLER
             </div>
             <h3 className="text-xl font-semibold mb-2 text-indigo-400">Pro</h3>
-            
+
             <p className="text-sm text-gray-400 mb-6 mt-4">Tüm güçlü yapay zeka modellerine ihtiyaç duyan profesyoneller için.</p>
             <ContactDialog defaultPlan="Pro">
               <button className="btn btn-primary w-full mb-8 py-3">Demo İste</button>
@@ -185,7 +185,7 @@ export function Pricing() {
             className="card bg-[#0f0f2a] border-white/5"
           >
             <h3 className="text-xl font-semibold mb-2 text-gray-300">Kurumsal</h3>
-            
+
             <p className="text-sm text-gray-400 mb-6 mt-4">Özel fiyat teklifi almak ve projenize uygun çözümleri değerlendirmek için bizimle iletişime geçin.</p>
             <ContactDialog defaultPlan="Kurumsal">
               <button className="btn btn-secondary w-full mb-8">Bize Ulaşın</button>

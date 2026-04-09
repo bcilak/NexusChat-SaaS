@@ -26,7 +26,7 @@ class ContactRequestResponse(ContactRequestCreate):
     class Config:
         from_attributes = True
 
-@router.post("/", response_model=ContactRequestResponse, description="Genel form isteği oluştur")
+@router.post("", response_model=ContactRequestResponse, description="Genel form isteği oluştur")
 def create_contact_request(req: ContactRequestCreate, db: Session = Depends(get_db)):
     db_req = ContactRequest(
         name=req.name,

@@ -50,7 +50,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
             <p className="text-xs text-gray-500">Platform Yönetimi</p>
           </div>
         </div>
-        
+
         <div className="p-4 flex-1 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -59,11 +59,10 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
-                  isActive
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${isActive
                     ? "bg-gradient-to-r from-red-500/10 to-orange-500/10 text-red-600 dark:text-red-400 border border-red-500/20"
                     : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 {item.label}
@@ -73,7 +72,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="p-4 border-t border-gray-200 dark:border-white/10 space-y-2">
-           <Link
+          <Link
             href="/dashboard"
             className="flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
           >
@@ -102,11 +101,11 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-6 lg:p-10 relative">
-            {/* Background elements */}
-            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-500/5 dark:bg-red-500/10 rounded-full blur-[100px] pointer-events-none -mr-40 -mt-40" />
-            <div className="relative z-10">
-              {children}
-            </div>
+          {/* Background elements */}
+          <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-500/5 dark:bg-red-500/10 rounded-full blur-[100px] pointer-events-none -mr-40 -mt-40" />
+          <div className="relative z-10">
+            {children}
+          </div>
         </div>
       </main>
     </div>
