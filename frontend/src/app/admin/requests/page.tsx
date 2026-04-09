@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiFetch } from "@/lib/api";
+
+const formatDate = (dateStr: string) => {
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(dateStr));
+};
 
 interface ContactRequest {
   id: string;
@@ -96,7 +104,7 @@ export default function AdminRequestsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    {format(new Date(req.created_at), "dd MMM yyyy HH:mm", { locale: tr })}
+                    {formatDate(req.created_at)}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
@@ -151,7 +159,7 @@ export default function AdminRequestsPage() {
                 </div>
                 <div>
                   <span className="text-gray-400 block text-xs">Tarih</span>
-                  <span className="font-medium">{format(new Date(selectedReq.created_at), "dd MMM yyyy HH:mm", { locale: tr })}</span>
+                  <span className="font-medium">{formatDate(selectedReq.created_at)}</span>
                 </div>
               </div>
               
