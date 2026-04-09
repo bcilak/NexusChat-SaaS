@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { apiFetch } from "@/lib/api";
 
 function ContactDialog({ children, defaultPlan = "Başlangıç" }: { children: React.ReactNode, defaultPlan?: string }) {
   const [open, setOpen] = useState(false);
@@ -29,16 +30,10 @@ function ContactDialog({ children, defaultPlan = "Başlangıç" }: { children: R
     setLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/contact/", {
+      await apiFetch("/api/contact/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify(formData)
       });
-      if (!res.ok) {
-        throw new Error("Form gönderilirken bir hata oluştu.");
-      }
       setSuccess(true);
       setTimeout(() => {
         setOpen(false);
