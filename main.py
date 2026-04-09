@@ -17,7 +17,7 @@ except ImportError:
     print("⚠️  WARNING: slowapi not installed. Rate limiting disabled. Install with: pip install slowapi")
 
 from db.database import engine, Base
-from models import User, Bot, Document, ChatHistory, CrawledPage, BotIntegration, BotTool, InboxConversation, InboxMessage
+from models import User, Bot, Document, ChatHistory, CrawledPage, BotIntegration, BotTool, InboxConversation, InboxMessage, Ticket, ContactRequest
 
 # Load environment variables
 load_dotenv()
@@ -75,7 +75,7 @@ os.makedirs("./static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
-from routers import auth, bot, train, chat, widget, web_train, integration, analytics, admin, inbox, whatsapp, upload, bot_tools
+from routers import auth, bot, train, chat, widget, web_train, integration, analytics, admin, inbox, whatsapp, upload, bot_tools, contact
 
 app.include_router(auth.router)
 app.include_router(admin.router)
@@ -90,6 +90,7 @@ app.include_router(inbox.router)
 app.include_router(whatsapp.router)
 app.include_router(upload.router)
 app.include_router(bot_tools.router)
+app.include_router(contact.router)
 
 
 @app.get("/")

@@ -1,18 +1,131 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import Link from "next/link";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+
+function ContactDialog({ children, defaultPlan = "Başlangıç" }: { children: React.ReactNode, defaultPlan?: string }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    request_type: defaultPlan,
+    message: ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/contact/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      });
+      if (!res.ok) {
+        throw new Error("Form gönderilirken bir hata oluştu.");
+      }
+      setSuccess(true);
+      setTimeout(() => {
+        setOpen(false);
+        setSuccess(false);
+        setFormData(prev => ({ ...prev, name: "", email: "", phone: "", company: "", message: "" }));
+      }, 3000);
+    } catch (err: any) {
+      setError(err.message || "Bilinmeyen bir hata oluştu.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>İletişim & Demo</DialogTitle>
+          <DialogDescription>
+            Talebinizi iletin, ekibimiz en kısa sürede sizinle iletişime geçsin.
+          </DialogDescription>
+        </DialogHeader>
+        {success ? (
+          <div className="py-6 text-center text-green-500 font-medium">
+            Talebiniz başarıyla alındı. Teşekkür ederiz!
+          </div>
+        ) : (
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {error && <div className="text-red-500 text-sm whitespace-pre-wrap">{error}</div>}
+            
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Ad Soyad</label>
+              <input required name="name" value={formData.name} onChange={handleChange} className="w-full flex h-10 rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500" placeholder="Adınız Soyadınız" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">E-posta</label>
+              <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full flex h-10 rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500" placeholder="ornek@sirket.com" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Telefon</label>
+              <input name="phone" value={formData.phone} onChange={handleChange} className="w-full flex h-10 rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500" placeholder="05XX XXX XX XX" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Firma / Kurum</label>
+              <input name="company" value={formData.company} onChange={handleChange} className="w-full flex h-10 rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500" placeholder="Firma Adı" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Talep Türü / İlgilenilen Paket</label>
+              <select name="request_type" value={formData.request_type} onChange={handleChange} className="w-full flex h-10 rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500">
+                <option value="Başlangıç" className="bg-gray-900">Başlangıç Paketi</option>
+                <option value="Pro" className="bg-gray-900">Pro Paket</option>
+                <option value="Kurumsal" className="bg-gray-900">Kurumsal Paket</option>
+                <option value="Destek" className="bg-gray-900">Müşteri Desteği</option>
+                <option value="Diğer" className="bg-gray-900">Diğer</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Mesaj</label>
+              <textarea name="message" value={formData.message} onChange={handleChange} rows={3} className="w-full flex min-h-[80px] rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500" placeholder="Mesajınız..." />
+            </div>
+
+            <button type="submit" disabled={loading} className="btn btn-primary w-full py-2 flex items-center justify-center disabled:opacity-50">
+              {loading ? "Gönderiliyor..." : "Gönder"}
+            </button>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function Pricing() {
   return (
     <section id="pricing" className="py-24 relative z-10">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">Şeffaf Kredi Fiyatlandırması</h2>
+          <h2 className="text-3xl md:text-5xl font-bold mb-4">Paket İçeriklerimiz</h2>
           <p className="text-gray-400 max-w-xl mx-auto mb-10">
-            Kredi sistemi ile yalnızca kullandığınız kadar ödeyin. Model ağırlığına göre kredi harcayarak en yüksek verimi elde edin.
-            <br /><span className="text-sm text-indigo-400 mt-2 block">GPT-4o-mini (1 Kredi) | Claude 3.5 Sonnet (20 Kredi) | GPT-4o (30 Kredi) | Opus (100 Kredi)</span>
+            İhtiyacınıza uygun paketleri inceleyin ve projenize en uygun çözümleri değerlendirmek için bizimle iletişime geçin.
           </p>
         </div>
 
@@ -25,11 +138,11 @@ export function Pricing() {
             className="card bg-[#0f0f2a] border-white/5"
           >
             <h3 className="text-xl font-semibold mb-2 text-gray-300">Başlangıç</h3>
-            <div className="mb-6">
-              <span className="text-4xl font-bold">Ücretsiz</span>
-            </div>
+            
             <p className="text-sm text-gray-400 mb-6">Sistemi denemek ve küçük projelerinizin potansiyelini görmek için ideal.</p>
-            <Link href="/login" className="btn btn-secondary w-full mb-8">Ücretsiz Başla</Link>
+            <ContactDialog defaultPlan="Başlangıç">
+              <button className="btn btn-secondary w-full mb-8">Demo İste</button>
+            </ContactDialog>
 
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />1 Chatbot</li>
@@ -52,12 +165,11 @@ export function Pricing() {
               POPÜLER
             </div>
             <h3 className="text-xl font-semibold mb-2 text-indigo-400">Pro</h3>
-            <div className="mb-6 flex items-end gap-1">
-              <span className="text-4xl font-bold">$29</span>
-              <span className="text-gray-400 mb-1">/ay</span>
-            </div>
-            <p className="text-sm text-gray-400 mb-6">Tüm güçlü yapay zeka modellerine ihtiyaç duyan profesyoneller için.</p>
-            <Link href="/login" className="btn btn-primary w-full mb-8 py-3">Hemen Yükselt</Link>
+            
+            <p className="text-sm text-gray-400 mb-6 mt-4">Tüm güçlü yapay zeka modellerine ihtiyaç duyan profesyoneller için.</p>
+            <ContactDialog defaultPlan="Pro">
+              <button className="btn btn-primary w-full mb-8 py-3">Demo İste</button>
+            </ContactDialog>
 
             <ul className="space-y-4 text-sm text-gray-300">
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-400 shrink-0" />3 Chatbot</li>
@@ -78,11 +190,11 @@ export function Pricing() {
             className="card bg-[#0f0f2a] border-white/5"
           >
             <h3 className="text-xl font-semibold mb-2 text-gray-300">Kurumsal</h3>
-            <div className="mb-6">
-              <span className="text-2xl font-bold">Özel Fiyat</span>
-            </div>
-            <p className="text-sm text-gray-400 mb-6">Özel fiyat teklifi almak ve projenize uygun çözümleri değerlendirmek için bizimle iletişime geçin.</p>
-            <Link href="#contact" className="btn btn-secondary w-full mb-8">Bize Ulaşın</Link>
+            
+            <p className="text-sm text-gray-400 mb-6 mt-4">Özel fiyat teklifi almak ve projenize uygun çözümleri değerlendirmek için bizimle iletişime geçin.</p>
+            <ContactDialog defaultPlan="Kurumsal">
+              <button className="btn btn-secondary w-full mb-8">Bize Ulaşın</button>
+            </ContactDialog>
 
             <ul className="space-y-4 text-sm text-gray-400">
               <li className="flex gap-3"><Check className="w-5 h-5 text-indigo-500 shrink-0" />Sınırsız Chatbot</li>

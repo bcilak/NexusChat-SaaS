@@ -445,6 +445,24 @@ def _build_product_url(api_url: str, product: Dict[str, Any]) -> str:
         return f"{_normalize_api_url(api_url)}/{str(slug).lstrip('/')}"
     return ""
 
+def _extract_image_url(product: Dict[str, Any]) -> str:
+    # V1/V2 mix mapping
+    pic1 = product.get("picture1Path")
+    if pic1:
+        return f"https:{pic1}" if str(pic1).startswith("//") else str(pic1)
+    
+    images = product.get("images", [])
+    if isinstance(images, list) and len(images) > 0:
+        first_img = images[0]
+        if isinstance(first_img, dict):
+            img_url = first_img.get("originalUrl") or first_img.get("url") or first_img.get("filename")
+            if img_url:
+                if str(img_url).startswith("//"):
+                    return f"https:{img_url}"
+                return str(img_url)
+    return ""
+
+
 
 # ─────────────────────────────────────────────────────────────
 # Ürün işlemleri
@@ -490,6 +508,7 @@ def search_products(
             "sku": p.get("sku", p.get("stockCode", p.get("stock_code", ""))),
             "category": _extract_category(p),
             "url": _build_product_url(api_url, p),
+            "image_url": _extract_image_url(p),
             "raw": p,
         })
 
@@ -861,6 +880,8 @@ def format_products_for_chat(products: List[Dict[str, Any]]) -> str:
             lines.append(f"  - 📂 Kategori: {p['category']}")
         if p.get("url"):
             lines.append(f"  - 🔗 Ürün Linki: {p['url']}")
+        if p.get("image_url"):
+            lines.append(f"  - 🖼️ Görsel Linki: {p['image_url']}")
         lines.append("")
     return "\n".join(lines).strip()
 
