@@ -1,5 +1,5 @@
 ﻿/**
- * ChatGenius AI Widget Ã¢â‚¬â€ Premium Embeddable Chat Widget v2.1
+ * ChatGenius AI Widget — Premium Embeddable Chat Widget v2.1
  * Usage: <script src="https://yoursite.com/static/widget.js" data-bot-id="BOT_ID"></script>
  * Optional: data-api-base="https://custom-api-origin.com"
  */
@@ -17,7 +17,7 @@
     return;
   }
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Session Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Session --- */
   let sessionId =
     localStorage.getItem("nxc_session_" + botId) || _uid();
   localStorage.setItem("nxc_session_" + botId, sessionId);
@@ -26,7 +26,7 @@
     return "s_" + Math.random().toString(36).slice(2, 13);
   }
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Helper: Hex rengi biraz koyulaÃ…Å¸tÃ„Â±r / aÃƒÂ§Ã„Â±klaÃ…Å¸tÃ„Â±r Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Helper: Hex rengi biraz koyulaştır / açıklaştır --- */
   function _adjustColor(hex, amount) {
     const num = parseInt(hex.replace("#", ""), 16);
     const r = Math.min(255, Math.max(0, (num >> 16) + amount));
@@ -35,7 +35,7 @@
     return "#" + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
   }
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Helper: Hex'den RGB al Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Helper: Hex'den RGB al --- */
   function _hexToRgb(hex) {
     const num = parseInt(hex.replace("#", ""), 16);
     return {
@@ -45,13 +45,13 @@
     };
   }
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Helper: RGB'den rgba string oluÃ…Å¸tur Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Helper: RGB'den rgba string oluştur --- */
   function _rgba(hex, alpha) {
     const { r, g, b } = _hexToRgb(hex);
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Google Fonts (Inter) Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Google Fonts (Inter) --- */
   if (!document.getElementById("nxc-font")) {
     const link = document.createElement("link");
     link.id = "nxc-font";
@@ -61,7 +61,7 @@
     document.head.appendChild(link);
   }
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Styles Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Styles --- */
   const style = document.createElement("style");
   style.id = "nxc-style";
   style.textContent = `
@@ -73,7 +73,7 @@
       --nxc-border-radius: 20px;
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Toggle Button Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Toggle Button --- */
     #nxc-toggle {
       position: fixed;
       bottom: 24px;
@@ -103,7 +103,7 @@
     #nxc-toggle.open svg.icon-close { transform: scale(1) rotate(0deg); }
     #nxc-toggle svg.icon-close { position: absolute; transform: scale(0) rotate(90deg); }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Notification badge Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Notification badge --- */
     #nxc-badge {
       position: absolute;
       top: -3px;
@@ -126,7 +126,7 @@
       to   { transform: scale(1); }
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Main Container Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Main Container --- */
     #nxc-container {
       position: fixed;
       bottom: 96px;
@@ -169,7 +169,7 @@
       pointer-events: all;
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Header Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Header --- */
     .nxc-header {
       padding: 16px 20px;
       background: linear-gradient(135deg, var(--nxc-accent) 0%, var(--nxc-accent-end) 100%);
@@ -280,7 +280,7 @@
     .nxc-close-btn:hover { background: rgba(255,255,255,0.28); transform: scale(1.08); }
     .nxc-close-btn svg { width: 14px; height: 14px; fill: none; stroke: var(--nxc-text-on-accent); stroke-width: 2.5; stroke-linecap: round; }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Messages Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Messages --- */
     .nxc-messages {
       flex: 1;
       overflow-y: auto;
@@ -382,7 +382,7 @@
       padding: 2px 0;
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Suggestion Chips Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Suggestion Chips --- */
     .nxc-chips {
       display: flex;
       flex-wrap: wrap;
@@ -415,7 +415,7 @@
     }
     .nxc-chip:active { transform: scale(.97) translateY(0); }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Image preview Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Image preview --- */
     #nxc-preview {
       display: none;
       padding: 8px 16px;
@@ -440,7 +440,7 @@
     }
     #nxc-preview button:hover { background: rgba(239,68,68,.25); }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Input area Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Input area --- */
     .nxc-input-area {
       padding: 12px 14px;
       border-top: 1px solid rgba(255,255,255,0.06);
@@ -503,7 +503,7 @@
     .nxc-send:disabled { opacity: .4; cursor: not-allowed; transform: none; }
     .nxc-send svg { width: 17px; height: 17px; fill: var(--nxc-text-on-accent); }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Branding footer Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Branding footer --- */
     .nxc-branding {
       text-align: center;
       padding: 5px 0 9px;
@@ -515,7 +515,7 @@
     .nxc-branding a { color: rgba(255,255,255,0.32); text-decoration: none; transition: color .2s; }
     .nxc-branding a:hover { color: rgba(255,255,255,0.6); }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Date divider Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Date divider --- */
     .nxc-date-divider {
       display: flex;
       align-items: center;
@@ -533,7 +533,7 @@
       background: rgba(255,255,255,0.07);
     }
 
-    /* Ã¢â€â‚¬Ã¢â€â‚¬ Mobile full-screen Ã¢â€â‚¬Ã¢â€â‚¬ */
+    /* --- Mobile full-screen --- */
     @media (max-width: 480px) {
       #nxc-container {
         bottom: 0; right: 0;
@@ -546,17 +546,17 @@
   `;
   document.head.appendChild(style);
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Toggle Button Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Toggle Button --- */
   const toggle = document.createElement("button");
   toggle.id = "nxc-toggle";
-  toggle.setAttribute("aria-label", "Sohbeti aÃƒÂ§/kapat");
+  toggle.setAttribute("aria-label", "Sohbeti aç/kapat");
   toggle.innerHTML = `
     <svg class="icon-chat" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
     <svg class="icon-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
   `;
   document.body.appendChild(toggle);
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Main Container Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Main Container --- */
   const container = document.createElement("div");
   container.id = "nxc-container";
   container.setAttribute("role", "dialog");
@@ -569,7 +569,7 @@
         </div>
         <div class="nxc-header-text">
           <h3 id="nxc-bot-name">AI Asistan</h3>
-          <p><span class="nxc-online-dot"></span> Ãƒâ€¡evrimiÃƒÂ§i, anÃ„Â±nda yanÃ„Â±tlÃ„Â±yor</p>
+          <p><span class="nxc-online-dot"></span> Çevrimiçi, anında yanıtlıyor</p>
         </div>
       </div>
       <div class="nxc-header-actions">
@@ -580,18 +580,18 @@
     </div>
 
     <div class="nxc-messages" id="nxc-messages">
-      <div class="nxc-date-divider">BugÃƒÂ¼n</div>
-      <div class="nxc-msg bot" id="nxc-welcome">Merhaba! Size nasÃ„Â±l yardÃ„Â±mcÃ„Â± olabilirim?</div>
+      <div class="nxc-date-divider">Bugün</div>
+      <div class="nxc-msg bot" id="nxc-welcome">Merhaba! Size nasıl yardımcı olabilirim?</div>
       <div class="nxc-chips" id="nxc-chips"></div>
     </div>
 
     <div id="nxc-preview"></div>
 
     <div class="nxc-input-area">
-      <label for="nxc-file" class="nxc-attach" title="Resim yÃƒÂ¼kle">ÄŸÅ¸â€œÂ</label>
+      <label for="nxc-file" class="nxc-attach" title="Resim yükle">📎</label>
       <input type="file" id="nxc-file" accept="image/*" style="display:none"/>
-      <input type="text" id="nxc-input" class="nxc-input-field" placeholder="MesajÃ„Â±nÃ„Â±zÃ„Â± yazÃ„Â±n..." autocomplete="off"/>
-      <button id="nxc-send" class="nxc-send" aria-label="GÃƒÂ¶nder">
+      <input type="text" id="nxc-input" class="nxc-input-field" placeholder="Mesajınızı yazın..." autocomplete="off"/>
+      <button id="nxc-send" class="nxc-send" aria-label="Gönder">
         <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
       </button>
     </div>
@@ -599,23 +599,23 @@
   `;
   document.body.appendChild(container);
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Tema renklerini dinamik olarak uygula Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Tema renklerini dinamik olarak uygula --- */
   function applyThemeColor(hexColor) {
     const accent = hexColor;
-    // Gradient bitiÃ…Å¸ rengi: birincil renkten biraz farklÃ„Â±laÃ…Å¸tÃ„Â±r
-    const accentEnd = _adjustColor(accent, -30); // biraz koyulaÃ…Å¸tÃ„Â±r
+    // Gradient bitiş rengi: birincil renkten biraz farklılaştır
+    const accentEnd = _adjustColor(accent, -30); // biraz koyulaştır
     const { r, g, b } = _hexToRgb(accent);
 
-    // CSS deÃ„Å¸iÃ…Å¸kenlerini container'a set et
+    // CSS değişkenlerini container'a set et
     container.style.setProperty("--nxc-accent", accent);
     container.style.setProperty("--nxc-accent-end", accentEnd);
     container.style.setProperty("--nxc-accent-rgb", `${r},${g},${b}`);
 
-    // Toggle butonunu da gÃƒÂ¼ncelle (inline style ile CSS var override)
+    // Toggle butonunu da güncelle (inline style ile CSS var override)
     toggle.style.background = `linear-gradient(135deg, ${accent}, ${accentEnd})`;
     toggle.style.boxShadow = `0 8px 30px ${_rgba(accent, 0.45)}, 0 0 0 0 ${_rgba(accent, 0.3)}`;
 
-    // Toggle hover eventlerini de gÃƒÂ¼ncelle
+    // Toggle hover eventlerini de güncelle
     toggle.onmouseenter = () => {
       toggle.style.boxShadow = `0 12px 40px ${_rgba(accent, 0.65)}, 0 0 0 6px ${_rgba(accent, 0.18)}`;
     };
@@ -624,7 +624,7 @@
     };
   }
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Load bot config Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Load bot config --- */
   fetch(`${apiBase}/api/widget/${botId}/config`)
     .then((r) => r.json())
     .then((cfg) => {
@@ -637,7 +637,7 @@
         av.innerHTML = `<img src="${cfg.logo_url}" alt="logo"/>`;
       }
 
-      /* Theme color Ã¢â‚¬â€ tÃƒÂ¼m dinamik stilleri gÃƒÂ¼ncelle */
+      /* Theme color — tüm dinamik stilleri güncelle */
       if (cfg.theme_color) {
         applyThemeColor(cfg.theme_color);
       }
@@ -679,12 +679,12 @@
       document.getElementById("nxc-chips").style.display = "none";
     });
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Toggle open/close Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Toggle open/close --- */
   toggle.addEventListener("click", () => {
     const isOpen = container.classList.toggle("open");
     toggle.classList.toggle("open", isOpen);
     if (isOpen) {
-      // Badge'i kaldÃ„Â±r
+      // Badge'i kaldır
       const badge = toggle.querySelector("#nxc-badge");
       if (badge) badge.remove();
       setTimeout(() => document.getElementById("nxc-input").focus(), 350);
@@ -695,7 +695,7 @@
     toggle.classList.remove("open");
   });
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ File upload Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- File upload --- */
   let attachmentUrl = null;
   const fileInput = document.getElementById("nxc-file");
   const preview = document.getElementById("nxc-preview");
@@ -704,7 +704,7 @@
   fileInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    attachBtn.textContent = "Ã¢Å’â€º";
+    attachBtn.textContent = "⏳";
     const fd = new FormData();
     fd.append("file", file);
     try {
@@ -713,12 +713,12 @@
       if (data.url) {
         attachmentUrl = apiBase ? `${apiBase}${data.url}` : data.url;
         preview.style.display = "flex";
-        preview.innerHTML = `<img src="${attachmentUrl}" alt="preview"/> <button onclick="window.__nxcClear()">Ã¢Å“â€“ KaldÃ„Â±r</button>`;
+        preview.innerHTML = `<img src="${attachmentUrl}" alt="preview"/> <button onclick="window.__nxcClear()">✅ Kaldır</button>`;
       }
     } catch {
-      alert("Dosya yÃƒÂ¼klenemedi.");
+      alert("Dosya yüklenemedi.");
     } finally {
-      attachBtn.textContent = "ÄŸÅ¸â€œÂ";
+      attachBtn.textContent = "📎";
       fileInput.value = "";
     }
   });
@@ -729,13 +729,13 @@
     preview.innerHTML = "";
   };
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Zaman formatla Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Zaman formatla --- */
   function _formatTime() {
     const now = new Date();
     return now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
   }
 
-  /* Ã¢â€â‚¬Ã¢â€â‚¬ Send message Ã¢â€â‚¬Ã¢â€â‚¬ */
+  /* --- Send message --- */
   const inputEl = document.getElementById("nxc-input");
   const sendBtn = document.getElementById("nxc-send");
   const msgList = document.getElementById("nxc-messages");
@@ -781,7 +781,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question: text || "Bu gÃƒÂ¶rseli aÃƒÂ§Ã„Â±kla.",
+          question: text || "Bu görseli açıkla.",
           session_id: sessionId,
           attachment_url: sentUrl,
         }),
@@ -793,7 +793,7 @@
       const botBubble = document.createElement("div");
       botBubble.className = "nxc-msg bot";
       
-      let rawText = data.answer || "YanÃ„Â±t alÃ„Â±namadÃ„Â±.";
+      let rawText = data.answer || "Yanıt alınamadı.";
       let mdHtml = rawText
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
@@ -803,35 +803,35 @@
       
             if (rawText.toUpperCase().replace(/\s+/g,'').includes("[TICKET_FORM_RENDER]")) {        
         botBubble.innerHTML = `<div style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; font-family: inherit;">
-            <h4 style="margin:0 0 4px 0; color: #a5b4fc; font-size: 14px;">?? Hasar / Eksik Bildirimi</h4>
-            <p style="margin: 0 0 10px 0; color: #ccc; font-size: 12px;">Yetkiliye iletmek Ã¼zere bilgileri doldurun:</p>
-            <input type="text" id="t-order" placeholder="SipariÅŸ No (Ä°steÄŸe baÄŸlÄ±)" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px;" />
-            <input type="text" id="t-product" placeholder="Hangi ÃœrÃ¼n?" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px;" />
-            <textarea id="t-summary" placeholder="Sorunu kÄ±saca aÃ§Ä±klayÄ±n (kÄ±rÄ±k, vb.)" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px; font-family: inherit;" rows="2"></textarea>
-            <button id="t-submit" style="width: 100%; padding: 8px; border-radius: 6px; border: none; background: #6366f1; color: white; font-weight: 600; cursor: pointer; transition: 0.2s;">Talebi GÃ¶nder</button></div>`;
+            <h4 style="margin:0 0 4px 0; color: #a5b4fc; font-size: 14px;">🛠️ Hasar / Eksik Bildirimi</h4>
+            <p style="margin: 0 0 10px 0; color: #ccc; font-size: 12px;">Yetkiliye iletmek üzere bilgileri doldurun:</p>
+            <input type="text" id="t-order" placeholder="Sipariş No (İsteğe bağlı)" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px;" />
+            <input type="text" id="t-product" placeholder="Hangi Ürün?" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px;" />
+            <textarea id="t-summary" placeholder="Sorunu kısaca açıklayın (kırık, vb.)" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px; font-family: inherit;" rows="2"></textarea>
+            <button id="t-submit" style="width: 100%; padding: 8px; border-radius: 6px; border: none; background: #6366f1; color: white; font-weight: 600; cursor: pointer; transition: 0.2s;">Talebi Gönder</button></div>`;
         setTimeout(() => {
           const btn = botBubble.querySelector("#t-submit");
           if (btn) {
             btn.addEventListener("click", async () => {
               btn.disabled = true;
-              btn.innerText = "Ä°letiliyor...";
+              btn.innerText = "İletiliyor...";
               const order = botBubble.querySelector("#t-order").value;
               const product = botBubble.querySelector("#t-product").value;
               const summary = botBubble.querySelector("#t-summary").value;
               
               if (!product || !summary) {
-                btn.innerText = "LÃ¼tfen Ã¼rÃ¼n adÄ± ve sorunu yazÄ±n!";
+                btn.innerText = "Lütfen ürün adı ve sorunu yazın!";
                 btn.style.background = "#ef4444";
                 setTimeout(() => {
                   btn.disabled = false;
-                  btn.innerText = "Talebi GÃ¶nder";
+                  btn.innerText = "Talebi Gönder";
                   btn.style.background = "#6366f1";
                 }, 2000);
                 return;
               }
 
               try {
-                await fetch(`${apiBase}}/api/widget/${botId}/ticket`, {
+                await fetch(`${apiBase}/api/widget/${botId}/ticket`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
@@ -843,7 +843,7 @@
                 });
                 botBubble.innerHTML = `<div style="padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; color: #34d399; text-align: center; font-size: 13px;">✅ Talebiniz destek ekibimize iletildi. Numaranızı ve sorununuzu aldık.</div>`;
               } catch(e) {
-                btn.innerText = "Hata oluÅŸtu!";
+                btn.innerText = "Hata oluştu!";
               }
             });
           }
@@ -861,8 +861,8 @@
         const det = document.createElement("details");
         det.className = "nxc-sources";
         det.innerHTML =
-          `<summary>ÄŸÅ¸â€œâ€ ${data.sources.length} kaynak gÃƒÂ¶ster</summary>` +
-          data.sources.map((s) => `<div class="nxc-src">Ã¢â‚¬Â¢ ${s.file_name}</div>`).join("");
+          `<summary>📚 ${data.sources.length} kaynak göster</summary>` +
+          data.sources.map((s) => `<div class="nxc-src">• ${s.file_name}</div>`).join("");
         botBubble.appendChild(det);
       }
       msgList.appendChild(botBubble);
@@ -872,7 +872,7 @@
         localStorage.setItem("nxc_session_" + botId, sessionId);
       }
 
-      /* Pencere kapalÃ„Â±ysa badge gÃƒÂ¶ster */
+      /* Pencere kapalıysa badge göster */
       if (!container.classList.contains("open")) {
         let badge = toggle.querySelector("#nxc-badge");
         if (!badge) {
@@ -886,7 +886,7 @@
       typing.remove();
       const err = document.createElement("div");
       err.className = "nxc-msg bot";
-      err.textContent = "BaÃ„Å¸lantÃ„Â± hatasÃ„Â±. LÃƒÂ¼tfen tekrar deneyin.";
+      err.textContent = "Bağlantı hatası. Lütfen tekrar deneyin.";
       msgList.appendChild(err);
     }
 
