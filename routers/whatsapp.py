@@ -104,20 +104,24 @@ async def receive_webhook(request: Request, background_tasks: BackgroundTasks, d
                             from_number = msg["from"]
                             msg_type = msg.get("type", "text")
                             
+                            media_id = None
+                            filename = None
+
                             if msg_type == "text":
                                 text = msg["text"]["body"]
                             elif msg_type == "image":
                                 media_id = msg["image"]["id"]
                                 caption = msg["image"].get("caption", "")
                                 text = f"[📷 Resim] {caption}".strip() if caption else "[📷 Resim gönderildi]"
-                                # Download media in background for future use
-                                background_tasks.add_task(handle_media_message, media_id, msg_type, phone_number_id, db)
                             elif msg_type == "video":
+                                media_id = msg["video"]["id"]
                                 caption = msg["video"].get("caption", "")
                                 text = f"[🎥 Video] {caption}".strip() if caption else "[🎥 Video gönderildi]"
                             elif msg_type == "audio":
+                                media_id = msg["audio"]["id"]
                                 text = "[🎵 Sesli mesaj gönderildi]"
                             elif msg_type == "document":
+                                media_id = msg["document"]["id"]
                                 filename = msg["document"].get("filename", "belge")
                                 text = f"[📄 Belge: {filename}]"
                             elif msg_type == "location":
@@ -147,7 +151,8 @@ async def receive_webhook(request: Request, background_tasks: BackgroundTasks, d
                                 from_number, text, phone_number_id,
                                 db, background_tasks, msg_type,
                                 msg_id=msg.get("id"),
-                                media_id=msg.get("image", {}).get("id") if msg_type == "image" else None
+                                media_id=media_id,
+                                filename=filename
                             )
 
         return {"status": "ok"}
@@ -162,7 +167,7 @@ async def receive_webhook(request: Request, background_tasks: BackgroundTasks, d
 def process_whatsapp_message(
     phone_number: str, text: str, phone_number_id: str,
     db: Session, background_tasks: BackgroundTasks,
-    msg_type: str = "text", msg_id: str = None, media_id: str = None
+    msg_type: str = "text", msg_id: str = None, media_id: str = None, filename: str = None
 ):
     """Process an incoming WhatsApp message: save, RAG respond, and relay back."""
     if not phone_number_id:
@@ -178,14 +183,37 @@ def process_whatsapp_message(
     if media_id and bot.whatsapp_token:
         from services.whatsapp import download_whatsapp_media
         import os
-        media_data = download_whatsapp_media(media_id, bot.whatsapp_token)
+        import mimetypes
+        media_data, mime_type = download_whatsapp_media(media_id, bot.whatsapp_token, return_mime=True)
         if media_data:
+            ext = mimetypes.guess_extension(mime_type) if mime_type else ""
+            if not ext:
+                if msg_type == "image": ext = ".jpg"
+                elif msg_type == "video": ext = ".mp4"
+                elif msg_type == "audio": ext = ".mp3"
+                elif msg_type == "document": ext = ".pdf"
+            
+            safe_filename = f"{media_id}{ext}"
+            if filename: # if we have a real filename from document
+                import re
+                safe_name = re.sub(r'[^a-zA-Z0-9_\-\.]', '_', filename)
+                safe_filename = f"{media_id}_{safe_name}"
+
             os.makedirs(f"uploads/{bot.id}", exist_ok=True)
-            filepath = f"uploads/{bot.id}/{media_id}.jpg"
+            filepath = f"uploads/{bot.id}/{safe_filename}"
             with open(filepath, "wb") as f:
                 f.write(media_data)
             attachment_url = f"/{filepath}"
-            text = f"![Resim]({attachment_url})\n{text}"
+            
+            if msg_type == "image":
+                text = f"![Resim]({attachment_url})\n{text}"
+            elif msg_type == "document":
+                # For document, we can add a link so the dashboard user can click on it.
+                text = f"[{filename or 'Belge'}]({attachment_url})\n{text}"
+            elif msg_type == "video":
+                text = f"[Video]({attachment_url})\n{text}"
+            elif msg_type == "audio":
+                text = f"[Ses Kaydı]({attachment_url})\n{text}"
         
     # Get or Create Conversation
     conv = db.query(InboxConversation).filter(

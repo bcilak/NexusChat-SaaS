@@ -130,7 +130,7 @@ def mark_message_read(message_id: str, token: str, phone_id: str) -> bool:
         return False
 
 
-def download_whatsapp_media(media_id: str, token: str) -> Optional[bytes]:
+def download_whatsapp_media(media_id: str, token: str, return_mime: bool = False):
     """
     Download media from WhatsApp Cloud API.
     
@@ -138,11 +138,11 @@ def download_whatsapp_media(media_id: str, token: str) -> Optional[bytes]:
     1. GET media URL from media_id
     2. Download the actual file bytes
     
-    Returns raw bytes of the media file, or None on failure.
+    Returns raw bytes of the media file, or None on failure. If return_mime is True, returns (bytes, mime_type).
     """
     if not token or not media_id:
-        return None
-    
+        return (None, None) if return_mime else None
+        
     headers = {"Authorization": f"Bearer {token}"}
     
     try:
@@ -151,23 +151,26 @@ def download_whatsapp_media(media_id: str, token: str) -> Optional[bytes]:
             media_info_url = f"{GRAPH_API_BASE}/{media_id}"
             info_response = client.get(media_info_url, headers=headers)
             info_response.raise_for_status()
-            media_url = info_response.json().get("url")
-            
+            media_json = info_response.json()
+            media_url = media_json.get("url")
+            mime_type = media_json.get("mime_type")
+
             if not media_url:
                 print(f"No URL found for media_id: {media_id}")
-                return None
-            
+                return (None, None) if return_mime else None
+
             # Step 2: Download the actual file
             file_response = client.get(media_url, headers=headers)
             file_response.raise_for_status()
-            return file_response.content
             
+            return (file_response.content, mime_type) if return_mime else file_response.content
+
     except httpx.HTTPStatusError as e:
         print(f"WhatsApp Media API Error: {e.response.status_code} — {e.response.text}")
-        return None
+        return (None, None) if return_mime else None
     except Exception as e:
         print(f"Failed to download WhatsApp media: {e}")
-        return None
+        return (None, None) if return_mime else None
 
 
 def send_whatsapp_image(
