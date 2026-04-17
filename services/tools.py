@@ -134,8 +134,8 @@ class ECommerceProductSearchTool(BaseTool):
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ IdeaSoft SipariÅŸ Sorgulama Tool â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class IdeaSoftOrderInput(BaseModel):
-    query: str = Field(description="SipariÅŸ numarasÄ±, mÃ¼ÅŸteri adÄ± veya 'son sipariÅŸler' gibi sorgular")
-
+    query: str = Field(description="SipariÅŸ numarasÄ±, mÃ¼ÅŸteri adÄ± veya 'son sipariÅŸler' gibi genel sorgular. SipariÅŸ numarasÄ± iÃ§eriyorsa sadece rakamlarÄ± (Ã¶rn: 142822) iÃ§ermelidir.")
+    order_number: Optional[str] = Field(description="KullanÄ±cÄ± bir sipariÅŸ numarasÄ± verdiyse, sadece rakamlardan oluÅŸan sipariÅŸ numarasÄ±. Yoksa bÄ±rakÄ±n.", default=None)
 
 class IdeaSoftOrderSearchTool(BaseTool):
     name: str = "ideasoft_order_search"
@@ -151,13 +151,24 @@ class IdeaSoftOrderSearchTool(BaseTool):
     api_secret: str = ""    # client_secret
     meta_data_str: str = ""
 
-    def _run(self, query: str) -> str:
+    def _run(self, query: str, order_number: Optional[str] = None) -> str:
         try:
-            # SipariÅŸ numarasÄ± mÄ± yoksa genel sorgu mu?
-            query_stripped = query.strip()
-            # EÄŸer sadece rakam iÃ§eriyorsa sipariÅŸ numarasÄ± kabul et
-            if query_stripped.isdigit() or (query_stripped.startswith("#") and query_stripped[1:].isdigit()):
-                order_no = query_stripped.lstrip("#")
+            import re
+            order_no = order_number
+            if not order_no and query:
+                # Sadece rakamsal bir string mi veya iÃ§inde aÃ§Ä±kÃ§a sipariÅŸ numarasÄ± var mÄ±?
+                query_stripped = query.strip()
+                if query_stripped.isdigit():
+                    order_no = query_stripped
+                elif query_stripped.startswith("#") and query_stripped[1:].isdigit():
+                    order_no = query_stripped[1:]
+                else:
+                    # Metin iÃ§inde daha uzun rakam grubunu da dÃ¼ÅŸÃ¼nelim, en az 4 haneli
+                    match = re.search(r'\b\d{4,}\b', query)
+                    if match:
+                        order_no = match.group(0)
+
+            if order_no:
                 res = ideasoft_get_order_by_number(
                     api_url=self.api_url,
                     client_id=self.api_key,
@@ -167,17 +178,18 @@ class IdeaSoftOrderSearchTool(BaseTool):
                 )
                 order = res.get("order")
                 if order:
-                    lines = [f"**SipariÅŸ #{order['order_no']} DetaylarÄ±:**\n"]
+                    lines = [f"**SipariÅŸ #{order.get('order_no', order_no)} DetaylarÄ±:**\n"]
                     if order.get("date"):
                         lines.append(f"- ğŸ“… Tarih: {order['date']}")
-                    lines.append(f"- ğŸ”„ Durum: {order['status']}")
-                    lines.append(f"- ğŸ’° Toplam: {order['total']}")
+                    lines.append(f"- ğŸ”„ Durum: {order.get('status', 'Bilinmiyor')}")
+                    if order.get("total"):
+                        lines.append(f"- ğŸ’° Toplam: {order['total']}")
                     if order.get("cargo_tracking_no"):
                         lines.append(f"- ğŸšš Kargo Takip No: {order['cargo_tracking_no']}")
                     if order.get("items"):
                         lines.append("\n**ÃœrÃ¼nler:**")
                         for item in order["items"]:
-                            lines.append(f"  - {item['name']} Ã— {item['qty']} adet")
+                            lines.append(f"  - {item.get('name', 'Bilinmeyen ÃœrÃ¼n')} Ã— {item.get('qty', 1)} adet")
                     return "\n".join(lines)
                 return f"#{order_no} numaralÄ± sipariÅŸ bulunamadÄ±."
             else:
