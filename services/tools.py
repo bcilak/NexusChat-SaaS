@@ -28,6 +28,22 @@ class ECommerceProductSearchTool(BaseTool):
     api_secret: str = ""
     provider: str = ""
     meta_data_str: str = ""
+    bot_id: int = 0
+
+    def _update_meta(self, new_meta: str):
+        if new_meta and new_meta != self.meta_data_str and self.bot_id:
+            try:
+                from db.database import SessionLocal
+                from models.bot_integration import BotIntegration
+                db = SessionLocal()
+                intg = db.query(BotIntegration).filter_by(bot_id=self.bot_id, provider=self.provider).first()
+                if intg:
+                    intg.meta_data = new_meta
+                    db.commit()
+                db.close()
+                self.meta_data_str = new_meta
+            except Exception as e:
+                pass
     
     def _run(self, query: str) -> str:
         # â”€â”€ WooCommerce â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -69,12 +85,14 @@ class ECommerceProductSearchTool(BaseTool):
                     limit=5,
                     meta_data_str=self.meta_data_str,
                 )
+                if res and res.get("updated_meta_data_str"):
+                    self._update_meta(res["updated_meta_data_str"])
                 products = res.get("products", [])
                 return format_products_for_chat(products)
             except IdeaSoftError as e:
-                return f"IdeaSoft Ã¼rÃ¼n arama hatasÄ±: {str(e)}"
+                return f"Bunu kullanÄ±cÄ±ya AYNEN ilet: MaÄŸaza Ã¼rÃ¼n sisteminde (IdeaSoft) geçici bir baÄŸlantÄ±, yetki veya token sorunu var ({str(e)}). LÃ¼tfen bu hatayÄ± maÄŸaza sahiplerine raporlayÄ±n."
             except Exception as e:
-                return f"Beklenmedik hata: {str(e)}"
+                return f"Beklenmedik hata (KullanÄ±cÄ±ya bu durumu bildirin): {str(e)}"
 
         # â”€â”€ Ticimax â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         elif self.provider == "ticimax":
@@ -145,6 +163,22 @@ class IdeaSoftOrderSearchTool(BaseTool):
     api_key: str = ""       # client_id
     api_secret: str = ""    # client_secret
     meta_data_str: str = ""
+    bot_id: int = 0
+
+    def _update_meta(self, new_meta: str):
+        if new_meta and new_meta != self.meta_data_str and self.bot_id:
+            try:
+                from db.database import SessionLocal
+                from models.bot_integration import BotIntegration
+                db = SessionLocal()
+                intg = db.query(BotIntegration).filter_by(bot_id=self.bot_id, provider="ideasoft").first()
+                if intg:
+                    intg.meta_data = new_meta
+                    db.commit()
+                db.close()
+                self.meta_data_str = new_meta
+            except Exception as e:
+                pass
 
     def _run(self, query: str) -> str:
         try:
@@ -171,6 +205,8 @@ class IdeaSoftOrderSearchTool(BaseTool):
                     order_number=order_no,
                     meta_data_str=self.meta_data_str,
                 )
+                if res and res.get("updated_meta_data_str"):
+                    self._update_meta(res["updated_meta_data_str"])
                 order = res.get("order")
                 if order:
                     lines = [f"**SipariÅŸ #{order.get('order_no', order_no)} DetaylarÄ±:**\n"]
@@ -196,14 +232,16 @@ class IdeaSoftOrderSearchTool(BaseTool):
                     limit=5,
                     meta_data_str=self.meta_data_str,
                 )
+                if res and res.get("updated_meta_data_str"):
+                    self._update_meta(res["updated_meta_data_str"])
                 orders = res.get("orders", [])
                 return format_orders_for_chat(orders)
         except IdeaSoftError as e:
             if "HTTP 404" in str(e):
                 return f"Sisteme baktÄ±m, {order_no} numaralÄ± bir sipariÅŸiniz bulunmamaktadÄ±r. LÃ¼tfen numarayÄ± kontrol edip tekrar dener misiniz?"
-            return f"IdeaSoft sipariÅŸ sorgulama hatasÄ±: {str(e)}"
+            return f"BU MESAJI AYNEN Ä°LET: Åžu anda maÄŸaza sisteminde (IdeaSoft) geçici bir baÄŸlantÄ± sorunu veya yetki hatasÄ± yaÅŸanÄ±yor (Hata: {str(e)}). LÃ¼tfen durumu maÄŸaza yetkililerine bildirin."
         except Exception as e:
-            return f"Beklenmedik hata: {str(e)}"
+            return f"BU MESAJI AYNEN Ä°LET: SipariÅŸ kontrolÃ¼ sÄ±rasÄ±nda beklenmedik bir hata oluÅŸtu ({str(e)}). LÃ¼tfen maÄŸaza yÃ¶netimine bildirin."
 
 
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ E-Commerce Tool Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -230,6 +268,7 @@ def build_ecommerce_tools(bot_id: int, db) -> list:
                 api_secret=intg.api_secret or "",
                 provider=intg.provider,
                 meta_data_str=intg.meta_data or "",
+                bot_id=bot_id,
             ))
             # SipariÅŸ sorgulama sadece IdeaSoft'ta (diÄŸerleri iÃ§in ayrÄ± tool eklenebilir)
             if intg.provider == "ideasoft":
@@ -238,6 +277,7 @@ def build_ecommerce_tools(bot_id: int, db) -> list:
                     api_key=intg.api_key,
                     api_secret=intg.api_secret or "",
                     meta_data_str=intg.meta_data or "",
+                    bot_id=bot_id,
                 ))
     return tools
 
