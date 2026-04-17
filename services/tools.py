@@ -138,7 +138,7 @@ class IdeaSoftOrderInput(BaseModel):
 
 class IdeaSoftOrderSearchTool(BaseTool):
     name: str = "ideasoft_order_search"
-    description: str = "IdeaSoft maÄŸazasÄ±nda sipariÅŸ numarasÄ± ile durumunu veya son sipariÅŸleri sorgular. SipariÅŸ numarasÄ± girilirse kargo durumu de dÃ¶ner."
+    description: str = "IdeaSoft maÄŸazasÄ±nda sipariÅŸ numarasÄ± ile durumunu sorgular. Ã–NEMLÄ°: Bu aracÄ±n dÃ¶nÃ¼ÅŸ metnini KULLANICIYA AYNEN Ä°LET! EÄŸer 'bulunmuyor' diyorsa, kullanÄ±cÄ±ya 'sipariÅŸ bulunmuyor' de, asla kendi ezbere 'net bilgiye sahip deÄŸilim' ÅŸablonunu kullanma!"
     args_schema: Type[BaseModel] = IdeaSoftOrderInput
 
     api_url: str = ""
@@ -186,7 +186,7 @@ class IdeaSoftOrderSearchTool(BaseTool):
                         for item in order["items"]:
                             lines.append(f"  - {item.get('name', 'Bilinmeyen ÃœrÃ¼n')} Ã— {item.get('qty', 1)} adet")
                     return "\n".join(lines)
-                return f"#{order_no} numaralÄ± sipariÅŸ bulunamadÄ±."
+                return f"SipariÅŸ kayÄ±tlarÄ±mÄ±zda {order_no} numaralÄ± bir sipariÅŸ bulunmuyor."
             else:
                 # Genel sorgu â€” son sipariÅŸleri listele
                 res = ideasoft_get_orders(
@@ -199,6 +199,8 @@ class IdeaSoftOrderSearchTool(BaseTool):
                 orders = res.get("orders", [])
                 return format_orders_for_chat(orders)
         except IdeaSoftError as e:
+            if "HTTP 404" in str(e):
+                return f"Sisteme baktÄ±m, {order_no} numaralÄ± bir sipariÅŸiniz bulunmamaktadÄ±r. LÃ¼tfen numarayÄ± kontrol edip tekrar dener misiniz?"
             return f"IdeaSoft sipariÅŸ sorgulama hatasÄ±: {str(e)}"
         except Exception as e:
             return f"Beklenmedik hata: {str(e)}"
