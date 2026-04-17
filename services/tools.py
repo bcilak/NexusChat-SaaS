@@ -134,16 +134,11 @@ class ECommerceProductSearchTool(BaseTool):
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ IdeaSoft SipariÅŸ Sorgulama Tool â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class IdeaSoftOrderInput(BaseModel):
-    query: str = Field(description="SipariÅŸ numarasÄ±, mÃ¼ÅŸteri adÄ± veya 'son sipariÅŸler' gibi genel sorgular. SipariÅŸ numarasÄ± iÃ§eriyorsa sadece rakamlarÄ± (Ã¶rn: 142822) iÃ§ermelidir.")
-    order_number: Optional[str] = Field(description="KullanÄ±cÄ± bir sipariÅŸ numarasÄ± verdiyse, sadece rakamlardan oluÅŸan sipariÅŸ numarasÄ±. Yoksa bÄ±rakÄ±n.", default=None)
+    query: str = Field(description="SipariÅŸ numarasÄ± (Ã¶rn: 142822) veya 'son sipariÅŸler'.")
 
 class IdeaSoftOrderSearchTool(BaseTool):
     name: str = "ideasoft_order_search"
-    description: str = (
-        "IdeaSoft maÄŸazasÄ±nda sipariÅŸ sorgular. "
-        "SipariÅŸ numarasÄ± veya 'son sipariÅŸler' komutuyla kullanÄ±labilir. "
-        "SipariÅŸ durumu, kargo takibi ve sipariÅŸ detaylarÄ±nÄ± dÃ¶ndÃ¼rÃ¼r."
-    )
+    description: str = "IdeaSoft maÄŸazasÄ±nda sipariÅŸ numarasÄ± ile durumunu veya son sipariÅŸleri sorgular. SipariÅŸ numarasÄ± girilirse kargo durumu de dÃ¶ner."
     args_schema: Type[BaseModel] = IdeaSoftOrderInput
 
     api_url: str = ""
@@ -151,11 +146,11 @@ class IdeaSoftOrderSearchTool(BaseTool):
     api_secret: str = ""    # client_secret
     meta_data_str: str = ""
 
-    def _run(self, query: str, order_number: Optional[str] = None) -> str:
+    def _run(self, query: str) -> str:
         try:
             import re
-            order_no = order_number
-            if not order_no and query:
+            order_no = None
+            if query:
                 # Sadece rakamsal bir string mi veya iÃ§inde aÃ§Ä±kÃ§a sipariÅŸ numarasÄ± var mÄ±?
                 query_stripped = query.strip()
                 if query_stripped.isdigit():
