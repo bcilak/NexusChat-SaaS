@@ -176,6 +176,7 @@ const COLOR_PRESETS = [
 
 export default function BotDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { user } = useAuth();
   const botId = Number(params.id);
   const [bot, setBot] = useState<BotType | null>(null);
