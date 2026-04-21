@@ -125,17 +125,22 @@ export default function NewBotPage() {
                   onChange={e => update("model", e.target.value)}
                 >
                   <optgroup label="OpenAI (ChatGPT)">
+                    <option value="gpt-4.5-preview">GPT-4.5 Preview (En Yeni)</option>
                     <option value="gpt-4o">GPT-4o (Gelişmiş)</option>
-                    <option value="gpt-4o-mini">GPT-4o Mini (Hızlı)</option>
+                    <option value="gpt-4o-mini">GPT-4o Mini (Hızlı, Ekonomik)</option>
+                    <option value="o3-mini">o3-mini (Akıl Yürütme)</option>
+                    <option value="o1">o1 (Derin Düşünme)</option>
                   </optgroup>
                   <optgroup label="Google (Gemini)">
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (En Yeni, Hızlı)</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro (Gelişmiş)</option>
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                     <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                   </optgroup>
                   <optgroup label="Anthropic (Claude)">
-                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
-                    <option value="claude-3-opus-20240229">Claude 3 Opus</option>
-                    <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                    <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet (En Yeni)</option>
+                    <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Gelişmiş)</option>
+                    <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Hızlı)</option>
                   </optgroup>
                 </select>
               </div>

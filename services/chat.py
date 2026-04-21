@@ -211,13 +211,18 @@ def rag_chat(
     if user and llm_invoked:
         if "gpt-4o-mini" in model_name:
             deduction = 1
-        elif "gpt-4o" in model_name:
+        elif "gpt-4.5" in model_name or "o1" in model_name:
+            deduction = 60
+        elif "gpt-4o" in model_name or "o3-mini" in model_name:
             deduction = 30
         elif "claude-3-opus" in model_name:
             deduction = 100
-        elif "claude-3-5-sonnet" in model_name or "claude-3" in model_name:
+        elif "claude-3-7-sonnet" in model_name or "claude-3-5-sonnet" in model_name or "claude-3" in model_name:
+            deduction = 20
+        elif "gemini-2.5-pro" in model_name or "gemini-1.5-pro" in model_name:
             deduction = 20
         else:
+            # gemini flash models and others
             deduction = 2
             
         user.credits -= deduction
