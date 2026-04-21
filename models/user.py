@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from db.database import Base
 
 
@@ -23,4 +23,4 @@ class User(Base):
 
     bots = relationship("Bot", back_populates="owner", cascade="all, delete-orphan")
     # Alt kullanıcılar
-    sub_users = relationship("User", foreign_keys=[parent_id], backref="parent", lazy="dynamic")
+    sub_users = relationship("User", backref=backref("parent", remote_side=[id]), lazy="dynamic")
