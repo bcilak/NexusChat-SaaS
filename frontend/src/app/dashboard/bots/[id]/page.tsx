@@ -9,7 +9,7 @@ import {
   CheckCircle2, AlertCircle, Bot, MessageSquare, Zap, Smartphone,
   Eye, X, Send, ChevronRight, Sparkles
 } from "lucide-react";
-import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 import React from "react";
 
 interface BotType {
@@ -176,7 +176,7 @@ const COLOR_PRESETS = [
 
 export default function BotDetailPage() {
   const params = useParams();
-  const router = useRouter();
+  const { user } = useAuth();
   const botId = Number(params.id);
   const [bot, setBot] = useState<BotType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -184,9 +184,17 @@ export default function BotDetailPage() {
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [activeSection, setActiveSection] = useState<"appearance" | "ai" | "whatsapp">("appearance");
 
+  const canEdit = !user?.parent_id || user?.can_edit_bots;
+
   useEffect(() => {
     botsApi.get(botId).then(setBot).catch(console.error).finally(() => setLoading(false));
   }, [botId]);
+
+  useEffect(() => {
+    if (!loading && bot && !canEdit) {
+      router.replace(`/dashboard/bots/${botId}/inbox`);
+    }
+  }, [bot, loading, canEdit, botId, router]);
 
   const handleSave = async () => {
     if (!bot) return;
@@ -247,17 +255,18 @@ export default function BotDetailPage() {
   }
 
   const tabs = [
-    { label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` },
+    ...(canEdit ? [{ label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` }] : []),
     { label: "📥 Gelen Kutusu", path: `/dashboard/bots/${botId}/inbox` },
     { label: "💬 Geçmiş", path: `/dashboard/bots/${botId}/history` },
-    { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
-    { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
-    { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
-    { label: "🛠️ API Araçları", path: `/dashboard/bots/${botId}/tools` },
-    { label: "💬 Chat Test", path: `/dashboard/bots/${botId}/chat` },
-    { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
     { label: "🎟️ Destek Talepleri", path: `/dashboard/bots/${botId}/tickets` },
-
+    ...(canEdit ? [
+      { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
+      { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
+      { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
+      { label: "🛠️ API Araçları", path: `/dashboard/bots/${botId}/tools` },
+      { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
+    ] : []),
+    { label: "💬 Chat Test", path: `/dashboard/bots/${botId}/chat` },
   ];
 
   const accent = bot.theme_color || "#6366f1";
@@ -811,31 +820,33 @@ export default function BotDetailPage() {
       )}
 
       {/* Save Action Bar */}
-      <motion.div
-        initial={{ y: 100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
-        className="fixed bottom-0 left-0 right-0 md:left-64 z-50 p-4 bg-black/40 backdrop-blur-xl border-t border-white/10 flex justify-between items-center"
-      >
-        <div className="text-xs text-gray-500 hidden md:block">
-          Son değişiklikler kaydedilmedi · <span className="text-indigo-400">{bot.name}</span>
-        </div>
-        <div className="max-w-6xl w-full mx-auto flex justify-end">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-white shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] active:scale-95"
-            style={{ background: `linear-gradient(135deg, ${accent}, ${adjustColor(accent, -30)})`, boxShadow: `0 0 20px ${rgba(accent, 0.35)}` }}
-          >
-            {saving ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Save className="w-5 h-5" />
-            )}
-            {saving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
-          </button>
-        </div>
-      </motion.div>
+      {canEdit && (
+        <motion.div
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.2 }}
+          className="fixed bottom-0 left-0 right-0 md:left-64 z-50 p-4 bg-black/40 backdrop-blur-xl border-t border-white/10 flex justify-between items-center"
+        >
+          <div className="text-xs text-gray-500 hidden md:block">
+            Son değişiklikler kaydedilmedi · <span className="text-indigo-400">{bot.name}</span>
+          </div>
+          <div className="max-w-6xl w-full mx-auto flex justify-end">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-white shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] active:scale-95"
+              style={{ background: `linear-gradient(135deg, ${accent}, ${adjustColor(accent, -30)})`, boxShadow: `0 0 20px ${rgba(accent, 0.35)}` }}
+            >
+              {saving ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Save className="w-5 h-5" />
+              )}
+              {saving ? "Kaydediliyor..." : "Değişiklikleri Kaydet"}
+            </button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

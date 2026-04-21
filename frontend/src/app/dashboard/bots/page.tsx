@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import { Bot, Plus, Trash2, FileText, Clock, Component, Search, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 interface Bot {
   id: number;
   name: string;
@@ -18,9 +20,12 @@ interface Bot {
 
 export default function BotListPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [bots, setBots] = useState<Bot[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const isSubUser = user?.parent_id !== null;
 
   useEffect(() => {
     botsApi.list()
@@ -79,12 +84,14 @@ export default function BotListPage() {
               className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all"
             />
           </div>
-          <button 
-            onClick={() => router.push("/dashboard/bots/new")}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-gray-900 dark:text-white px-5 py-2.5 rounded-xl font-medium shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:shadow-[0_0_25px_rgba(99,102,241,0.4)] transition-all whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4" /> Yeni Ekle
-          </button>
+          {!isSubUser && (
+            <button 
+              onClick={() => router.push("/dashboard/bots/new")}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-gray-900 dark:text-white px-5 py-2.5 rounded-xl font-medium shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:shadow-[0_0_25px_rgba(99,102,241,0.4)] transition-all whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4" /> Yeni Ekle
+            </button>
+          )}
         </div>
       </div>
 
@@ -107,12 +114,16 @@ export default function BotListPage() {
           <p className="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
             Müşterilerinizle etkileşime geçecek, dokümanlarınızı okuyacak ve e-ticaret sitenizde satışları artıracak ilk yapay zeka asistanınızı hemen şimdi tasarlayın.
           </p>
-          <button
-            onClick={() => router.push("/dashboard/bots/new")}
-            className="inline-flex items-center gap-2 bg-white text-black hover:bg-gray-200 px-8 py-3.5 rounded-xl font-medium transition-colors"
-          >
-            <Plus className="w-5 h-5" /> Hemen Başla
-          </button>
+          {!isSubUser ? (
+            <button
+              onClick={() => router.push("/dashboard/bots/new")}
+              className="inline-flex items-center gap-2 bg-white text-black hover:bg-gray-200 px-8 py-3.5 rounded-xl font-medium transition-colors"
+            >
+              <Plus className="w-5 h-5" /> Hemen Başla
+            </button>
+          ) : (
+            <p className="text-gray-500 text-sm">Üst kullanıcınızın henüz asistanı bulunmuyor.</p>
+          )}
         </motion.div>
       ) : filteredBots.length === 0 ? (
         <div className="text-center py-20">
@@ -150,13 +161,15 @@ export default function BotListPage() {
                   </div>
                 </div>
                 
-                <button 
-                  onClick={(e) => handleDelete(e, bot.id, bot.name)}
-                  className="text-gray-500 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-all"
-                  title="Asistanı Sil"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {(!isSubUser || user?.can_edit_bots) && (
+                  <button 
+                    onClick={(e) => handleDelete(e, bot.id, bot.name)}
+                    className="text-gray-500 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-all"
+                    title="Asistanı Sil"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
               
               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 flex-grow mb-6 relative z-10 leading-relaxed">

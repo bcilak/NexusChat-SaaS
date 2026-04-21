@@ -17,8 +17,8 @@ interface SubUser {
   role: string;
   credits: number;
   can_use_api_tools: boolean;
-  can_remove_branding: boolean;
   can_create_users: boolean;
+  can_edit_bots: boolean;
   parent_id: number;
   created_at: string;
 }
@@ -32,6 +32,7 @@ const EMPTY_FORM = {
   can_use_api_tools: false,
   can_remove_branding: false,
   can_create_users: false,
+  can_edit_bots: false,
 };
 
 export default function SubUsersPage() {
@@ -99,6 +100,7 @@ export default function SubUsersPage() {
         can_use_api_tools: editUser.can_use_api_tools,
         can_remove_branding: editUser.can_remove_branding,
         can_create_users: editUser.can_create_users,
+        can_edit_bots: editUser.can_edit_bots,
       });
       setSubUsers(prev => prev.map(u => u.id === editUser.id ? editUser : u));
       setIsEditOpen(false);
@@ -127,6 +129,7 @@ export default function SubUsersPage() {
     api: user?.can_use_api_tools ?? false,
     branding: user?.can_remove_branding ?? false,
     create: user?.can_create_users ?? false,
+    edit_bots: user?.can_edit_bots ?? true, // If admin or primary user, they can edit bots
   };
 
   if (loading) {
@@ -170,7 +173,8 @@ export default function SubUsersPage() {
           Alt kullanıcılara yalnızca kendinizin sahip olduğu izinleri verebilirsiniz.
           API Araçları: <strong>{parentCan.api ? "✓" : "✗"}</strong> &nbsp;|&nbsp;
           Branding Kaldırma: <strong>{parentCan.branding ? "✓" : "✗"}</strong> &nbsp;|&nbsp;
-          Alt Kullanıcı Oluşturma: <strong>{parentCan.create ? "✓" : "✗"}</strong>
+          Alt Kullanıcı Oluşturma: <strong>{parentCan.create ? "✓" : "✗"}</strong> &nbsp;|&nbsp;
+          Bot Düzenleme: <strong>{parentCan.edit_bots ? "✓" : "✗"}</strong>
         </div>
       </div>
 
@@ -234,6 +238,7 @@ export default function SubUsersPage() {
                 <PermRow label="API Araçları" enabled={u.can_use_api_tools} />
                 <PermRow label="Branding Kaldırma" enabled={u.can_remove_branding} />
                 <PermRow label="Alt Kullanıcı Oluşturma" enabled={u.can_create_users} />
+                <PermRow label="Botları Düzenleyebilir" enabled={u.can_edit_bots} />
               </div>
             </motion.div>
           ))}
@@ -329,6 +334,12 @@ export default function SubUsersPage() {
                   disabled={!parentCan.create}
                   onChange={v => setForm(f => ({ ...f, can_create_users: v }))}
                 />
+                <PermToggle
+                  label="Botları Düzenleyebilir"
+                  value={form.can_edit_bots}
+                  disabled={!parentCan.edit_bots}
+                  onChange={v => setForm(f => ({ ...f, can_edit_bots: v }))}
+                />
               </div>
 
               {createError && (
@@ -414,6 +425,12 @@ export default function SubUsersPage() {
                   value={editUser.can_create_users}
                   disabled={!parentCan.create}
                   onChange={v => setEditUser({ ...editUser, can_create_users: v })}
+                />
+                <PermToggle
+                  label="Botları Düzenleyebilir"
+                  value={editUser.can_edit_bots}
+                  disabled={!parentCan.edit_bots}
+                  onChange={v => setEditUser({ ...editUser, can_edit_bots: v })}
                 />
               </div>
 

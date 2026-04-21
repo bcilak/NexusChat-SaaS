@@ -19,6 +19,7 @@ class User(Base):
     # Sub-user (alt kullanıcı) sistemi
     parent_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     can_create_users = Column(Boolean, default=False)
+    can_edit_bots = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     bots = relationship("Bot", back_populates="owner", cascade="all, delete-orphan")

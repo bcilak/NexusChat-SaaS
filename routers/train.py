@@ -44,7 +44,7 @@ async def upload_file(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
 
     ext = get_file_extension(file.filename)
     if ext not in ALLOWED_EXTENSIONS:
@@ -86,7 +86,7 @@ def train_bot(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
     result = train_all_documents(bot.id, db, UPLOAD_DIR, retrain=False)
     return result
 
@@ -97,7 +97,7 @@ def retrain_bot(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
     result = train_all_documents(bot.id, db, UPLOAD_DIR, retrain=True)
     return result
 
@@ -130,7 +130,7 @@ def delete_document(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
     doc = db.query(Document).filter(Document.id == doc_id, Document.bot_id == bot_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Döküman bulunamadı")

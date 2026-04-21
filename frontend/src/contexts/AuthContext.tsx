@@ -13,6 +13,7 @@ interface User {
   can_use_api_tools: boolean;
   can_remove_branding: boolean;
   can_create_users: boolean;
+  can_edit_bots: boolean;
   parent_id: number | null;
 }
 

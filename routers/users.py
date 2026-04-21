@@ -25,6 +25,7 @@ class CreateSubUserRequest(BaseModel):
     can_use_api_tools: Optional[bool] = False
     can_remove_branding: Optional[bool] = False
     can_create_users: Optional[bool] = False
+    can_edit_bots: Optional[bool] = False
 
 
 class UpdateSubUserRequest(BaseModel):
@@ -34,6 +35,7 @@ class UpdateSubUserRequest(BaseModel):
     can_use_api_tools: Optional[bool] = None
     can_remove_branding: Optional[bool] = None
     can_create_users: Optional[bool] = None
+    can_edit_bots: Optional[bool] = None
 
 
 def require_can_create_users(current_user: User = Depends(get_current_user)) -> User:
@@ -64,6 +66,7 @@ def list_sub_users(
             "can_use_api_tools": u.can_use_api_tools,
             "can_remove_branding": u.can_remove_branding,
             "can_create_users": u.can_create_users,
+            "can_edit_bots": getattr(u, 'can_edit_bots', False),
             "parent_id": u.parent_id,
             "created_at": u.created_at,
         }
@@ -101,6 +104,7 @@ def create_sub_user(
         can_use_api_tools=can_use_api,
         can_remove_branding=can_remove_brand,
         can_create_users=can_create,
+        can_edit_bots=req.can_edit_bots and getattr(current_user, 'can_edit_bots', False),
         parent_id=current_user.id,
     )
     db.add(new_user)
@@ -117,6 +121,7 @@ def create_sub_user(
         "can_use_api_tools": new_user.can_use_api_tools,
         "can_remove_branding": new_user.can_remove_branding,
         "can_create_users": new_user.can_create_users,
+        "can_edit_bots": getattr(new_user, 'can_edit_bots', False),
         "parent_id": new_user.parent_id,
         "created_at": new_user.created_at,
         "message": "Alt kullanıcı başarıyla oluşturuldu",
@@ -152,6 +157,8 @@ def update_sub_user(
         sub_user.can_remove_branding = req.can_remove_branding and current_user.can_remove_branding
     if req.can_create_users is not None:
         sub_user.can_create_users = req.can_create_users and current_user.can_create_users
+    if req.can_edit_bots is not None:
+        sub_user.can_edit_bots = req.can_edit_bots and getattr(current_user, 'can_edit_bots', False)
 
     db.commit()
     return {"message": "Alt kullanıcı güncellendi"}

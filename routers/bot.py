@@ -78,10 +78,16 @@ class BotResponse(BaseModel):
 
 
 # --- Helpers ---
-def get_user_bot(bot_id: int, user: User, db: Session) -> Bot:
-    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == user.id).first()
+def get_user_bot(bot_id: int, user: User, db: Session, require_can_edit: bool = False) -> Bot:
+    owner_id = user.parent_id if user.parent_id else user.id
+    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == owner_id).first()
     if not bot:
         raise HTTPException(status_code=404, detail="Bot bulunamadı")
+        
+    if require_can_edit:
+        if user.parent_id and not getattr(user, 'can_edit_bots', False):
+            raise HTTPException(status_code=403, detail="Bu işlemi yapmak için yetkiniz (Bot Düzenleme) bulunmuyor.")
+            
     return bot
 
 
@@ -117,6 +123,9 @@ def create_bot(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if current_user.parent_id:
+        raise HTTPException(status_code=403, detail="Alt kullanıcılar yeni bot oluşturamaz.")
+
     bot_data = req.model_dump(exclude_unset=False)
     if bot_data.get("prompt") is None:
         bot_data.pop("prompt", None)
@@ -133,7 +142,8 @@ def list_bots(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bots = db.query(Bot).filter(Bot.user_id == current_user.id).order_by(Bot.created_at.desc()).all()
+    owner_id = current_user.parent_id if current_user.parent_id else current_user.id
+    bots = db.query(Bot).filter(Bot.user_id == owner_id).order_by(Bot.created_at.desc()).all()
     return [bot_to_response(b) for b in bots]
 
 
@@ -154,7 +164,7 @@ def update_bot(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
     update_data = req.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(bot, key, value)
@@ -169,7 +179,7 @@ def delete_bot(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
     # Delete vector store collection
     try:
         vectordb = VectorDBService()
