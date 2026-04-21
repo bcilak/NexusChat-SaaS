@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { Bot, BarChart3, MessageSquarePlus, LogOut, Shield, Zap, ChevronRight } from "lucide-react";
+import { Bot, BarChart3, MessageSquarePlus, LogOut, Shield, Zap, ChevronRight, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -19,6 +19,10 @@ function Sidebar() {
 
   if (user?.role === "admin") {
     links.push({ label: "Admin Paneli", path: "/admin", icon: <Shield className="w-4 h-4" />, exact: false });
+  }
+
+  if (user?.can_create_users || user?.role === "admin") {
+    links.push({ label: "Alt Kullanıcılar", path: "/dashboard/sub-users", icon: <UsersRound className="w-4 h-4" />, exact: true });
   }
 
   const planColors: Record<string, string> = {

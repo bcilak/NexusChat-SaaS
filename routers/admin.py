@@ -1,13 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 from db.database import get_db
 from models.user import User
 from models.bot import Bot
 from models.document import Document
-from routers.auth import get_current_admin
+from routers.auth import get_current_admin, hash_password
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+
+# --- Schemas ---
+class CreateUserRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    plan: Optional[str] = "free"
+    role: Optional[str] = "user"
+    credits: Optional[int] = 500
+    can_use_api_tools: Optional[bool] = False
+    can_remove_branding: Optional[bool] = False
+    can_create_users: Optional[bool] = False
 
 @router.get("/stats")
 def get_platform_stats(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
@@ -34,10 +49,51 @@ def list_users(db: Session = Depends(get_db), admin: User = Depends(get_current_
             "credits": u.credits,
             "can_use_api_tools": u.can_use_api_tools,
             "can_remove_branding": u.can_remove_branding,
+            "can_create_users": u.can_create_users,
+            "parent_id": u.parent_id,
             "created_at": u.created_at
         }
         for u in users
     ]
+
+
+@router.post("/users")
+def create_user(req: CreateUserRequest, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    """Admin yeni bir kullanıcı oluşturur. can_create_users=True ise o kullanıcı da alt kullanıcı ekleyebilir."""
+    existing = db.query(User).filter(User.email == req.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Bu e-posta zaten kayıtlı")
+
+    new_user = User(
+        name=req.name,
+        email=req.email,
+        hashed_password=hash_password(req.password),
+        plan=req.plan,
+        role=req.role,
+        credits=req.credits,
+        can_use_api_tools=req.can_use_api_tools,
+        can_remove_branding=req.can_remove_branding,
+        can_create_users=req.can_create_users,
+        parent_id=admin.id,  # Oluşturan admin'in ID'si
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "id": new_user.id,
+        "name": new_user.name,
+        "email": new_user.email,
+        "plan": new_user.plan,
+        "role": new_user.role,
+        "credits": new_user.credits,
+        "can_use_api_tools": new_user.can_use_api_tools,
+        "can_remove_branding": new_user.can_remove_branding,
+        "can_create_users": new_user.can_create_users,
+        "parent_id": new_user.parent_id,
+        "created_at": new_user.created_at,
+        "message": "Kullanıcı başarıyla oluşturuldu"
+    }
 
 @router.put("/users/{user_id}")
 def update_user(user_id: int, payload: dict, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
@@ -55,9 +111,23 @@ def update_user(user_id: int, payload: dict, db: Session = Depends(get_db), admi
         user.can_use_api_tools = payload["can_use_api_tools"]
     if "can_remove_branding" in payload:
         user.can_remove_branding = payload["can_remove_branding"]
+    if "can_create_users" in payload:
+        user.can_create_users = payload["can_create_users"]
         
     db.commit()
     return {"message": "Kullanıcı güncellendi"}
+
+
+@router.delete("/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if user.role == "admin":
+        raise HTTPException(status_code=403, detail="Admin kullanıcılar silinemez")
+    db.delete(user)
+    db.commit()
+    return {"message": "Kullanıcı silindi"}
 
 @router.put("/users/{user_id}/plan")
 def update_user_plan(user_id: int, payload: dict, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):

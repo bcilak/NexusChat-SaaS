@@ -75,7 +75,7 @@ os.makedirs("./static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
-from routers import auth, bot, train, chat, widget, web_train, integration, analytics, admin, inbox, whatsapp, upload, bot_tools, contact
+from routers import auth, bot, train, chat, widget, web_train, integration, analytics, admin, inbox, whatsapp, upload, bot_tools, contact, users
 
 app.include_router(auth.router)
 app.include_router(admin.router)
@@ -91,6 +91,7 @@ app.include_router(whatsapp.router)
 app.include_router(upload.router)
 app.include_router(bot_tools.router)
 app.include_router(contact.router)
+app.include_router(users.router)
 
 
 @app.get("/")

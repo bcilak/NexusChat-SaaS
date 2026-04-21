@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from db.database import Base
 
@@ -16,6 +16,11 @@ class User(Base):
     credits = Column(Integer, default=500)
     can_use_api_tools = Column(Boolean, default=False)
     can_remove_branding = Column(Boolean, default=False)
+    # Sub-user (alt kullanıcı) sistemi
+    parent_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    can_create_users = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     bots = relationship("Bot", back_populates="owner", cascade="all, delete-orphan")
+    # Alt kullanıcılar
+    sub_users = relationship("User", foreign_keys=[parent_id], backref="parent", lazy="dynamic")

@@ -12,6 +12,8 @@ interface User {
   credits: number;
   can_use_api_tools: boolean;
   can_remove_branding: boolean;
+  can_create_users: boolean;
+  parent_id: number | null;
 }
 
 interface AuthContextType {

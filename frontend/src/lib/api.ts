@@ -212,7 +212,13 @@ export const adminApi = {
 
   getUsers: () => apiFetch(`/api/admin/users`),
 
-  updateUser: (userId: number, payload: Record<string, any>) =>
+  createUser: (data: Record<string, unknown>) =>
+    apiFetch(`/api/admin/users`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateUser: (userId: number, payload: Record<string, unknown>) =>
     apiFetch(`/api/admin/users/${userId}`, {
       method: "PUT",
       body: JSON.stringify(payload),
@@ -224,10 +230,33 @@ export const adminApi = {
       body: JSON.stringify({ plan }),
     }),
 
+  deleteUser: (userId: number) =>
+    apiFetch(`/api/admin/users/${userId}`, { method: "DELETE" }),
+
   getBots: () => apiFetch(`/api/admin/bots`),
 
   deleteBot: (botId: number) =>
     apiFetch(`/api/admin/bots/${botId}`, { method: "DELETE" }),
+};
+
+// --- Sub-Users (Kullanıcının kendi alt kullanıcıları) ---
+export const subUsersApi = {
+  list: () => apiFetch(`/api/users/sub-users`),
+
+  create: (data: Record<string, unknown>) =>
+    apiFetch(`/api/users/sub-users`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  update: (subUserId: number, data: Record<string, unknown>) =>
+    apiFetch(`/api/users/sub-users/${subUserId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  delete: (subUserId: number) =>
+    apiFetch(`/api/users/sub-users/${subUserId}`, { method: "DELETE" }),
 };
 
 // --- Inbox (Omnichannel & WhatsApp Live Chat) ---
