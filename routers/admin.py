@@ -73,8 +73,8 @@ def create_user(req: CreateUserRequest, db: Session = Depends(get_db), admin: Us
         credits=req.credits,
         can_use_api_tools=req.can_use_api_tools,
         can_remove_branding=req.can_remove_branding,
-        can_create_users=req.can_create_users,
-        parent_id=admin.id,  # Oluşturan admin'in ID'si
+        can_edit_bots=True, # Genellikle müşteri oluşturulduğu için baştan yetki tam olsun.
+        parent_id=None,  # Adminin oluşturduğu kullanıcı bağımsız bir müşteridir (kendi hesabı vardır).
     )
     db.add(new_user)
     db.commit()
