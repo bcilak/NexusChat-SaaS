@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { botsApi } from "@/lib/api";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   ArrowLeft, Settings, Palette, BrainCircuit, Save,
   CheckCircle2, AlertCircle, Bot, MessageSquare, Zap, Smartphone,
@@ -186,19 +187,23 @@ export default function BotDetailPage() {
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [activeSection, setActiveSection] = useState<"appearance" | "ai" | "whatsapp">("appearance");
 
-  // Eğer kullanıcı ana hesapsa VEYA botu düzenleme izni varsa VEYA bot doğrudan kendisine aitse düzenleyebilir.
-  const isOwner = bot?.user_id === user?.id;
-  const canEdit = !user?.parent_id || user?.can_edit_bots || isOwner;
+  // Yalnızca bot yüklendikten sonra sahiplik ve izin kontrolü yap
+  const isSubUser = !!user?.parent_id; // parent_id varsa alt kullanıcı
+  const isOwner = !loading && bot != null && bot.user_id === user?.id;
+  const hasEditPerm = user?.can_edit_bots === true;
+  // Düzenleme izni: alt kullanıcı değilse VEYA botu düzenleme yetkisi varsa VEYA botun sahibi kendisiyse
+  const canEdit = !isSubUser || hasEditPerm || isOwner;
 
   useEffect(() => {
     botsApi.get(botId).then(setBot).catch(console.error).finally(() => setLoading(false));
   }, [botId]);
 
   useEffect(() => {
-    if (!loading && bot && !canEdit) {
+    // Yönlendir: Bot yüklendi, kullanıcı kesin alt kullanıcı, botu kendisi değil ve edit yetkisi yok
+    if (!loading && bot != null && isSubUser && !hasEditPerm && !isOwner) {
       router.replace(`/dashboard/bots/${botId}/inbox`);
     }
-  }, [bot, loading, canEdit, botId, router]);
+  }, [bot, loading, isSubUser, hasEditPerm, isOwner, botId, router]);
 
   const handleSave = async () => {
     if (!bot) return;
