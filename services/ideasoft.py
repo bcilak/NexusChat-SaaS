@@ -873,17 +873,17 @@ def format_products_for_chat(products: List[Dict[str, Any]]) -> str:
 
     lines = ["**Bulunan Ürünler:**", ""]
     for p in products:
-        lines.append(f"- **{p['name']}**")
-        lines.append(f"  - 💰 Fiyat: {p['price']}")
-        lines.append(f"  - 📦 Stok: {p['stock']}")
-        if p.get("sku"):
-            lines.append(f"  - 🏷️ SKU: {p['sku']}")
-        if p.get("category"):
-            lines.append(f"  - 📂 Kategori: {p['category']}")
-        if p.get("url"):
-            lines.append(f"  - 🔗 Ürün Linki: {p['url']}")
         if p.get("image_url"):
-            lines.append(f"  - 🖼️ Görsel Linki: {p['image_url']}")
+            lines.append(f"![{p['name']}]({p['image_url']})")
+        if p.get("url"):
+            lines.append(f"**[{p['name']}]({p['url']})**")
+        else:
+            lines.append(f"**{p['name']}**")
+            
+        lines.append(f"💰 Fiyat: {p['price']}")
+        lines.append(f"📦 Stok: {p['stock']}")
+        if p.get("sku"):
+            lines.append(f"🏷️ SKU: {p['sku']}")
         lines.append("")
     return "\n".join(lines).strip()
 

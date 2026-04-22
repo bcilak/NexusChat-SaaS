@@ -807,6 +807,8 @@
       let rawText = data.answer || "Yanıt alınamadı.";
       let mdHtml = rawText
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/!\[([^\]]*)\]\((.*?)\)/g, "<img src='$2' alt='$1' style='max-width:100%; border-radius:8px; margin-top:8px;'/>")
+        .replace(/\[([^\]]+)\]\((.*?)\)/g, "<a href='$2' target='_blank' style='color:var(--nxc-accent); font-weight:600; text-decoration:none;'>$1</a>")
         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.*?)\*/g, "<em>$1</em>")
         .replace(/\n\n/g, "<br><br>")

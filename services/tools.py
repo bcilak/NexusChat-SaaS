@@ -61,13 +61,25 @@ class ECommerceProductSearchTool(BaseTool):
                     products = res.json()
                     if not products:
                         return f"'{query}' ile eÅŸleÅŸen Ã¼rÃ¼n bulunamadÄ±."
-                    lines = ["**Bulunan ÃœrÃ¼nler:**\n"]
+                    lines = ["**Bulunan Ürünler:**\n"]
                     for p in products:
                         stock = "Stokta Var" if p.get("in_stock") else "Stokta Yok"
                         price = p.get('price', '?')
-                        lines.append(f"- **{p.get('name')}**")
-                        lines.append(f"  - ğŸ’° Fiyat: {price} TL")
-                        lines.append(f"  - ğŸ“¦ Stok: {stock}")
+                        url = p.get('permalink')
+                        images = p.get('images', [])
+                        
+                        if images and len(images) > 0:
+                            img_url = images[0].get('src')
+                            if img_url:
+                                lines.append(f"![{p.get('name')}]({img_url})")
+                                
+                        if url:
+                            lines.append(f"**[{p.get('name')}]({url})**")
+                        else:
+                            lines.append(f"**{p.get('name')}**")
+                            
+                        lines.append(f"💰 Fiyat: {price} TL")
+                        lines.append(f"📦 Stok: {stock}")
                         lines.append("")
                     return "\n".join(lines)
                 return f"MaÄŸaza API'sinden hata alÄ±ndÄ± (HTTP {res.status_code})."
