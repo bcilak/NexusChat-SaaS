@@ -32,6 +32,7 @@ interface BotType {
   whatsapp_token: string | null;
   whatsapp_verify_token: string | null;
   whatsapp_welcome_message: string | null;
+  user_id: number;
 }
 
 /* ── Renk yardımcı fonksiyonlar ── */
@@ -185,7 +186,9 @@ export default function BotDetailPage() {
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [activeSection, setActiveSection] = useState<"appearance" | "ai" | "whatsapp">("appearance");
 
-  const canEdit = !user?.parent_id || user?.can_edit_bots;
+  // Eğer kullanıcı ana hesapsa VEYA botu düzenleme izni varsa VEYA bot doğrudan kendisine aitse düzenleyebilir.
+  const isOwner = bot?.user_id === user?.id;
+  const canEdit = !user?.parent_id || user?.can_edit_bots || isOwner;
 
   useEffect(() => {
     botsApi.get(botId).then(setBot).catch(console.error).finally(() => setLoading(false));

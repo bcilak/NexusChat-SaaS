@@ -75,6 +75,7 @@ class BotResponse(BaseModel):
     whatsapp_welcome_message: Optional[str]
     document_count: int = 0
     created_at: str
+    user_id: int
 
 
 # --- Helpers ---
@@ -120,6 +121,7 @@ def bot_to_response(bot: Bot) -> BotResponse:
         whatsapp_welcome_message=bot.whatsapp_welcome_message,
         document_count=len(bot.documents) if bot.documents else 0,
         created_at=bot.created_at.isoformat() if bot.created_at else "",
+        user_id=bot.user_id,
     )
 
 
