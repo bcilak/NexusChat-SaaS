@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ChatGenius AI Widget — Premium Embeddable Chat Widget v2.1
  * Usage: <script src="https://yoursite.com/static/widget.js" data-bot-id="BOT_ID"></script>
  * Optional: data-api-base="https://custom-api-origin.com"
@@ -541,6 +541,17 @@
         max-width: 100vw; max-height: 100dvh;
         border-radius: 0;
         transform-origin: bottom center;
+      }
+      /* Chat açıkken toggle butonunu gizle — input'un üzerine gelmesin */
+      #nxc-toggle.open {
+        display: none !important;
+      }
+      /* iOS safe-area (home indicator) için input alanına boşluk */
+      .nxc-input-area {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      }
+      .nxc-branding {
+        padding-bottom: calc(9px + env(safe-area-inset-bottom, 0px));
       }
     }
   `;
