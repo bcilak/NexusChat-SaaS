@@ -20,7 +20,7 @@ class ECommerceProductSearchInput(BaseModel):
 
 class ECommerceProductSearchTool(BaseTool):
     name: str = "ecommerce_product_search"
-    description: str = "Mağazadaki ürün fiyat, stok ve özelliklerini arar. DÖNEN SONUÇTAKİ ÜRÜN LİNKLERİNİ (🔗 Ürün Linki) KULLANICIYA MUTLAKA İLET!"
+    description: str = "Mağazadaki ürün fiyat, stok ve özelliklerini arar. ÇOK ÖNEMLİ: Bu aracın döndürdüğü yanıttaki '![Ürün Adı](image_url)' (görsel) ve '[Ürün Adı](url)' (link) formatlarını ASLA DEĞİŞTİRME veya ÖZETLEME! Yanıtına bu markdown kodlarını BİREBİR KOPYALAYARAK ekle, böylece kullanıcı resmi ve tıklanabilir linki görebilir."
     args_schema: Type[BaseModel] = ECommerceProductSearchInput
     
     api_url: str = ""
