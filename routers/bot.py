@@ -79,13 +79,20 @@ class BotResponse(BaseModel):
 
 # --- Helpers ---
 def get_user_bot(bot_id: int, user: User, db: Session, require_can_edit: bool = False) -> Bot:
-    owner_id = user.parent_id if user.parent_id else user.id
-    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == owner_id).first()
+    allowed_ids = [user.id]
+    if user.parent_id:
+        allowed_ids.append(user.parent_id)
+
+    if user.role == "admin":
+        bot = db.query(Bot).filter(Bot.id == bot_id).first()
+    else:
+        bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id.in_(allowed_ids)).first()
+        
     if not bot:
         raise HTTPException(status_code=404, detail="Bot bulunamadı")
         
     if require_can_edit:
-        if user.parent_id and not getattr(user, 'can_edit_bots', False):
+        if bot.user_id != user.id and user.parent_id and not getattr(user, 'can_edit_bots', False):
             raise HTTPException(status_code=403, detail="Bu işlemi yapmak için yetkiniz (Bot Düzenleme) bulunmuyor.")
             
     return bot
@@ -142,8 +149,11 @@ def list_bots(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    owner_id = current_user.parent_id if current_user.parent_id else current_user.id
-    bots = db.query(Bot).filter(Bot.user_id == owner_id).order_by(Bot.created_at.desc()).all()
+    allowed_ids = [current_user.id]
+    if current_user.parent_id:
+        allowed_ids.append(current_user.parent_id)
+        
+    bots = db.query(Bot).filter(Bot.user_id.in_(allowed_ids)).order_by(Bot.created_at.desc()).all()
     return [bot_to_response(b) for b in bots]
 
 
