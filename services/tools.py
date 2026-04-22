@@ -1,4 +1,4 @@
-﻿import json
+import json
 import requests as http_requests
 from typing import Type, Any, Optional
 from langchain_core.tools import BaseTool
@@ -20,7 +20,7 @@ class ECommerceProductSearchInput(BaseModel):
 
 class ECommerceProductSearchTool(BaseTool):
     name: str = "ecommerce_product_search"
-    description: str = "MaÄŸazada verilen anahtar kelimeye gÃ¶re Ã¼rÃ¼n fiyat, stok ve Ã¶zelliklerini canlÄ± arar."
+    description: str = "Mağazadaki ürün fiyat, stok ve özelliklerini arar. DÖNEN SONUÇTAKİ ÜRÜN LİNKLERİNİ (🔗 Ürün Linki) KULLANICIYA MUTLAKA İLET!"
     args_schema: Type[BaseModel] = ECommerceProductSearchInput
     
     api_url: str = ""
