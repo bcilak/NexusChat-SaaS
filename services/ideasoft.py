@@ -476,10 +476,12 @@ def search_products(
     limit: int = 10,
     meta_data_str: Optional[str] = None,
 ) -> Dict[str, Any]:
-    params = {
-        "q": query,
-        "limit": limit,
-    }
+    # IdeaSoft API "q" parametresini array formatında bekler: q[]=değer
+    # requests kütüphanesinde bunu tuple listesiyle gönderiyoruz.
+    params = [
+        ("q[]", query),
+        ("limit", limit),
+    ]
 
     result = _api_request(
         api_url=api_url,
