@@ -13,11 +13,23 @@ import datetime
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
-@router.get("/bot/{bot_id}/stats")
-def get_bot_stats(bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
+
+def get_authorized_bot(bot_id: int, user: User, db: Session) -> Bot:
+    """Bot erişim kontrolü: sahip veya alt kullanıcı (parent_id üzerinden) erişebilir."""
+    allowed_ids = [user.id]
+    if user.parent_id:
+        allowed_ids.append(user.parent_id)
+    if user.role == "admin":
+        bot = db.query(Bot).filter(Bot.id == bot_id).first()
+    else:
+        bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id.in_(allowed_ids)).first()
     if not bot:
         raise HTTPException(status_code=404, detail="Bot bulunamadı veya yetkisiz erişim")
+    return bot
+
+@router.get("/bot/{bot_id}/stats")
+def get_bot_stats(bot_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    bot = get_authorized_bot(bot_id, current_user, db)
         
     total_messages = db.query(ChatHistory).filter(ChatHistory.bot_id == bot_id).count()
     fallbacks = db.query(ChatHistory).filter(ChatHistory.bot_id == bot_id, ChatHistory.is_fallback == True).count()
@@ -33,9 +45,7 @@ def get_bot_stats(bot_id: int, db: Session = Depends(get_db), current_user: User
 
 @router.get("/bot/{bot_id}/fallbacks")
 def get_fallback_questions(bot_id: int, limit: int = 50, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
-    if not bot:
-        raise HTTPException(status_code=404, detail="Yetkisiz erişim")
+    bot = get_authorized_bot(bot_id, current_user, db)
         
     records = db.query(ChatHistory).filter(
         ChatHistory.bot_id == bot_id, 
@@ -54,9 +64,7 @@ def get_chat_history(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
-    if not bot:
-        raise HTTPException(status_code=404, detail="Bot bulunamadı veya yetkisiz erişim")
+    bot = get_authorized_bot(bot_id, current_user, db)
     
     query = db.query(ChatHistory).filter(ChatHistory.bot_id == bot_id)
     
@@ -117,9 +125,7 @@ def analyze_chat_history(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
-    if not bot:
-        raise HTTPException(status_code=404, detail="Bot bulunamadı veya yetkisiz erişim")
+    bot = get_authorized_bot(bot_id, current_user, db)
     
     query = db.query(ChatHistory).filter(ChatHistory.bot_id == bot_id)
     

@@ -6,6 +6,7 @@ import { botsApi, trainingApi, webTrainApi } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Bot, UploadCloud, FileText, FileSpreadsheet, FileIcon, Trash2, Globe, Server, CheckCircle2, AlertCircle, Play, RotateCw } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CrawledPage {
   id: number;
@@ -27,6 +28,7 @@ export default function TrainingPage() {
   const params = useParams();
   const router = useRouter();
   const botId = Number(params.id);
+  const { user } = useAuth();
   const [botName, setBotName] = useState("");
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,10 @@ export default function TrainingPage() {
   const [training, setTraining] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [dragOver, setDragOver] = useState(false);
+
+  // Yetki kontrolü
+  const isSubUser = !!user?.parent_id;
+  const canEdit = !isSubUser || user?.can_edit_bots === true;
   
   // Web Training States
   const [trainingMode, setTrainingMode] = useState<"file" | "web">("file");
@@ -57,6 +63,13 @@ export default function TrainingPage() {
     loadDocs();
     loadWebPages();
   }, [botId, loadDocs, loadWebPages]);
+
+  // Alt kullanıcı yetkisi yoksa yönlendir
+  useEffect(() => {
+    if (user !== undefined && isSubUser && !canEdit) {
+      router.replace(`/dashboard/bots/${botId}/inbox`);
+    }
+  }, [user, isSubUser, canEdit, botId, router]);
 
   // Canlı tarama takibi için her 5 saniyede bir sayfaları güncelle
   useEffect(() => {
@@ -150,17 +163,18 @@ export default function TrainingPage() {
   };
 
   const tabs = [
-    { label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` },
+    ...(canEdit ? [{ label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` }] : []),
     { label: "📥 Gelen Kutusu", path: `/dashboard/bots/${botId}/inbox` },
     { label: "💬 Geçmiş", path: `/dashboard/bots/${botId}/history` },
-    { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
-    { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
-    { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
-    { label: "🛠️ API Araçları", path: `/dashboard/bots/${botId}/tools` },
-    { label: "💬 Chat Test", path: `/dashboard/bots/${botId}/chat` },
-    { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
     { label: "🎟️ Destek Talepleri", path: `/dashboard/bots/${botId}/tickets` },
-
+    ...(canEdit ? [
+      { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
+      { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
+      { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
+      { label: "🛠️ API Araçları", path: `/dashboard/bots/${botId}/tools` },
+      { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
+    ] : []),
+    { label: "💬 Chat Test", path: `/dashboard/bots/${botId}/chat` },
   ];
 
   const getFileIcon = (type: string) => {

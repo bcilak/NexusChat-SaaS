@@ -25,6 +25,9 @@ export default function HistoryPage() {
   const botId = Number(params.id);
   const { user } = useAuth();
 
+  const isSubUser = !!user?.parent_id;
+  const canEdit = !isSubUser || user?.can_edit_bots === true;
+
   const [botName, setBotName] = useState("");
   const [records, setRecords] = useState<HistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,17 +130,18 @@ export default function HistoryPage() {
   };
 
   const tabs = [
-    { label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` },
+    ...(canEdit ? [{ label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` }] : []),
     { label: "📥 Gelen Kutusu", path: `/dashboard/bots/${botId}/inbox` },
     { label: "💬 Geçmiş", path: `/dashboard/bots/${botId}/history` },
-    { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
-    { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
-    { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
-    { label: "🛠️ API Araçları", path: `/dashboard/bots/${botId}/tools` },
-    { label: "💭 Chat Test", path: `/dashboard/bots/${botId}/chat` },
-    { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
     { label: "🎟️ Destek Talepleri", path: `/dashboard/bots/${botId}/tickets` },
-
+    ...(canEdit ? [
+      { label: "🔌 Entegrasyonlar", path: `/dashboard/bots/${botId}/integrations` },
+      { label: "📈 Analitikler", path: `/dashboard/bots/${botId}/analytics` },
+      { label: "📚 Eğitim", path: `/dashboard/bots/${botId}/training` },
+      { label: "🛠️ API Araçları", path: `/dashboard/bots/${botId}/tools` },
+      { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
+    ] : []),
+    { label: "💬 Chat Test", path: `/dashboard/bots/${botId}/chat` },
   ];
 
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
