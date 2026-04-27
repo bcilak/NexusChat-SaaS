@@ -27,6 +27,7 @@ export default function SecurityAdminPage() {
   const [bannedIps, setBannedIps] = useState<BannedIP[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "spam" | "banned">("all");
+  const [selectedBotId, setSelectedBotId] = useState<number | "all">("all");
   const [error, setError] = useState<string | null>(null);
 
   const [banInput, setBanInput] = useState("");
@@ -82,6 +83,17 @@ export default function SecurityAdminPage() {
       </div>
     );
   }
+
+  const uniqueBots = Array.from(new Set(chatLogs.map(l => l.bot_id))).map(id => {
+    return {
+      id,
+      name: chatLogs.find(l => l.bot_id === id)?.bot_name || "Bilinmeyen Bot"
+    }
+  });
+
+  const filteredLogs = selectedBotId === "all" 
+    ? chatLogs 
+    : chatLogs.filter(log => log.bot_id === selectedBotId);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -143,10 +155,24 @@ export default function SecurityAdminPage() {
               <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                 <Search className="w-4 h-4 text-gray-500" /> {activeTab === "all" ? "Gelen Tüm İstekler" : "Son Engellenen Spam İstekler (Kredi Tüketmeyen)"}
               </h2>
+              
+              {/* Bot Filtresi */}
+              {chatLogs.length > 0 && (
+                <select
+                  value={selectedBotId}
+                  onChange={(e) => setSelectedBotId(e.target.value === "all" ? "all" : Number(e.target.value))}
+                  className="px-3 py-1.5 bg-white dark:bg-[#0a0a1a] border border-gray-200 dark:border-white/10 rounded-lg text-sm font-medium focus:ring-2 focus:ring-red-500/50 outline-none transition-all text-gray-900 dark:text-white"
+                >
+                  <option value="all">Tüm Botlar</option>
+                  {uniqueBots.map(bot => (
+                    <option key={bot.id} value={bot.id}>{bot.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
-            {chatLogs.length === 0 ? (
+            {filteredLogs.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                Hiç mesaj bulunamadı.
+                Bu bota ait hiç mesaj bulunamadı.
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -163,7 +189,7 @@ export default function SecurityAdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-white/10">
-                    {chatLogs.map((log) => {
+                    {filteredLogs.map((log) => {
                       const isBanned = bannedIps.some((b) => b.ip_address === log.ip_address);
                       return (
                         <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
