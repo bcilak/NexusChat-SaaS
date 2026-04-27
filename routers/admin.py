@@ -173,9 +173,13 @@ def delete_bot_admin(bot_id: int, db: Session = Depends(get_db), admin: User = D
 
 # --- Security Endpoints ---
 
-@router.get("/security/spam-logs")
-def get_spam_logs(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
-    logs = db.query(ChatHistory).filter(ChatHistory.is_spam == True).order_by(ChatHistory.created_at.desc()).limit(100).all()
+@router.get("/security/logs")
+def get_chat_logs(type: Optional[str] = "all", db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    query = db.query(ChatHistory)
+    if type == "spam":
+        query = query.filter(ChatHistory.is_spam == True)
+    
+    logs = query.order_by(ChatHistory.created_at.desc()).limit(150).all()
     result = []
     for log in logs:
         bot = db.query(Bot).filter(Bot.id == log.bot_id).first()
@@ -185,6 +189,8 @@ def get_spam_logs(db: Session = Depends(get_db), admin: User = Depends(get_curre
             "bot_name": bot.name if bot else "Unknown",
             "ip_address": log.ip_address,
             "question": log.question,
+            "answer": log.answer,
+            "is_spam": log.is_spam,
             "created_at": log.created_at
         })
     return result

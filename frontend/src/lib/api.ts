@@ -238,7 +238,7 @@ export const adminApi = {
   deleteBot: (botId: number) =>
     apiFetch(`/api/admin/bots/${botId}`, { method: "DELETE" }),
 
-  getSpamLogs: () => apiFetch(`/api/admin/security/spam-logs`),
+  getChatLogs: (type: string = "all") => apiFetch(`/api/admin/security/logs?type=${type}`),
 
   getBannedIps: () => apiFetch(`/api/admin/security/banned-ips`),
 

@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { adminApi } from "@/lib/api";
 import { ShieldAlert, ShieldBan, ShieldCheck, Search, Trash2, Ban } from "lucide-react";
 
-interface SpamLog {
+interface ChatLog {
   id: number;
   bot_id: number;
   bot_name: string;
   ip_address: string | null;
   question: string;
+  answer: string;
+  is_spam: boolean;
   created_at: string;
 }
 
@@ -21,10 +23,10 @@ interface BannedIP {
 }
 
 export default function SecurityAdminPage() {
-  const [spamLogs, setSpamLogs] = useState<SpamLog[]>([]);
+  const [chatLogs, setChatLogs] = useState<ChatLog[]>([]);
   const [bannedIps, setBannedIps] = useState<BannedIP[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"logs" | "banned">("logs");
+  const [activeTab, setActiveTab] = useState<"all" | "spam" | "banned">("all");
   const [error, setError] = useState<string | null>(null);
 
   const [banInput, setBanInput] = useState("");
@@ -35,10 +37,10 @@ export default function SecurityAdminPage() {
       setLoading(true);
       setError(null);
       const [logsData, bannedData] = await Promise.all([
-        adminApi.getSpamLogs(),
+        adminApi.getChatLogs(activeTab === "spam" ? "spam" : "all"),
         adminApi.getBannedIps(),
       ]);
-      setSpamLogs(logsData);
+      setChatLogs(logsData);
       setBannedIps(bannedData);
     } catch (err: any) {
       setError(err.message || "Veriler yüklenirken bir hata oluştu.");
@@ -49,7 +51,7 @@ export default function SecurityAdminPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [activeTab]);
 
   const handleBanIp = async (ip: string, reason: string = "Bot/Spam Saldırısı") => {
     if (!ip) return;
@@ -73,7 +75,7 @@ export default function SecurityAdminPage() {
     }
   };
 
-  if (loading && spamLogs.length === 0) {
+  if (loading && chatLogs.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="w-8 h-8 border-4 border-red-500/20 border-t-red-500 rounded-full animate-spin" />
@@ -96,9 +98,19 @@ export default function SecurityAdminPage() {
 
         <div className="flex bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-1">
           <button
-            onClick={() => setActiveTab("logs")}
+            onClick={() => setActiveTab("all")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === "logs"
+              activeTab === "all"
+                ? "bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+          >
+            Tüm Mesajlar
+          </button>
+          <button
+            onClick={() => setActiveTab("spam")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "spam"
                 ? "bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400 shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }`}
@@ -124,35 +136,44 @@ export default function SecurityAdminPage() {
         </div>
       )}
 
-      {activeTab === "logs" ? (
+      {activeTab === "all" || activeTab === "spam" ? (
         <div className="space-y-4">
           <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
             <div className="p-4 border-b border-gray-200 dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-white/5">
               <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Search className="w-4 h-4 text-gray-500" /> Son Engellenen Spam İstekler (Kredi Tüketmeyen)
+                <Search className="w-4 h-4 text-gray-500" /> {activeTab === "all" ? "Gelen Tüm İstekler" : "Son Engellenen Spam İstekler (Kredi Tüketmeyen)"}
               </h2>
             </div>
-            {spamLogs.length === 0 ? (
+            {chatLogs.length === 0 ? (
               <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                Şu an için hiç spam denemesi yok. Sistem güvende.
+                Hiç mesaj bulunamadı.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-white/5">
                     <tr>
+                      <th className="px-6 py-4">Durum</th>
                       <th className="px-6 py-4">Tarih</th>
                       <th className="px-6 py-4">Bot</th>
                       <th className="px-6 py-4">IP Adresi</th>
                       <th className="px-6 py-4">Gönderilen Mesaj</th>
+                      <th className="px-6 py-4">Cevap</th>
                       <th className="px-6 py-4 text-right">İşlem</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-white/10">
-                    {spamLogs.map((log) => {
+                    {chatLogs.map((log) => {
                       const isBanned = bannedIps.some((b) => b.ip_address === log.ip_address);
                       return (
                         <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
+                          <td className="px-6 py-4">
+                            {log.is_spam ? (
+                              <span className="bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 px-2 py-1 rounded text-xs font-semibold">SPAM</span>
+                            ) : (
+                              <span className="bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400 px-2 py-1 rounded text-xs font-semibold">TEMİZ</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">
                             {new Date(log.created_at).toLocaleString("tr-TR", { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </td>
@@ -167,6 +188,9 @@ export default function SecurityAdminPage() {
                           <td className="px-6 py-4 max-w-xs truncate text-gray-600 dark:text-gray-400" title={log.question}>
                             {log.question}
                           </td>
+                          <td className="px-6 py-4 max-w-xs truncate text-gray-600 dark:text-gray-400" title={log.answer}>
+                            {log.answer}
+                          </td>
                           <td className="px-6 py-4 text-right">
                             {isBanned ? (
                               <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500">
@@ -174,10 +198,10 @@ export default function SecurityAdminPage() {
                               </span>
                             ) : log.ip_address ? (
                               <button
-                                onClick={() => handleBanIp(log.ip_address!, "Spam Log Üzerinden Ban")}
+                                onClick={() => handleBanIp(log.ip_address!, "Panel Üzerinden Ban")}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 rounded-lg font-medium transition-colors"
                               >
-                                <Ban className="w-3.5 h-3.5" /> IP'yi Banla
+                                <Ban className="w-3.5 h-3.5" /> Banla
                               </button>
                             ) : (
                               <span className="text-xs text-gray-400">İşlem yapılamaz</span>
