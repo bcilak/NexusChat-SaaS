@@ -237,6 +237,19 @@ export const adminApi = {
 
   deleteBot: (botId: number) =>
     apiFetch(`/api/admin/bots/${botId}`, { method: "DELETE" }),
+
+  getSpamLogs: () => apiFetch(`/api/admin/security/spam-logs`),
+
+  getBannedIps: () => apiFetch(`/api/admin/security/banned-ips`),
+
+  banIp: (ipAddress: string, reason: string = "Bot/Spam Saldırısı") =>
+    apiFetch(`/api/admin/security/ban-ip`, {
+      method: "POST",
+      body: JSON.stringify({ ip_address: ipAddress, reason }),
+    }),
+
+  unbanIp: (id: number) =>
+    apiFetch(`/api/admin/security/ban-ip/${id}`, { method: "DELETE" }),
 };
 
 // --- Sub-Users (Kullanıcının kendi alt kullanıcıları) ---

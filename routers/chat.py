@@ -53,8 +53,17 @@ def chat(
     bot = get_user_bot(bot_id, current_user, db)
     session_id = req.session_id or str(uuid.uuid4())
 
-    result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url, platform=req.platform)
-    return ChatResponse(**result)
+    try:
+        result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url, platform=req.platform)
+        return ChatResponse(**result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return ChatResponse(
+            answer=f"Sistemde geçici bir hata oluştu: {str(e)}",
+            sources=[],
+            session_id=session_id
+        )
 
 
 @router.get("/history", response_model=list[HistoryItem])

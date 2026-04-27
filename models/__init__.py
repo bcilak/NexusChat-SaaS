@@ -8,5 +8,6 @@ from models.bot_tool import BotTool
 from models.inbox import InboxConversation, InboxMessage
 from models.ticket import Ticket
 from models.contact_request import ContactRequest
+from models.banned_ip import BannedIP
 
-__all__ = ["User", "Bot", "Document", "ChatHistory", "CrawledPage", "BotIntegration", "BotTool", "InboxConversation", "InboxMessage", "Ticket", "ContactRequest"]
+__all__ = ["User", "Bot", "Document", "ChatHistory", "CrawledPage", "BotIntegration", "BotTool", "InboxConversation", "InboxMessage", "Ticket", "ContactRequest", "BannedIP"]

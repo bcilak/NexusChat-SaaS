@@ -7,6 +7,8 @@ from db.database import get_db
 from models.user import User
 from models.bot import Bot
 from models.document import Document
+from models.chat_history import ChatHistory
+from models.banned_ip import BannedIP
 from routers.auth import get_current_admin, hash_password
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -23,6 +25,10 @@ class CreateUserRequest(BaseModel):
     can_use_api_tools: Optional[bool] = False
     can_remove_branding: Optional[bool] = False
     can_create_users: Optional[bool] = False
+
+class BanIPRequest(BaseModel):
+    ip_address: str
+    reason: Optional[str] = "Bot/Spam Saldırısı"
 
 @router.get("/stats")
 def get_platform_stats(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
@@ -164,3 +170,55 @@ def delete_bot_admin(bot_id: int, db: Session = Depends(get_db), admin: User = D
     db.delete(bot)
     db.commit()
     return {"message": "Bot sistemden kalıcı olarak silindi"}
+
+# --- Security Endpoints ---
+
+@router.get("/security/spam-logs")
+def get_spam_logs(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    logs = db.query(ChatHistory).filter(ChatHistory.is_spam == True).order_by(ChatHistory.created_at.desc()).limit(100).all()
+    result = []
+    for log in logs:
+        bot = db.query(Bot).filter(Bot.id == log.bot_id).first()
+        result.append({
+            "id": log.id,
+            "bot_id": log.bot_id,
+            "bot_name": bot.name if bot else "Unknown",
+            "ip_address": log.ip_address,
+            "question": log.question,
+            "created_at": log.created_at
+        })
+    return result
+
+@router.get("/security/banned-ips")
+def get_banned_ips(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    ips = db.query(BannedIP).order_by(BannedIP.created_at.desc()).all()
+    return [
+        {
+            "id": ip.id,
+            "ip_address": ip.ip_address,
+            "reason": ip.reason,
+            "created_at": ip.created_at
+        }
+        for ip in ips
+    ]
+
+@router.post("/security/ban-ip")
+def ban_ip(req: BanIPRequest, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    existing = db.query(BannedIP).filter(BannedIP.ip_address == req.ip_address).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Bu IP adresi zaten banlanmış.")
+    
+    new_ban = BannedIP(ip_address=req.ip_address, reason=req.reason)
+    db.add(new_ban)
+    db.commit()
+    return {"message": f"IP {req.ip_address} başarıyla banlandı."}
+
+@router.delete("/security/ban-ip/{ip_id}")
+def unban_ip(ip_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    banned_ip = db.query(BannedIP).filter(BannedIP.id == ip_id).first()
+    if not banned_ip:
+        raise HTTPException(status_code=404, detail="Banlı IP bulunamadı.")
+    
+    db.delete(banned_ip)
+    db.commit()
+    return {"message": "IP banı başarıyla kaldırıldı."}

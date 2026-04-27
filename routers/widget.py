@@ -2,13 +2,14 @@
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from db.database import get_db
 from models.bot import Bot
+from models.banned_ip import BannedIP
 from services.chat import rag_chat
 
 router = APIRouter(prefix="/api/widget", tags=["widget"])
@@ -51,6 +52,7 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
 def widget_chat(
     bot_id: int,
     req: WidgetChatRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     """Public endpoint — chat with a bot from the embedded widget (no auth required)."""
@@ -58,9 +60,31 @@ def widget_chat(
     if not bot:
         raise HTTPException(status_code=404, detail="Bot bulunamadı")
 
+    # IP adresini al
+    forwarded = request.headers.get("X-Forwarded-For")
+    client_ip = forwarded.split(",")[0] if forwarded else request.client.host
+    
+    # Check if IP is banned
+    is_banned = db.query(BannedIP).filter(BannedIP.ip_address == client_ip).first()
+    if is_banned:
+        return {
+            "answer": "Sistem tarafından engellendiniz. Lütfen yönetici ile iletişime geçin.",
+            "sources": [],
+            "session_id": req.session_id or str(uuid.uuid4())
+        }
+
     session_id = req.session_id or str(uuid.uuid4())
-    result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url, platform="web")
-    return result
+    try:
+        result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url, platform="web", client_ip=client_ip)
+        return result
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {
+            "answer": f"Üzgünüm, şu anda sistemde geçici bir sorun yaşanıyor. Lütfen daha sonra tekrar deneyin. (Hata: {str(e)})",
+            "sources": [],
+            "session_id": session_id
+        }
 
 
 @router.post("/{bot_id}/ticket")

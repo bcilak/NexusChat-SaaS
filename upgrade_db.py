@@ -52,7 +52,9 @@ def upgrade_db():
     chat_columns = [
         ("is_liked", "BOOLEAN"),
         ("is_fallback", "BOOLEAN DEFAULT 0"),
-        ("platform", "VARCHAR(50) DEFAULT 'web'")
+        ("platform", "VARCHAR(50) DEFAULT 'web'"),
+        ("is_spam", "BOOLEAN DEFAULT 0"),
+        ("ip_address", "VARCHAR(100)")
     ]
     
     for col_name, col_def in chat_columns:
@@ -65,6 +67,23 @@ def upgrade_db():
             else:
                 pass
                 
+    conn.commit()
+    
+    # Create banned_ips table
+    try:
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS banned_ips (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_address VARCHAR(255) UNIQUE,
+            reason TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_banned_ips_ip_address ON banned_ips (ip_address)")
+        print("Created banned_ips table.")
+    except Exception as e:
+        print(f"Error creating banned_ips table: {e}")
+        
     conn.commit()
     conn.close()
     print("DB upgrade completed.")

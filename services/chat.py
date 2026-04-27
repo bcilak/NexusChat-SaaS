@@ -45,15 +45,71 @@ def format_sources(docs: List[Document]) -> List[dict]:
     return sources
 
 
+def is_spam_or_gibberish(text: str) -> bool:
+    """Check if the text is likely spam, random characters, or gibberish."""
+    if not text:
+        return True
+    
+    text_stripped = text.strip()
+    
+    # Çok kısa ve anlamsız (sadece 1-2 harf)
+    if len(text_stripped) < 3 and not any(char.isdigit() for char in text_stripped):
+        return True
+    
+    # Sürekli aynı harfin tekrarı (ör: kkkkkk, lllllll)
+    import re
+    if re.search(r'(.)\1{4,}', text_stripped):
+        return True
+    
+    # Aşırı emoji, az metin
+    emoji_pattern = re.compile("[\U00010000-\U0010ffff]", flags=re.UNICODE)
+    emojis = emoji_pattern.findall(text_stripped)
+    if len(emojis) > 4 and len(text_stripped) < 20:
+        return True
+        
+    # Çok uzun kelimeler ama ünlü harf yok (ş, ç, vs dahil Türkçe/İngilizce ünlüler)
+    vowels = set('aeıioöuüAEIİOÖUÜ')
+    words = text_stripped.split()
+    for word in words:
+        if len(word) > 10 and not any(c in vowels for c in word):
+            return True
+
+    return False
+
+
 def rag_chat(
     bot: Bot,
     question: str,
     session_id: str,
     db: Session,
     attachment_url: str = None,
-    platform: str = "web"
+    platform: str = "web",
+    client_ip: str = None
 ) -> dict:
     """Full RAG chain: retrieve → prompt → generate → save."""
+    # Check for gibberish/spam to save credits
+    if not attachment_url and is_spam_or_gibberish(question):
+        spam_answer = "Lütfen geçerli bir soru sorunuz."
+        spam_history = ChatHistory(
+            bot_id=bot.id,
+            session_id=session_id,
+            question=question,
+            answer=spam_answer,
+            sources="[]",
+            platform=platform,
+            is_fallback=True,
+            is_spam=True,
+            ip_address=client_ip
+        )
+        db.add(spam_history)
+        db.commit()
+        
+        return {
+            "answer": spam_answer,
+            "sources": [],
+            "session_id": session_id,
+        }
+
     # Check if the bot owner has enough credits
     user = db.query(User).filter(User.id == bot.user_id).first()
     if user and user.credits <= 0:
@@ -203,7 +259,8 @@ def rag_chat(
         answer=answer,
         sources=json.dumps(sources, ensure_ascii=False),
         platform=platform,
-        is_fallback=is_fallback
+        is_fallback=is_fallback,
+        ip_address=client_ip
     )
     db.add(history)
 

@@ -19,6 +19,10 @@ class ChatHistory(Base):
     is_liked = Column(Boolean, nullable=True)
     is_fallback = Column(Boolean, default=False)
     
+    # Security
+    is_spam = Column(Boolean, default=False)
+    ip_address = Column(String(100), nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
     bot = relationship("Bot", back_populates="chat_history")

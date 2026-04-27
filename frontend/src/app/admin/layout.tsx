@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { Bot, Users, LayoutDashboard, LogOut, ArrowLeft, MessageSquare } from "lucide-react";
+import { Bot, Users, LayoutDashboard, LogOut, ArrowLeft, MessageSquare, ShieldAlert } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
@@ -35,6 +35,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
     { href: "/admin/users", icon: Users, label: "Kullanıcılar" },
     { href: "/admin/bots", icon: Bot, label: "Sistem Botları" },
     { href: "/admin/requests", icon: MessageSquare, label: "Talepler" },
+    { href: "/admin/security", icon: ShieldAlert, label: "Güvenlik & Ban" },
   ];
 
   return (
