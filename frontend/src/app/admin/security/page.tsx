@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { adminApi } from "@/lib/api";
 import { ShieldAlert, ShieldBan, ShieldCheck, Search, Trash2, Ban } from "lucide-react";
-import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 
 interface SpamLog {
   id: number;
@@ -156,7 +154,7 @@ export default function SecurityAdminPage() {
                       return (
                         <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-white/5">
                           <td className="px-6 py-4 whitespace-nowrap text-gray-500 dark:text-gray-400">
-                            {format(new Date(log.created_at), "dd MMM yyyy HH:mm", { locale: tr })}
+                            {new Date(log.created_at).toLocaleString("tr-TR", { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </td>
                           <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">
                             {log.bot_name}
@@ -276,7 +274,7 @@ export default function SecurityAdminPage() {
                             {ip.reason || "-"}
                           </td>
                           <td className="px-6 py-4 text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                            {format(new Date(ip.created_at), "dd MMM yyyy HH:mm", { locale: tr })}
+                            {new Date(ip.created_at).toLocaleString("tr-TR", { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <button
