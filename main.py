@@ -51,18 +51,15 @@ if RATE_LIMITING_ENABLED:
 else:
     limiter = None
 
-# CORS — allow frontend (security: no wildcard)
-ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS", 
-    "http://localhost:3000,http://127.0.0.1:3000"
-).split(",")
+# CORS — allow all origins for mobile app and external widget access
+ALLOWED_ORIGINS = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=["*"],
+    allow_headers=["*"],
     max_age=600,
 )
 
