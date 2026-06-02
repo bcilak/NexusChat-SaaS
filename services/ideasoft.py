@@ -476,12 +476,12 @@ def search_products(
     limit: int = 10,
     meta_data_str: Optional[str] = None,
 ) -> Dict[str, Any]:
-    # IdeaSoft API "q" parametresini array formatında bekler: q[]=değer
-    # requests kütüphanesinde bunu tuple listesiyle gönderiyoruz.
-    params = [
-        ("q[]", query),
-        ("limit", limit),
-    ]
+    # IdeaSoft product list supports direct field filters such as name/sku.
+    # q[] is not a valid product search filter in the bundled API schema.
+    params = {
+        "name": query,
+        "limit": limit,
+    }
 
     result = _api_request(
         api_url=api_url,
