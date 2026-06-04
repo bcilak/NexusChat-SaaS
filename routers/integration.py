@@ -145,7 +145,7 @@ def ideasoft_callback_exchange(
     sonrasında sisteme entegrasyonu kaydeder.
     Frontend doğrudan window.location ile yönlendirildiğinden state = bot_id olarak gelir.
     """
-    from services.ideasoft import exchange_code_for_token, IdeaSoftError
+    from services.ideasoft import exchange_code_for_token, IdeaSoftError, IDEASOFT_DEFAULT_SCOPES
 
     bot_id = req.get("bot_id")
     bot = db.query(Bot).filter(Bot.id == bot_id, Bot.user_id == current_user.id).first()
@@ -168,6 +168,7 @@ def ideasoft_callback_exchange(
         # auth-url endpoint'i çağrılmadıysa (frontend doğrudan yönlendiriyorsa)
         # state = bot_id olarak güvenle kabul et
         meta["ideasoft_state"] = str(bot_id)
+    meta["ideasoft_requested_scopes"] = IDEASOFT_DEFAULT_SCOPES
 
     try:
         token_res = exchange_code_for_token(

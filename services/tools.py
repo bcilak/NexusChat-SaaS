@@ -92,8 +92,8 @@ class ECommerceProductSearchTool(BaseTool):
                 meta = json.loads(self.meta_data_str or "{}")
             except Exception:
                 meta = {}
-            requested_scopes = set(meta.get("ideasoft_requested_scopes") or [])
-            if not requested_scopes.intersection({"product_read", "catalog_read"}):
+            known_scopes = set(meta.get("ideasoft_granted_scopes") or meta.get("ideasoft_requested_scopes") or [])
+            if known_scopes and not known_scopes.intersection({"product_read", "catalog_read"}):
                 return (
                     "IDEASOFT_REAUTH_REQUIRED: IdeaSoft entegrasyonu eski izinlerle baglanmis gorunuyor. "
                     "Urun fiyat/stok sorgusu icin entegrasyonu kaldirip yeniden yetkilendirin."
