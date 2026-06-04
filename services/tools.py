@@ -89,6 +89,16 @@ class ECommerceProductSearchTool(BaseTool):
         # â”€â”€ IdeaSoft â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         elif self.provider == "ideasoft":
             try:
+                meta = json.loads(self.meta_data_str or "{}")
+            except Exception:
+                meta = {}
+            requested_scopes = set(meta.get("ideasoft_requested_scopes") or [])
+            if not requested_scopes.intersection({"product_read", "catalog_read"}):
+                return (
+                    "IDEASOFT_REAUTH_REQUIRED: IdeaSoft entegrasyonu eski izinlerle baglanmis gorunuyor. "
+                    "Urun fiyat/stok sorgusu icin entegrasyonu kaldirip yeniden yetkilendirin."
+                )
+            try:
                 res = ideasoft_search_products(
                     api_url=self.api_url,
                     client_id=self.api_key,

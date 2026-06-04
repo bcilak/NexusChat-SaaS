@@ -232,7 +232,12 @@ def rag_chat(
                         try:
                             tool_result = tool.invoke(tc["args"])
                             tool_result_text = str(tool_result)
-                            if (
+                            if "IDEASOFT_REAUTH_REQUIRED:" in tool_result_text:
+                                direct_tool_error_answer = (
+                                    "IdeaSoft entegrasyonu eski veya eksik izinlerle bağlı görünüyor. "
+                                    "Ürün fiyat/stok sorguları için mağaza yöneticisinin entegrasyonu kaldırıp yeniden yetkilendirmesi gerekiyor."
+                                )
+                            elif (
                                 tc["name"] == "ecommerce_product_search"
                                 and "IdeaSoft" in tool_result_text
                                 and any(k in tool_result_text.lower() for k in ("yetki", "token", "bağlant", "api"))
