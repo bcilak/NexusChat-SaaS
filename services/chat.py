@@ -224,19 +224,33 @@ def rag_chat(
             
             if response_msg.tool_calls:
                 messages_input.append(response_msg)
+                direct_tool_error_answer = None
                 
                 for tc in response_msg.tool_calls:
                     tool = next((t for t in active_tools if t.name == tc["name"]), None)
                     if tool:
                         try:
                             tool_result = tool.invoke(tc["args"])
-                            messages_input.append(ToolMessage(content=str(tool_result), tool_call_id=tc["id"]))
+                            tool_result_text = str(tool_result)
+                            if (
+                                tc["name"] == "ecommerce_product_search"
+                                and "IdeaSoft" in tool_result_text
+                                and any(k in tool_result_text.lower() for k in ("yetki", "token", "bağlant", "api"))
+                            ):
+                                direct_tool_error_answer = (
+                                    "Mağaza ürün sistemi şu anda ürün fiyat/stok bilgisini döndüremiyor. "
+                                    "Lütfen mağaza yöneticisine bildirin; entegrasyon yetkisi veya token bilgisi yeniden kontrol edilmelidir."
+                                )
+                            messages_input.append(ToolMessage(content=tool_result_text, tool_call_id=tc["id"]))
                         except Exception as e:
                             messages_input.append(ToolMessage(content=f"Error executing tool: {e}", tool_call_id=tc["id"]))
                 
-                # Final LLM output combining tool results
-                final_response = llm.invoke(messages_input)
-                answer = final_response.content
+                if direct_tool_error_answer:
+                    answer = direct_tool_error_answer
+                else:
+                    # Final LLM output combining tool results
+                    final_response = llm.invoke(messages_input)
+                    answer = final_response.content
             else:
                 answer = response_msg.content
         else:
