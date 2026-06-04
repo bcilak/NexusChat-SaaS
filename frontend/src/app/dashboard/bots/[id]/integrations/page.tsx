@@ -47,6 +47,16 @@ const PROVIDER_LABELS: Record<string, { key: string; secret: string; secretRequi
   },
 };
 
+const IDEASOFT_READ_SCOPES = [
+  "catalog_read",
+  "product_read",
+  "category_read",
+  "brand_read",
+  "order_read",
+  "shipping_read",
+  "store_read",
+];
+
 export default function IntegrationsPage() {
   const params = useParams();
   const router = useRouter();
@@ -169,7 +179,8 @@ export default function IntegrationsPage() {
       const shopUrl = apiUrl.replace(/\/$/, "");
       const redirectUri = typeof window !== 'undefined' ? window.location.href.split('?')[0] : "";
       const state = String(botId);
-      const authUrl = `${shopUrl}/panel/auth?client_id=${encodeURIComponent(apiKey)}&response_type=code&state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      const scope = IDEASOFT_READ_SCOPES.join(" ");
+      const authUrl = `${shopUrl}/panel/auth?client_id=${encodeURIComponent(apiKey)}&response_type=code&state=${encodeURIComponent(state)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
       window.location.href = authUrl;
       return;
     }

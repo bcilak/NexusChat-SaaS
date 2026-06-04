@@ -36,6 +36,15 @@ IDEASOFT_API_BASE = "/api"
 
 REQUEST_TIMEOUT = 15
 TOKEN_SAFETY_MARGIN_SECONDS = 30
+IDEASOFT_DEFAULT_SCOPES = [
+    "catalog_read",
+    "product_read",
+    "category_read",
+    "brand_read",
+    "order_read",
+    "shipping_read",
+    "store_read",
+]
 
 
 class IdeaSoftError(Exception):
@@ -107,6 +116,9 @@ def _store_tokens_in_meta(meta: Dict[str, Any], token_response: Dict[str, Any]) 
     if refresh_token:
         meta["ideasoft_refresh_token"] = refresh_token
 
+    if token_response.get("scope"):
+        meta["ideasoft_granted_scopes"] = str(token_response.get("scope")).split()
+
     return meta
 
 
@@ -131,6 +143,7 @@ def build_authorization_url(
     redirect_uri: str,
     meta_data_str: Optional[str] = None,
     state: Optional[str] = None,
+    scopes: Optional[List[str]] = None,
 ) -> Dict[str, str]:
     api_url = _normalize_api_url(api_url)
     meta = _parse_meta(meta_data_str)
@@ -138,11 +151,15 @@ def build_authorization_url(
     generated_state = state or secrets.token_urlsafe(24)
     meta["ideasoft_state"] = generated_state
 
+    requested_scopes = scopes or IDEASOFT_DEFAULT_SCOPES
+    meta["ideasoft_requested_scopes"] = requested_scopes
+
     query = urlencode({
         "client_id": client_id,
         "response_type": "code",
         "state": generated_state,
         "redirect_uri": redirect_uri,
+        "scope": " ".join(requested_scopes),
     })
 
     return {
@@ -377,6 +394,11 @@ def _api_request(
             err_text = err_json if isinstance(err_json, dict) else {"response": err_json}
         except Exception:
             err_text = resp.text[:500]
+        if resp.status_code in (401, 403):
+            raise IdeaSoftAuthRequired(
+                f"IdeaSoft API yetkisi reddedildi (HTTP {resp.status_code}). "
+                f"Entegrasyonu product_read/catalog_read izinleriyle yeniden yetkilendirin. Detay: {err_text}"
+            )
         raise IdeaSoftError(f"IdeaSoft API hatası (HTTP {resp.status_code}): {err_text}")
 
     try:
