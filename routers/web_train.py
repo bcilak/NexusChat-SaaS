@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -6,7 +8,9 @@ from models.user import User
 from models.crawled_page import CrawledPage
 from routers.auth import get_current_user
 from routers.bot import get_user_bot
-from services.crawler_tasks import process_single_url, crawl_website_recursive
+from services.crawler_tasks import process_single_url_background, crawl_website_recursive_background
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/bots/{bot_id}/web", tags=["web-training"])
 
@@ -32,8 +36,14 @@ def train_url(
     current_user: User = Depends(get_current_user),
 ):
     bot = get_user_bot(bot_id, current_user, db)
+    logger.info(
+        "[web-training] Queue single URL url=%s bot_id=%s user_id=%s",
+        req.url,
+        bot.id,
+        current_user.id,
+    )
     # Start task in background so API answers instantly
-    background_tasks.add_task(process_single_url, req.url, bot_id, db)
+    background_tasks.add_task(process_single_url_background, req.url, bot.id)
     return {"message": f"{req.url} URL'si öğrenme kuyruğuna eklendi."}
 
 @router.post("/train-website")
@@ -45,7 +55,14 @@ def train_website(
     current_user: User = Depends(get_current_user),
 ):
     bot = get_user_bot(bot_id, current_user, db)
-    background_tasks.add_task(crawl_website_recursive, req.base_url, bot_id, db, req.max_pages)
+    logger.info(
+        "[web-training] Queue recursive crawl base_url=%s bot_id=%s user_id=%s max_pages=%s",
+        req.base_url,
+        bot.id,
+        current_user.id,
+        req.max_pages,
+    )
+    background_tasks.add_task(crawl_website_recursive_background, req.base_url, bot.id, req.max_pages)
     return {"message": f"{req.base_url} tüm site tarama kuyruğuna eklendi (Maks: {req.max_pages} sayfa)."}
 
 @router.get("/pages", response_model=list[CrawledPageResponse])
