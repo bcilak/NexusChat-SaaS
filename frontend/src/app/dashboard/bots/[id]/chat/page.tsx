@@ -63,7 +63,7 @@ export default function ChatTestPage() {
     <div class="card"><div class="icon">🤖</div><h3>Yapay Zeka Destekli</h3><p>Dokümanlarınızla eğitilmiş bot, müşterilere 7/24 yanıt verir.</p></div>
   </section>
   <div class="footer">© 2026 DemoSite — Widget canlı test ortamı</div>
-  <script src="${apiBase}/static/widget.js" data-bot-id="${botId}"></script>
+  <script src="${apiBase}/static/widget.js?v=${Date.now()}" data-bot-id="${botId}" data-api-base="${apiBase}"></script>
 </body>
 </html>`, [apiBase, botId, reloadKey]);
 

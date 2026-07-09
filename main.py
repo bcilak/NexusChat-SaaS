@@ -71,6 +71,15 @@ app.mount("/uploads", StaticFiles(directory=os.getenv("UPLOAD_DIR", "./uploads")
 os.makedirs("./static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
+# widget.js önbelleklenmesin — panel değişiklikleri müşteri sitelerine anında ulaşsın
+@app.middleware("http")
+async def widget_no_cache(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static/widget.js") or request.url.path.startswith("/api/widget/"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
 # Include routers
 from routers import auth, bot, train, chat, widget, web_train, integration, analytics, admin, inbox, whatsapp, upload, bot_tools, contact, users
 
