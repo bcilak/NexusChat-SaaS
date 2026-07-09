@@ -138,6 +138,66 @@ def parse_feed(xml_bytes: bytes) -> list[dict]:
     return products
 
 
+# Ürün aramasında elenmesi gereken soru kalıpları
+_STOPWORDS = {
+    "var", "yok", "kaç", "kaça", "kaçtır", "fiyat", "fiyatı", "fiyati", "fiyatlar", "fiyatları",
+    "nedir", "kadar", "için", "icin", "acaba", "merhaba", "selam", "lütfen", "lutfen", "rica",
+    "ürün", "urun", "ürünü", "ürünler", "stok", "stokta", "stokda", "satıyor", "satiyor",
+    "musunuz", "misiniz", "mısınız", "alabilir", "almak", "istiyorum", "isterim", "bana",
+    "sizde", "sizin", "hangi", "nasıl", "nasil", "gönderim", "kargo", "indirim", "indirimli",
+    "the", "and", "for", "with",
+}
+
+
+def _tokenize_query(text: str) -> list[str]:
+    tokens = re.findall(r"[\wçğıöşüÇĞİÖŞÜ]+", text.lower())
+    return [t for t in tokens if len(t) >= 3 and t not in _STOPWORDS and not t.isdigit()]
+
+
+def search_products(bot_id: int, query: str, db: Session, k: int = 4) -> list[Product]:
+    """Soru metnindeki anahtar kelimelerle ürün tablosunda arama yapar.
+
+    Başlıkta eşleşen kelime sayısına göre puanlar; stokta olanları öne alır.
+    Anlamlı kelime yoksa (selamlama vb.) boş döner.
+    """
+    tokens = _tokenize_query(query)
+    if not tokens:
+        return []
+
+    from sqlalchemy import or_
+    conditions = []
+    for t in tokens:
+        like = f"%{t}%"
+        conditions.append(Product.title.ilike(like))
+        conditions.append(Product.category.ilike(like))
+        conditions.append(Product.brand.ilike(like))
+    candidates = (
+        db.query(Product)
+        .filter(Product.bot_id == bot_id)
+        .filter(or_(*conditions))
+        .limit(200)
+        .all()
+    )
+    if not candidates:
+        return []
+
+    def score(p: Product) -> tuple:
+        title = (p.title or "").lower()
+        cat = (p.category or "").lower()
+        brand = (p.brand or "").lower()
+        title_hits = sum(1 for t in tokens if t in title)
+        other_hits = sum(1 for t in tokens if t in cat or t in brand)
+        out_of_stock = 1 if (p.stock or "").strip() in ("0", "out of stock", "outofstock") else 0
+        return (-title_hits, -other_hits, out_of_stock, len(title))
+
+    candidates.sort(key=score)
+    best = candidates[0]
+    # En az bir başlık eşleşmesi şartı — tamamen alakasız sonuç dönmesin
+    if not any(t in (best.title or "").lower() for t in tokens):
+        return []
+    return candidates[:k]
+
+
 def sync_feed(bot: Bot, db: Session, feed_url: Optional[str] = None) -> dict:
     """Feed'i indir, parse et, ürünleri upsert et. Sonuç istatistiği döner."""
     url = feed_url or bot.feed_url

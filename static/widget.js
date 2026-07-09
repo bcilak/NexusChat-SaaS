@@ -679,6 +679,80 @@
     }
     .nxc-chip:active { transform: scale(.97) translateY(0); }
 
+    /* --- Ürün kartları --- */
+    .nxc-products {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 4px 2px 8px;
+      align-self: stretch;
+      max-width: 100%;
+      animation: nxc-msgIn .4s ease both;
+      scrollbar-width: thin;
+    }
+    .nxc-products::-webkit-scrollbar { height: 4px; }
+    .nxc-products::-webkit-scrollbar-thumb { background: var(--nxc-scrollbar); border-radius: 10px; }
+    .nxc-pcard {
+      min-width: 150px;
+      max-width: 150px;
+      background: var(--nxc-bubble-bg);
+      border: 1px solid var(--nxc-bubble-border);
+      border-radius: 13px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .nxc-pcard-img {
+      width: 100%;
+      height: 104px;
+      object-fit: cover;
+      background: var(--nxc-preview-bg);
+      display: block;
+    }
+    .nxc-pcard-body {
+      padding: 9px 10px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex: 1;
+    }
+    .nxc-pcard-title {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--nxc-text);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 31px;
+    }
+    .nxc-pcard-price { font-size: 12.5px; font-weight: 700; color: var(--nxc-accent); }
+    .nxc-pcard-price .nxc-old {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--nxc-text-muted);
+      text-decoration: line-through;
+      margin-right: 5px;
+    }
+    .nxc-pcard-stock { font-size: 10px; color: var(--nxc-text-muted); }
+    .nxc-pcard-stock.nxc-out { color: #f87171; }
+    .nxc-pcard-btn {
+      margin-top: auto;
+      text-align: center;
+      display: block;
+      padding: 6px 4px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--nxc-accent), var(--nxc-accent-end));
+      color: var(--nxc-text-on-accent);
+      font-size: 11px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity .2s, transform .15s;
+    }
+    .nxc-pcard-btn:hover { opacity: .88; transform: translateY(-1px); }
+
     /* --- Image preview --- */
     #nxc-preview {
       display: none;
@@ -1292,6 +1366,73 @@
     botBubble.appendChild(wrap);
   }
 
+  /* --- Ürün kartları oluştur --- */
+  function buildProductCards(products) {
+    const wrap = document.createElement("div");
+    wrap.className = "nxc-products";
+    products.forEach((p) => {
+      const card = document.createElement("div");
+      card.className = "nxc-pcard";
+
+      if (p.image_url) {
+        const img = document.createElement("img");
+        img.className = "nxc-pcard-img";
+        img.src = p.image_url;
+        img.alt = p.title || "";
+        img.loading = "lazy";
+        img.onerror = () => img.remove();
+        card.appendChild(img);
+      }
+
+      const body = document.createElement("div");
+      body.className = "nxc-pcard-body";
+
+      const title = document.createElement("div");
+      title.className = "nxc-pcard-title";
+      title.textContent = p.title || "";
+      body.appendChild(title);
+
+      const cur = p.currency === "TRY" ? "TL" : (p.currency || "TL");
+      const fmt = (n) => Number(n).toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      if (p.price || p.sale_price) {
+        const price = document.createElement("div");
+        price.className = "nxc-pcard-price";
+        if (p.sale_price && p.price && p.sale_price < p.price) {
+          const old = document.createElement("span");
+          old.className = "nxc-old";
+          old.textContent = fmt(p.price) + " " + cur;
+          price.appendChild(old);
+          price.appendChild(document.createTextNode(fmt(p.sale_price) + " " + cur));
+        } else {
+          price.textContent = fmt(p.sale_price || p.price) + " " + cur;
+        }
+        body.appendChild(price);
+      }
+
+      if (p.stock) {
+        const stock = document.createElement("div");
+        const isOut = String(p.stock).trim() === "0" || /out/i.test(p.stock);
+        stock.className = "nxc-pcard-stock" + (isOut ? " nxc-out" : "");
+        stock.textContent = isOut ? "Stokta yok" : "Stokta var";
+        body.appendChild(stock);
+      }
+
+      if (p.product_url) {
+        const btn = document.createElement("a");
+        btn.className = "nxc-pcard-btn";
+        btn.href = p.product_url;
+        btn.target = "_blank";
+        btn.rel = "noopener";
+        btn.textContent = "Ürüne Git";
+        body.appendChild(btn);
+      }
+
+      card.appendChild(body);
+      wrap.appendChild(card);
+    });
+    return wrap;
+  }
+
   /* --- Send message --- */
   async function sendMessage() {
     const text = inputEl.value.trim();
@@ -1432,6 +1573,12 @@
       attachFeedback(botBubble, data.message_id);
 
       msgList.appendChild(botBubble);
+
+      /* Ürün kartları — cevabın hemen altında yatay kaydırmalı */
+      if (data.products && data.products.length) {
+        msgList.appendChild(buildProductCards(data.products));
+      }
+
       _playDing();
 
       if (data.session_id) {

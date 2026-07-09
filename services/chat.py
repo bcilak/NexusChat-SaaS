@@ -126,7 +126,15 @@ def rag_chat(
     vectordb = VectorDBService()
     retrieved_docs = vectordb.hybrid_search(str(bot.id), question, k=4)
 
-    if not retrieved_docs and not attachment_url:
+    # 1b. Ürün feed'inden eşleşen ürünler (widget'ta kart olarak gösterilir)
+    matched_products = []
+    try:
+        from services.feed import search_products
+        matched_products = search_products(bot.id, question, db, k=4)
+    except Exception:
+        matched_products = []
+
+    if not retrieved_docs and not attachment_url and not matched_products:
         answer = "Bu konuda bilgim yok. Lütfen farklı bir soru sorun veya botun eğitim verilerine daha fazla bilgi ekleyin."
         sources = []
         is_fallback = True
@@ -134,6 +142,24 @@ def rag_chat(
         sources = format_sources(retrieved_docs) if bot.show_sources else []
         # 2. Build prompt with context and History memory
         context = format_context(retrieved_docs)
+
+        # Eşleşen ürünleri güncel fiyat/stokla context'e ekle — LLM eski fiyat uyduramaz
+        if matched_products:
+            plines = []
+            for p in matched_products:
+                price_txt = ""
+                if p.sale_price and p.price and p.sale_price < p.price:
+                    price_txt = f"İndirimli fiyat: {p.sale_price} {p.currency} (normal: {p.price} {p.currency})"
+                elif p.price:
+                    price_txt = f"Fiyat: {p.price} {p.currency}"
+                stock_txt = f"Stok: {p.stock}" if p.stock else ""
+                plines.append(f"- {p.title} | {price_txt} | {stock_txt}".strip(" |"))
+            context += (
+                "\n\n---\n\n[GÜNCEL ÜRÜN KATALOĞU — fiyat ve stok bilgisi bu listeden alınmalı, "
+                "asla başka kaynaktan fiyat söyleme. Ürün kartları kullanıcıya ayrıca görsel olarak "
+                "gösterilecek; cevabında link veya görsel URL'si yazma, sadece kısa ve doğal bir "
+                "şekilde ürünleri tanıt.]\n" + "\n".join(plines)
+            )
         
         recent_history = db.query(ChatHistory).filter(
             ChatHistory.bot_id == bot.id,
@@ -306,9 +332,25 @@ def rag_chat(
 
     db.commit()
 
+    products_payload = []
+    if matched_products and not is_fallback:
+        products_payload = [
+            {
+                "title": p.title,
+                "price": p.price,
+                "sale_price": p.sale_price,
+                "currency": p.currency,
+                "stock": p.stock,
+                "image_url": p.image_url,
+                "product_url": p.product_url,
+            }
+            for p in matched_products
+        ]
+
     return {
         "answer": answer,
         "sources": sources,
         "session_id": session_id,
         "message_id": history.id,
+        "products": products_payload,
     }
