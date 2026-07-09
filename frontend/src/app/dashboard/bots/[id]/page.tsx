@@ -184,6 +184,60 @@ function WidgetPreview({ bot }: { bot: BotType }) {
   );
 }
 
+/* ── Canlı önizleme sütunu (Görünüm ve Davranış sekmelerinde ortak) ── */
+function PreviewColumn({ bot }: { bot: BotType }) {
+  const accent = bot.theme_color || "#6366f1";
+  return (
+    <div className="lg:sticky lg:top-8">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Eye className="w-4 h-4 text-gray-400" />
+          <span className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Canlı Önizleme</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">CANLI</span>
+        </div>
+
+        {/* Toggle Button Önizlemesi */}
+        <div className="mb-4 p-4 bg-white/[0.03] border border-white/10 rounded-2xl">
+          <p className="text-xs text-gray-500 mb-3 uppercase tracking-wider font-semibold">Sohbet Butonu</p>
+          <div className="flex items-center gap-4">
+            <div
+              className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl"
+              style={{
+                background: `linear-gradient(135deg, ${accent}, ${adjustColor(accent, -30)})`,
+                boxShadow: `0 8px 30px ${rgba(accent, 0.5)}`,
+              }}
+            >
+              <MessageSquare size={24} color={bot.text_color || "#ffffff"} />
+            </div>
+            <div>
+              <p className="text-sm text-white font-medium">Widget Butonu</p>
+              <p className="text-xs text-gray-500">
+                Sayfanın {bot.widget_position === "left" ? "sol" : "sağ"} alt köşesinde görünür
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Widget Önizlemesi */}
+        <div className="relative">
+          <div className="absolute -inset-1 rounded-3xl opacity-20 blur-lg" style={{ background: `linear-gradient(135deg, ${accent}, ${adjustColor(accent, -30)})` }} />
+          <div className="relative">
+            <WidgetPreview bot={bot} />
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-600 text-center mt-3">
+          Değişiklikler otomatik olarak yansır. Kaydetmek için butona tıklayın.
+        </p>
+      </motion.div>
+    </div>
+  );
+}
+
 /* ── Preset renk paleti ── */
 const COLOR_PRESETS = [
   { name: "İndigo", color: "#6366f1" },
@@ -209,7 +263,7 @@ export default function BotDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
-  const [activeSection, setActiveSection] = useState<"appearance" | "ai" | "whatsapp">("appearance");
+  const [activeSection, setActiveSection] = useState<"appearance" | "behavior" | "ai" | "whatsapp">("appearance");
 
   // Yalnızca bot yüklendikten sonra sahiplik ve izin kontrolü yap
   const isSubUser = !!user?.parent_id; // parent_id varsa alt kullanıcı
@@ -404,6 +458,7 @@ export default function BotDetailPage() {
       {/* Section Navigation */}
       <div className="flex gap-2 mb-6 p-1 bg-gray-100 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl w-fit">
         {sectionBtn("appearance", <Palette className="w-4 h-4" />, "Görünüm & Arayüz", "#a78bfa")}
+        {sectionBtn("behavior", <Zap className="w-4 h-4" />, "Widget Davranışı", "#22d3ee")}
         {sectionBtn("ai", <BrainCircuit className="w-4 h-4" />, "Yapay Zeka", "#6366f1")}
         {sectionBtn("whatsapp", <Smartphone className="w-4 h-4" />, "WhatsApp", "#22c55e")}
       </div>
@@ -610,15 +665,52 @@ export default function BotDetailPage() {
               </p>
             </motion.div>
 
-            {/* Widget Davranışı */}
+            {/* Widget Davranışı sekmesine yönlendirme */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
+            >
+              <button
+                onClick={() => setActiveSection("behavior")}
+                className="w-full flex items-center justify-between gap-3 p-4 rounded-2xl border border-cyan-500/25 bg-cyan-500/[0.06] hover:bg-cyan-500/10 transition-all group"
+              >
+                <div className="flex items-center gap-3 text-left">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white flex items-center gap-2">
+                      Widget Davranışı
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">YENİ</span>
+                    </p>
+                    <p className="text-[11px] text-gray-500">Tema modu, konum, karşılama ekranı, proaktif mesaj, ses ve daha fazlası</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-cyan-400 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+              </button>
+            </motion.div>
+          </div>
+
+          {/* Right: Live Preview */}
+          <PreviewColumn bot={bot} />
+        </div>
+      )}
+
+      {/* ── BEHAVIOR SECTION ── */}
+      {activeSection === "behavior" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left: Settings */}
+          <div className="space-y-6">
+            {/* Widget Davranışı */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
               className="bg-white/[0.03] border border-white/10 rounded-2xl p-6"
             >
               <h3 className="text-base font-bold mb-2 flex items-center gap-2 text-white">
                 <Zap className="w-4 h-4 text-cyan-400" /> Widget Davranışı
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">YENİ</span>
               </h3>
               <p className="text-xs text-gray-500 mb-5">
                 Widget&apos;ın sitede nasıl görüneceğini ve davranacağını ayarlayın.
@@ -742,51 +834,7 @@ export default function BotDetailPage() {
           </div>
 
           {/* Right: Live Preview */}
-          <div className="lg:sticky lg:top-8">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Eye className="w-4 h-4 text-gray-400" />
-                <span className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Canlı Önizleme</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">CANLI</span>
-              </div>
-
-              {/* Toggle Button Önizlemesi */}
-              <div className="mb-4 p-4 bg-white/[0.03] border border-white/10 rounded-2xl">
-                <p className="text-xs text-gray-500 mb-3 uppercase tracking-wider font-semibold">Sohbet Butonu</p>
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl"
-                    style={{
-                      background: `linear-gradient(135deg, ${accent}, ${adjustColor(accent, -30)})`,
-                      boxShadow: `0 8px 30px ${rgba(accent, 0.5)}`,
-                    }}
-                  >
-                    <MessageSquare size={24} color={bot.text_color || "#ffffff"} />
-                  </div>
-                  <div>
-                    <p className="text-sm text-white font-medium">Widget Butonu</p>
-                    <p className="text-xs text-gray-500">Sayfanın sağ alt köşesinde görünür</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Widget Önizlemesi */}
-              <div className="relative">
-                <div className="absolute -inset-1 rounded-3xl opacity-20 blur-lg" style={{ background: `linear-gradient(135deg, ${accent}, ${adjustColor(accent, -30)})` }} />
-                <div className="relative">
-                  <WidgetPreview bot={bot} />
-                </div>
-              </div>
-
-              <p className="text-xs text-gray-600 text-center mt-3">
-                Değişiklikler otomatik olarak yansır. Kaydetmek için butona tıklayın.
-              </p>
-            </motion.div>
-          </div>
+          <PreviewColumn bot={bot} />
         </div>
       )}
 
