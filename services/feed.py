@@ -122,6 +122,12 @@ def parse_feed(xml_bytes: bytes) -> list[dict]:
             continue
         raw_price = d.get("price")
         raw_sale = d.get("sale_price")
+        # Açıklamadaki HTML etiketlerini ve fazla boşlukları temizle
+        desc = d.get("description") or ""
+        desc = re.sub(r"<[^>]+>", " ", desc)
+        desc = re.sub(r"&\w+;", " ", desc)
+        desc = re.sub(r"\s+", " ", desc).strip()
+        d["description"] = desc
         products.append({
             "external_id": d.get("external_id"),
             "title": d.get("title")[:500],
