@@ -40,6 +40,7 @@
     proactiveMessage: null,
     brandingVisible: true,
     soundEnabled: false,
+    heroHeader: false,
     hasInteracted: sessionStorage.getItem("nxc_interacted_" + botId) === "1",
   };
 
@@ -307,6 +308,27 @@
       flex-shrink: 0;
       position: relative;
       overflow: hidden;
+      transition: padding .45s cubic-bezier(.4,0,.2,1);
+    }
+    /* --- Hero header (genişletilmiş marka alanı; sohbet başlayınca küçülür) --- */
+    #nxc-container.nxc-hero .nxc-header {
+      padding: 30px 22px 26px;
+    }
+    #nxc-container.nxc-hero .nxc-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+    }
+    #nxc-container.nxc-hero .nxc-avatar svg { width: 30px; height: 30px; }
+    #nxc-container.nxc-hero .nxc-header-text h3 {
+      font-size: 21px;
+      white-space: normal;
+    }
+    #nxc-container.nxc-hero .nxc-header-text p {
+      font-size: 13px;
+      margin-top: 4px;
+      white-space: normal;
+      -webkit-line-clamp: 2;
     }
     .nxc-header::before {
       content: '';
@@ -342,6 +364,7 @@
       width: 40px;
       height: 40px;
       border-radius: 12px;
+      transition: width .45s cubic-bezier(.4,0,.2,1), height .45s cubic-bezier(.4,0,.2,1), border-radius .45s cubic-bezier(.4,0,.2,1);
       background: rgba(255,255,255,0.2);
       backdrop-filter: blur(8px);
       border: 1.5px solid rgba(255,255,255,0.35);
@@ -361,6 +384,7 @@
     .nxc-header-text { min-width: 0; }
     .nxc-header-text h3 {
       margin: 0;
+      transition: font-size .45s cubic-bezier(.4,0,.2,1);
       font-size: 15px;
       font-weight: 700;
       color: var(--nxc-text-on-accent);
@@ -371,6 +395,7 @@
     }
     .nxc-header-text p {
       margin: 2px 0 0;
+      transition: font-size .45s cubic-bezier(.4,0,.2,1);
       font-size: 11px;
       color: rgba(255,255,255,0.75);
       display: flex;
@@ -930,6 +955,16 @@
   const inputEl = document.getElementById("nxc-input");
   const sendBtn = document.getElementById("nxc-send");
 
+  /* --- Hero header: sohbet başlayınca kompakt boyuta küçül --- */
+  function collapseHero() {
+    container.classList.remove("nxc-hero");
+  }
+  function expandHero() {
+    if (state.heroHeader && !state.hasInteracted) {
+      container.classList.add("nxc-hero");
+    }
+  }
+
   /* --- Home screen görünürlüğü --- */
   function showHomeScreen() {
     homeEl.classList.add("active");
@@ -1079,6 +1114,10 @@
       /* Sound */
       state.soundEnabled = !!cfg.sound_enabled;
 
+      /* Hero header — sohbet henüz başlamadıysa genişletilmiş açılır */
+      state.heroHeader = !!cfg.hero_header;
+      expandHero();
+
       /* Privacy notice */
       if (cfg.privacy_url) {
         state.privacyUrl = cfg.privacy_url;
@@ -1156,6 +1195,7 @@
     localStorage.setItem("nxc_session_" + botId, sessionId);
     sessionStorage.removeItem("nxc_interacted_" + botId);
     state.hasInteracted = false;
+    expandHero();
     // Mesaj listesini welcome durumuna döndür
     const welcome = document.getElementById("nxc-welcome");
     const chips = document.getElementById("nxc-chips");
@@ -1252,6 +1292,7 @@
     if (!text && !attachmentUrl) return;
 
     showChatScreen();
+    collapseHero();
     if (!state.hasInteracted) {
       state.hasInteracted = true;
       sessionStorage.setItem("nxc_interacted_" + botId, "1");
@@ -1418,5 +1459,11 @@
   sendBtn.addEventListener("click", sendMessage);
   inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  /* --- Hero küçülme tetikleyicileri: yazmaya başlama veya mesaj listesinde scroll --- */
+  inputEl.addEventListener("input", collapseHero);
+  msgList.addEventListener("scroll", () => {
+    if (msgList.scrollTop > 10) collapseHero();
   });
 })();

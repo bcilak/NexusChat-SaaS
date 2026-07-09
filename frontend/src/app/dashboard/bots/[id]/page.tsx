@@ -38,6 +38,7 @@ interface BotType {
   proactive_message: string | null;
   branding_visible: boolean;
   sound_enabled: boolean;
+  hero_header: boolean;
   whatsapp_phone_id: string | null;
   whatsapp_token: string | null;
   whatsapp_verify_token: string | null;
@@ -70,13 +71,20 @@ function WidgetPreview({ bot }: { bot: BotType }) {
   const accentEnd = adjustColor(accent, -30);
   const textOnAccent = bot.text_color || "#ffffff";
   const [previewMsg, setPreviewMsg] = useState("");
+  const [heroCollapsed, setHeroCollapsed] = useState(false);
   const [chatMsgs, setChatMsgs] = useState([
     { role: "bot", text: bot.welcome_message || "Merhaba! Size nasıl yardımcı olabilirim?" }
   ]);
 
   useEffect(() => {
     setChatMsgs([{ role: "bot", text: bot.welcome_message || "Merhaba! Size nasıl yardımcı olabilirim?" }]);
+    setHeroCollapsed(false);
   }, [bot.welcome_message]);
+
+  // Toggle açılıp kapanınca hero durumunu sıfırla — animasyon tekrar izlenebilsin
+  useEffect(() => { setHeroCollapsed(false); }, [bot.hero_header]);
+
+  const heroActive = bot.hero_header && !heroCollapsed;
 
   const chips = useMemo(() => {
     if (!bot.example_questions) return [];
@@ -85,6 +93,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
 
   const sendPreview = () => {
     if (!previewMsg.trim()) return;
+    setHeroCollapsed(true);
     setChatMsgs(prev => [...prev,
     { role: "user", text: previewMsg },
     { role: "bot", text: "Bu bir önizleme modudur. Gerçek bot bu cevabı üretecektir." }
@@ -100,20 +109,37 @@ function WidgetPreview({ bot }: { bot: BotType }) {
 
   return (
     <div className="flex flex-col rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, background: surfaceBg }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${accent}, ${accentEnd})` }}>
+      {/* Header (hero modunda genişler, sohbet başlayınca küçülür) */}
+      <div
+        className="flex items-center justify-between relative overflow-hidden transition-all duration-500"
+        style={{
+          background: `linear-gradient(135deg, ${accent}, ${accentEnd})`,
+          padding: heroActive ? "26px 18px 22px" : "12px 16px",
+        }}
+      >
         <div className="absolute top-[-50%] right-[-8%] w-32 h-32 rounded-full opacity-20 pointer-events-none" style={{ background: "white" }} />
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center border border-white/30" style={{ background: "rgba(255,255,255,0.2)" }}>
+        <div className="flex items-center gap-3 relative z-10 min-w-0">
+          <div
+            className="rounded-xl flex items-center justify-center border border-white/30 flex-shrink-0 transition-all duration-500"
+            style={{ background: "rgba(255,255,255,0.2)", width: heroActive ? 56 : 36, height: heroActive ? 56 : 36 }}
+          >
             {bot.logo_url
               ? <img src={bot.logo_url} alt="logo" className="w-full h-full object-cover rounded-xl" />
-              : <Bot size={18} color={textOnAccent} />}
+              : <Bot size={heroActive ? 28 : 18} color={textOnAccent} />}
           </div>
-          <div>
-            <div className="font-bold text-sm leading-tight" style={{ color: textOnAccent }}>{bot.name || "AI Asistan"}</div>
-            <div className="flex items-center gap-1.5 text-[10px]" style={{ color: `${textOnAccent}b3` }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_6px_#4ade80]" style={{ display: "inline-block" }} />
-              {bot.subtitle || "Çevrimiçi"}
+          <div className="min-w-0">
+            <div
+              className="font-bold leading-tight transition-all duration-500"
+              style={{ color: textOnAccent, fontSize: heroActive ? 19 : 14 }}
+            >
+              {bot.name || "AI Asistan"}
+            </div>
+            <div
+              className="flex items-center gap-1.5 transition-all duration-500"
+              style={{ color: `${textOnAccent}b3`, fontSize: heroActive ? 12 : 10 }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_6px_#4ade80] flex-shrink-0" style={{ display: "inline-block" }} />
+              <span className={heroActive ? "" : "truncate"}>{bot.subtitle || "Çevrimiçi"}</span>
             </div>
           </div>
         </div>
@@ -161,7 +187,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
       <div className="flex items-center gap-2 px-3 py-2.5 border-t" style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
         <input
           value={previewMsg}
-          onChange={e => setPreviewMsg(e.target.value)}
+          onChange={e => { setPreviewMsg(e.target.value); if (e.target.value) setHeroCollapsed(true); }}
           onKeyDown={e => e.key === "Enter" && sendPreview()}
           placeholder="Mesajınızı yazın..."
           className="flex-1 bg-white/5 border border-white/08 rounded-xl px-3 py-2 text-[12px] text-white/80 outline-none placeholder-white/25"
@@ -311,6 +337,7 @@ export default function BotDetailPage() {
         proactive_message: bot.proactive_message,
         branding_visible: bot.branding_visible,
         sound_enabled: bot.sound_enabled,
+        hero_header: bot.hero_header,
         whatsapp_phone_id: bot.whatsapp_phone_id,
         whatsapp_token: bot.whatsapp_token,
         whatsapp_verify_token: bot.whatsapp_verify_token,
@@ -765,6 +792,7 @@ export default function BotDetailPage() {
 
                 {/* Toggle satırları */}
                 {[
+                  { key: "hero_header" as const, label: "Büyük Marka Başlığı", desc: "Sohbet açılınca büyük logo/başlık; yazmaya başlayınca küçülür" },
                   { key: "show_home_screen" as const, label: "Karşılama Ekranı", desc: "Sohbet öncesi logo, başlık ve soru butonları göster" },
                   { key: "branding_visible" as const, label: "\"Powered by\" Görünür", desc: "Widget altındaki marka yazısı" },
                   { key: "sound_enabled" as const, label: "Ses Bildirimi", desc: "Yeni bot yanıtında kısa bildirim sesi çal" },

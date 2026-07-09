@@ -1,56 +1,71 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { botsApi, chatApi } from "@/lib/api";
+import { botsApi, API_BASE } from "@/lib/api";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bot, Send, Sparkles, User, RefreshCcw } from "lucide-react";
+import { ArrowLeft, Sparkles, RefreshCcw, Monitor, Smartphone } from "lucide-react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-
-interface Message {
-  role: "user" | "bot";
-  content: string;
-  sources?: { file_name: string; snippet: string }[];
-}
 
 export default function ChatTestPage() {
   const params = useParams();
   const router = useRouter();
   const botId = Number(params.id);
   const [botName, setBotName] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sessionId, setSessionId] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop");
 
   useEffect(() => {
     botsApi.get(botId).then((b) => setBotName(b.name)).catch(() => {});
   }, [botId]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  // Widget'ın yükleneceği API origin'i — dev ortamında FastAPI 8000 portunda
+  const apiBase = API_BASE || "http://127.0.0.1:8000";
 
-  const sendMessage = async () => {
-    const q = input.trim();
-    if (!q || sending) return;
-
-    setMessages((prev) => [...prev, { role: "user", content: q }]);
-    setInput("");
-    setSending(true);
-
-    try {
-      const data = await chatApi.send(botId, q, sessionId || undefined);
-      setSessionId(data.session_id);
-      setMessages((prev) => [...prev, { role: "bot", content: data.answer, sources: data.sources }]);
-    } catch (err: any) {
-      setMessages((prev) => [...prev, { role: "bot", content: "Sistem hatası: " + err.message }]);
-    } finally {
-      setSending(false);
-    }
-  };
+  // Sahte müşteri sitesi + gerçek widget.js — birebir gömülü görünüm
+  const srcDoc = useMemo(() => `<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; color: #1e293b; min-height: 100vh; }
+  .navbar { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-weight: 800; font-size: 18px; color: #0f172a; }
+  .logo span { color: #6366f1; }
+  .nav-links { display: flex; gap: 24px; font-size: 14px; color: #64748b; }
+  .hero { text-align: center; padding: 72px 24px 56px; }
+  .hero h1 { font-size: 34px; font-weight: 800; color: #0f172a; margin-bottom: 12px; }
+  .hero p { font-size: 16px; color: #64748b; max-width: 480px; margin: 0 auto 24px; line-height: 1.6; }
+  .hero button { background: #6366f1; color: #fff; border: none; padding: 12px 28px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; padding: 0 24px 72px; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; }
+  .card .icon { width: 44px; height: 44px; border-radius: 12px; background: #eef2ff; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 14px; }
+  .card h3 { font-size: 15px; margin-bottom: 6px; color: #0f172a; }
+  .card p { font-size: 13px; color: #64748b; line-height: 1.5; }
+  .footer { text-align: center; padding: 24px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; background: #fff; }
+</style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">Demo<span>Site</span>.com</div>
+    <div class="nav-links"><span>Ana Sayfa</span><span>Ürünler</span><span>Hakkımızda</span><span>İletişim</span></div>
+  </nav>
+  <section class="hero">
+    <h1>Web Sitenize Hoş Geldiniz</h1>
+    <p>Bu, chatbot widget'ınızın müşterilerinizin sitesinde nasıl görüneceğini gösteren bir demo sayfasıdır. Sağ (veya sol) alttaki sohbet butonuna tıklayın.</p>
+    <button>Daha Fazla Bilgi</button>
+  </section>
+  <section class="cards">
+    <div class="card"><div class="icon">🚀</div><h3>Hızlı Kurulum</h3><p>Tek satır kod ile sitenize ekleyin, dakikalar içinde yayında olun.</p></div>
+    <div class="card"><div class="icon">🎨</div><h3>Tam Özelleştirme</h3><p>Renk, tema, konum ve davranışları markanıza göre ayarlayın.</p></div>
+    <div class="card"><div class="icon">🤖</div><h3>Yapay Zeka Destekli</h3><p>Dokümanlarınızla eğitilmiş bot, müşterilere 7/24 yanıt verir.</p></div>
+  </section>
+  <div class="footer">© 2026 DemoSite — Widget canlı test ortamı</div>
+  <script src="${apiBase}/static/widget.js" data-bot-id="${botId}"></script>
+</body>
+</html>`, [apiBase, botId, reloadKey]);
 
   const tabs = [
     { label: "⚙️ Ayarlar", path: `/dashboard/bots/${botId}` },
@@ -63,15 +78,14 @@ export default function ChatTestPage() {
     { label: "💬 Chat Test", path: `/dashboard/bots/${botId}/chat` },
     { label: "🔗 Embed", path: `/dashboard/bots/${botId}/embed` },
     { label: "🎟️ Destek Talepleri", path: `/dashboard/bots/${botId}/tickets` },
-
   ];
 
   return (
-    <div className="pb-24 max-w-5xl mx-auto h-[calc(100vh-100px)] flex flex-col">
+    <div className="pb-8 max-w-6xl mx-auto h-[calc(100vh-80px)] flex flex-col">
       {/* Header */}
       <div className="flex-none mb-6">
-        <button 
-          onClick={() => router.push("/dashboard/bots")} 
+        <button
+          onClick={() => router.push("/dashboard/bots")}
           className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-white transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" /> Botlara Dön
@@ -85,19 +99,38 @@ export default function ChatTestPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{botName || "Yükleniyor..."}</h1>
               <div className="flex items-center gap-2 text-xs font-medium">
                 <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20 tracking-wider uppercase">
-                  Canlı Simülasyon
+                  Gerçek Widget · Site Simülasyonu
                 </span>
               </div>
             </div>
           </div>
-          
-          <button 
-            onClick={() => { setMessages([]); setSessionId(""); }}
-            className="p-2 text-gray-500 hover:bg-white/5 hover:text-white rounded-xl transition-all"
-            title="Sohbeti Temizle"
-          >
-            <RefreshCcw className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* Viewport toggle */}
+            <div className="flex gap-1 p-1 bg-white/5 border border-white/10 rounded-xl">
+              <button
+                onClick={() => setViewport("desktop")}
+                className={`p-2 rounded-lg transition-all ${viewport === "desktop" ? "bg-indigo-500/20 text-indigo-300" : "text-gray-500 hover:text-white"}`}
+                title="Masaüstü görünümü"
+              >
+                <Monitor className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewport("mobile")}
+                className={`p-2 rounded-lg transition-all ${viewport === "mobile" ? "bg-indigo-500/20 text-indigo-300" : "text-gray-500 hover:text-white"}`}
+                title="Mobil görünümü"
+              >
+                <Smartphone className="w-4 h-4" />
+              </button>
+            </div>
+            <button
+              onClick={() => setReloadKey(k => k + 1)}
+              className="p-2 text-gray-500 hover:bg-white/5 hover:text-white rounded-xl transition-all"
+              title="Sayfayı Yenile (widget baştan yüklenir)"
+            >
+              <RefreshCcw className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -106,8 +139,8 @@ export default function ChatTestPage() {
         {tabs.map((tab) => {
           const isActive = tab.path === `/dashboard/bots/${botId}/chat`;
           return (
-            <Link 
-              key={tab.path} 
+            <Link
+              key={tab.path}
               href={tab.path}
               className={`whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors relative ${
                 isActive ? "text-indigo-400" : "text-gray-400 hover:text-gray-200"
@@ -115,9 +148,9 @@ export default function ChatTestPage() {
             >
               {tab.label}
               {isActive && (
-                <motion.div 
-                  layoutId="activeTab" 
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]" 
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]"
                 />
               )}
             </Link>
@@ -125,105 +158,35 @@ export default function ChatTestPage() {
         })}
       </div>
 
-      {/* Chat Interface */}
-      <div className="flex-1 min-h-0 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-3xl overflow-hidden flex flex-col relative shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl -mr-48 -mt-48 pointer-events-none" />
-        
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 relative z-10 scroll-smooth">
-          {messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
-              <Bot className="w-16 h-16 text-indigo-400 mb-6 mx-auto" />
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Simülasyon Başladı</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm">
-                Botunuza eğittiğiniz dokümanlar dahilinde her türlü soruyu sorabilir ve nasıl tepki vereceğini uçtan uca test edebilirsiniz.
-              </p>
+      {/* Browser frame + iframe */}
+      <div className="flex-1 min-h-0 flex flex-col items-center">
+        <div
+          className={`flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-300 ${
+            viewport === "mobile" ? "w-[390px] max-w-full" : "w-full"
+          }`}
+        >
+          {/* Fake browser bar */}
+          <div className="flex-none flex items-center gap-2 px-4 py-2.5 bg-gray-200 border-b border-gray-300">
+            <div className="flex gap-1.5">
+              <span className="w-3 h-3 rounded-full bg-red-400" />
+              <span className="w-3 h-3 rounded-full bg-yellow-400" />
+              <span className="w-3 h-3 rounded-full bg-green-400" />
             </div>
-          )}
-
-          {messages.map((msg, i) => (
-            <motion.div 
-              key={i} 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex items-start gap-4 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}
-            >
-              {/* Avatar */}
-              <div className={`w-8 h-8 rounded-full flex flex-shrink-0 items-center justify-center ${
-                msg.role === "user" ? "bg-white/10" : "bg-gradient-to-tr from-indigo-500 to-purple-500"
-              }`}>
-                {msg.role === "user" ? <User className="w-4 h-4 text-gray-900 dark:text-white" /> : <Bot className="w-4 h-4 text-gray-900 dark:text-white" />}
-              </div>
-
-              {/* Bubble */}
-              <div className={`max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed ${
-                msg.role === "user" 
-                  ? "bg-indigo-500 text-white rounded-tr-sm" 
-                  : "bg-white/5 border border-white/5 text-gray-300 rounded-tl-sm backdrop-blur-md"
-              }`}>
-                {msg.role === "user" ? (
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                ) : (
-                  <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap leading-relaxed">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
-                )}
-
-                {msg.sources && msg.sources.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
-                    <p className="text-xs font-medium text-emerald-400 mb-2 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> AI Kaynakları Kullandı ({msg.sources.length})
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      {msg.sources.map((s, j) => (
-                        <div key={j} className="text-xs bg-white/80 dark:bg-black/40 rounded-lg p-2 border border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-400 font-mono truncate">
-                          📄 {s.file_name}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
-
-          {sending && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start gap-4">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center animate-pulse">
-               <Bot className="w-4 h-4 text-gray-900 dark:text-white" />
-              </div>
-              <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl rounded-tl-sm px-5 py-4 flex gap-1.5 items-center">
-                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
-            </motion.div>
-          )}
-          <div ref={messagesEndRef} className="h-4" />
-        </div>
-
-        {/* Input Bar */}
-        <div className="flex-none p-4 bg-white dark:bg-black/20 border-t border-gray-200 dark:border-white/5 relative z-10 backdrop-blur-md">
-          <div className="relative flex items-center max-w-4xl mx-auto">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              placeholder="Yapay zeka asistanınıza test sorusu sorun..."
-              disabled={sending}
-              className="w-full pl-6 pr-14 py-4 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all text-sm shadow-inner"
-            />
-            <button 
-              onClick={sendMessage} 
-              disabled={sending || !input.trim()}
-              className="absolute right-2 p-2 bg-indigo-500 hover:bg-indigo-400 disabled:bg-gray-700 text-gray-900 dark:text-white rounded-xl transition-colors"
-            >
-              <Send className="w-5 h-5" />
-            </button>
+            <div className="flex-1 mx-3 px-3 py-1 bg-white rounded-md text-[11px] text-gray-500 font-mono truncate">
+              https://demosite.com — bot #{botId} gömülü
+            </div>
           </div>
-          <p className="text-center text-[10px] text-gray-600 mt-3">Simülasyondaki cevaplar AI modeline ve eğittiğiniz belgelere göre değişiklik gösterir.</p>
+          <iframe
+            key={reloadKey}
+            srcDoc={srcDoc}
+            title="Widget canlı test"
+            className="flex-1 w-full border-0"
+            sandbox="allow-scripts allow-same-origin allow-popups"
+          />
         </div>
+        <p className="flex-none text-xs text-gray-600 text-center mt-3">
+          Bu, sitenize gömülen <code className="text-indigo-400">widget.js</code>&apos;in birebir kendisidir — ayarlarda yaptığınız değişiklikleri görmek için kaydedin ve yenile butonuna basın.
+        </p>
       </div>
     </div>
   );

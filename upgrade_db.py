@@ -45,7 +45,8 @@ def upgrade_db():
         ("auto_open_delay", "INTEGER DEFAULT 0"),
         ("proactive_message", "TEXT"),
         ("branding_visible", "BOOLEAN DEFAULT 1"),
-        ("sound_enabled", "BOOLEAN DEFAULT 0")
+        ("sound_enabled", "BOOLEAN DEFAULT 0"),
+        ("hero_header", "BOOLEAN DEFAULT 0")
     ]
     
     for col_name, col_def in bot_columns:

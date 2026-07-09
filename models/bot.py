@@ -41,6 +41,7 @@ class Bot(Base):
     proactive_message = Column(Text, nullable=True)  # Teaser bubble text on the toggle button
     branding_visible = Column(Boolean, default=True)  # "Powered by" footer
     sound_enabled = Column(Boolean, default=False)  # Ding on new bot message
+    hero_header = Column(Boolean, default=False)  # Large brand header that shrinks when chatting starts
 
     # WhatsApp Integration
     whatsapp_phone_id = Column(String(100), nullable=True, index=True)

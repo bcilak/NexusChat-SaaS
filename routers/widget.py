@@ -55,6 +55,7 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
         "proactive_message": bot.proactive_message,
         "branding_visible": bot.branding_visible if bot.branding_visible is not None else True,
         "sound_enabled": bool(bot.sound_enabled),
+        "hero_header": bool(bot.hero_header),
     }
 
 
