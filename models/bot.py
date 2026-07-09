@@ -43,6 +43,10 @@ class Bot(Base):
     sound_enabled = Column(Boolean, default=False)  # Ding on new bot message
     hero_header = Column(Boolean, default=False)  # Large brand header that shrinks when chatting starts
 
+    # Product feed (Google Merchant / Ticimax / İdeasoft XML)
+    feed_url = Column(String(1000), nullable=True)
+    feed_last_sync = Column(DateTime, nullable=True)
+
     # WhatsApp Integration
     whatsapp_phone_id = Column(String(100), nullable=True, index=True)
     whatsapp_token = Column(String(500), nullable=True)
@@ -58,3 +62,4 @@ class Bot(Base):
     integrations = relationship("BotIntegration", back_populates="bot", cascade="all, delete-orphan")
     inbox_conversations = relationship("InboxConversation", back_populates="bot", cascade="all, delete-orphan")
     tools = relationship("BotTool", back_populates="bot", cascade="all, delete-orphan")
+    products = relationship("Product", back_populates="bot", cascade="all, delete-orphan")

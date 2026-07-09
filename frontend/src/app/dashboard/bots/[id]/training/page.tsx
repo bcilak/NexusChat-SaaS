@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { botsApi, trainingApi, webTrainApi } from "@/lib/api";
+import { botsApi, trainingApi, webTrainApi, feedApi } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Bot, UploadCloud, FileText, FileSpreadsheet, FileIcon, Trash2, Globe, Server, CheckCircle2, AlertCircle, Play, RotateCw } from "lucide-react";
+import { ArrowLeft, Bot, UploadCloud, FileText, FileSpreadsheet, FileIcon, Trash2, Globe, Server, CheckCircle2, AlertCircle, Play, RotateCw, ShoppingBag, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -42,13 +42,61 @@ export default function TrainingPage() {
   const canEdit = !isSubUser || user?.can_edit_bots === true;
   
   // Web Training States
-  const [trainingMode, setTrainingMode] = useState<"file" | "web">("file");
+  const [trainingMode, setTrainingMode] = useState<"file" | "web" | "feed">("file");
   const [webUrl, setWebUrl] = useState("");
   const [maxPages, setMaxPages] = useState<number>(50);
   const [crawledPages, setCrawledPages] = useState<CrawledPage[]>([]);
   const [webMode, setWebMode] = useState<"single" | "website">("single");
 
+  // Product Feed States
+  interface FeedProduct {
+    id: number; title: string; price: number | null; sale_price: number | null;
+    currency: string; stock: string | null; image_url: string | null;
+    product_url: string | null; category: string | null;
+  }
+  const [feedUrl, setFeedUrl] = useState("");
+  const [feedSyncing, setFeedSyncing] = useState(false);
+  const [feedProducts, setFeedProducts] = useState<FeedProduct[]>([]);
+  const [feedTotal, setFeedTotal] = useState(0);
+  const [feedLastSync, setFeedLastSync] = useState<string | null>(null);
+  const [feedSearch, setFeedSearch] = useState("");
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadFeedProducts = useCallback((q?: string) => {
+    feedApi.listProducts(botId, q).then((res) => {
+      setFeedProducts(res.products);
+      setFeedTotal(res.total);
+      setFeedLastSync(res.feed_last_sync);
+      if (res.feed_url) setFeedUrl((prev) => prev || res.feed_url);
+    }).catch(console.error);
+  }, [botId]);
+
+  const handleFeedSync = async () => {
+    if (!feedUrl.trim()) return;
+    setFeedSyncing(true);
+    setMessage(null);
+    try {
+      const res = await feedApi.sync(botId, feedUrl.trim());
+      setMessage({ text: res.message, type: "success" });
+      loadFeedProducts();
+    } catch (err: any) {
+      setMessage({ text: err.message || "Feed senkronizasyon hatası.", type: "error" });
+    } finally {
+      setFeedSyncing(false);
+      setTimeout(() => setMessage(null), 6000);
+    }
+  };
+
+  const handleFeedClear = async () => {
+    if (!confirm("Tüm senkronize ürünler silinecek. Emin misiniz?")) return;
+    try {
+      await feedApi.clearProducts(botId);
+      loadFeedProducts();
+    } catch (err: any) {
+      setMessage({ text: err.message || "Silme hatası.", type: "error" });
+    }
+  };
 
   const loadDocs = useCallback(() => {
     trainingApi.listDocuments(botId).then(setDocs).catch(console.error).finally(() => setLoading(false));
@@ -62,7 +110,8 @@ export default function TrainingPage() {
     botsApi.get(botId).then((b) => setBotName(b.name)).catch(() => {});
     loadDocs();
     loadWebPages();
-  }, [botId, loadDocs, loadWebPages]);
+    loadFeedProducts();
+  }, [botId, loadDocs, loadWebPages, loadFeedProducts]);
 
   // Alt kullanıcı yetkisi yoksa yönlendir
   useEffect(() => {
@@ -261,15 +310,26 @@ export default function TrainingPage() {
         >
           <FileText className="w-4 h-4" /> Dokümanlar
         </button>
-        <button 
+        <button
           onClick={() => setTrainingMode("web")}
           className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            trainingMode === "web" 
-              ? "bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm" 
+            trainingMode === "web"
+              ? "bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm"
               : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
           }`}
         >
           <Globe className="w-4 h-4" /> Web Siteleri
+        </button>
+        <button
+          onClick={() => setTrainingMode("feed")}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            trainingMode === "feed"
+              ? "bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-sm"
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300"
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4" /> Ürün Feed&apos;i
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">YENİ</span>
         </button>
       </div>
 
@@ -397,8 +457,8 @@ export default function TrainingPage() {
               )}
             </div>
           </motion.div>
-        ) : (
-          <motion.div 
+        ) : trainingMode === "web" ? (
+          <motion.div
             key="web"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -513,6 +573,141 @@ export default function TrainingPage() {
                       </button>
                     </motion.div>
                   ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="feed"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-6"
+          >
+            {/* Feed URL + Sync */}
+            <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-3xl p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+
+              <div className="mb-6 border-b border-gray-200 dark:border-white/10 pb-6 relative z-10">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-cyan-400" /> Ürün Feed&apos;i ile Eğit
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  E-ticaret altyapınızın XML ürün feed&apos;ini bağlayın — bot ürün adı, fiyat, stok ve linkleri öğrenir.
+                  Ticimax, İdeasoft, T-Soft ve Google Merchant formatları desteklenir.
+                </p>
+              </div>
+
+              <div className="space-y-4 relative z-10">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Feed URL (XML)</label>
+                  <input
+                    type="url"
+                    value={feedUrl}
+                    onChange={(e) => setFeedUrl(e.target.value)}
+                    placeholder="https://site.com/xml/urunler veya Google Merchant feed adresi"
+                    className="w-full px-4 py-3 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-cyan-500 font-mono text-sm"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1.5">
+                    Ticimax: Panel → Entegrasyonlar → XML Servisleri · İdeasoft: /export/google · Feed herkese açık olmalı.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleFeedSync}
+                  disabled={feedSyncing || !feedUrl.trim()}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white px-8 py-3.5 rounded-xl font-bold shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all disabled:opacity-50"
+                >
+                  {feedSyncing ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <RefreshCcw className="w-5 h-5" />}
+                  {feedSyncing ? "Ürünler İndiriliyor ve İşleniyor..." : "Feed'i Senkronize Et"}
+                </button>
+
+                {feedLastSync && (
+                  <p className="text-xs text-gray-500 text-center">
+                    Son senkronizasyon: {new Date(feedLastSync).toLocaleString("tr-TR")}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Product List */}
+            <div className="bg-white dark:bg-black/20 border border-gray-200 dark:border-white/5 rounded-3xl p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-cyan-400" /> Senkronize Ürünler ({feedTotal})
+                </h3>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={feedSearch}
+                    onChange={(e) => { setFeedSearch(e.target.value); loadFeedProducts(e.target.value); }}
+                    placeholder="Ürün ara..."
+                    className="px-3 py-2 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-cyan-500"
+                  />
+                  {feedTotal > 0 && (
+                    <button
+                      onClick={handleFeedClear}
+                      className="text-gray-500 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-colors shrink-0"
+                      title="Tüm ürünleri sil"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {feedProducts.length === 0 ? (
+                <div className="text-center py-12 border border-gray-200 dark:border-white/5 border-dashed rounded-2xl">
+                  <ShoppingBag className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-500">Henüz ürün senkronize edilmedi. Feed URL&apos;sini girip senkronizasyonu başlatın.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                  {feedProducts.map((p) => (
+                    <motion.div
+                      key={p.id}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      className="flex items-center gap-4 p-3 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 hover:border-cyan-500/30 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-lg bg-white/80 dark:bg-black/40 flex items-center justify-center shrink-0 overflow-hidden">
+                        {p.image_url
+                          ? <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                          : <ShoppingBag className="w-5 h-5 text-gray-500" />}
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <h4 className="font-semibold text-gray-900 dark:text-white truncate text-sm">{p.title}</h4>
+                        <div className="flex items-center gap-3 mt-1 text-xs">
+                          {p.sale_price && p.price && p.sale_price < p.price ? (
+                            <>
+                              <span className="text-gray-500 line-through">{p.price.toLocaleString("tr-TR")} {p.currency}</span>
+                              <span className="text-emerald-400 font-bold">{p.sale_price.toLocaleString("tr-TR")} {p.currency}</span>
+                            </>
+                          ) : p.price ? (
+                            <span className="text-emerald-400 font-bold">{p.price.toLocaleString("tr-TR")} {p.currency}</span>
+                          ) : null}
+                          {p.stock && (
+                            <span className={`${p.stock === "0" || p.stock.includes("out") ? "text-red-400" : "text-gray-500"}`}>
+                              Stok: {p.stock}
+                            </span>
+                          )}
+                          {p.category && <span className="text-gray-600 truncate">{p.category}</span>}
+                        </div>
+                      </div>
+                      {p.product_url && (
+                        <a href={p.product_url} target="_blank" rel="noreferrer"
+                          className="text-xs text-cyan-400 hover:underline shrink-0">
+                          Ürüne git →
+                        </a>
+                      )}
+                    </motion.div>
+                  ))}
+                  {feedTotal > feedProducts.length && (
+                    <p className="text-center text-xs text-gray-500 py-2">
+                      İlk {feedProducts.length} ürün gösteriliyor (toplam {feedTotal}). Aramayla daraltabilirsiniz.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

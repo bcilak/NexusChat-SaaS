@@ -46,7 +46,9 @@ def upgrade_db():
         ("proactive_message", "TEXT"),
         ("branding_visible", "BOOLEAN DEFAULT 1"),
         ("sound_enabled", "BOOLEAN DEFAULT 0"),
-        ("hero_header", "BOOLEAN DEFAULT 0")
+        ("hero_header", "BOOLEAN DEFAULT 0"),
+        ("feed_url", "VARCHAR(1000)"),
+        ("feed_last_sync", "DATETIME")
     ]
     
     for col_name, col_def in bot_columns:
@@ -95,6 +97,34 @@ def upgrade_db():
     except Exception as e:
         print(f"Error creating banned_ips table: {e}")
         
+    # Create products table (ürün feed senkronizasyonu)
+    try:
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bot_id INTEGER NOT NULL,
+            external_id VARCHAR(200),
+            title VARCHAR(500) NOT NULL,
+            description TEXT,
+            price FLOAT,
+            sale_price FLOAT,
+            currency VARCHAR(10) DEFAULT 'TRY',
+            stock VARCHAR(50),
+            image_url VARCHAR(1000),
+            product_url VARCHAR(1000),
+            category VARCHAR(500),
+            brand VARCHAR(200),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (bot_id) REFERENCES bots(id)
+        )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_products_bot_id ON products (bot_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_products_external_id ON products (external_id)")
+        print("Created products table.")
+    except Exception as e:
+        print(f"Error creating products table: {e}")
+
     conn.commit()
     conn.close()
     print("DB upgrade completed.")

@@ -9,5 +9,6 @@ from models.inbox import InboxConversation, InboxMessage
 from models.ticket import Ticket
 from models.contact_request import ContactRequest
 from models.banned_ip import BannedIP
+from models.product import Product
 
-__all__ = ["User", "Bot", "Document", "ChatHistory", "CrawledPage", "BotIntegration", "BotTool", "InboxConversation", "InboxMessage", "Ticket", "ContactRequest", "BannedIP"]
+__all__ = ["User", "Bot", "Document", "ChatHistory", "CrawledPage", "BotIntegration", "BotTool", "InboxConversation", "InboxMessage", "Ticket", "ContactRequest", "BannedIP", "Product"]

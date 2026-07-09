@@ -338,4 +338,17 @@ export const ticketsApi = {
     })
 };
 
+// --- Ürün Feed ---
+export const feedApi = {
+  sync: (botId: number, feedUrl?: string) =>
+    apiFetch(`/api/bots/${botId}/feed/sync`, {
+      method: "POST",
+      body: JSON.stringify({ feed_url: feedUrl || null }),
+    }),
+  listProducts: (botId: number, q?: string, limit = 50, offset = 0) =>
+    apiFetch(`/api/bots/${botId}/products?limit=${limit}&offset=${offset}${q ? `&q=${encodeURIComponent(q)}` : ""}`),
+  clearProducts: (botId: number) =>
+    apiFetch(`/api/bots/${botId}/products`, { method: "DELETE" }),
+};
+
 export { API_BASE };

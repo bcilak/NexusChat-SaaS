@@ -1,0 +1,93 @@
+"""Ürün feed yönetimi — feed URL kaydetme, senkronizasyon, ürün listeleme."""
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from db.database import get_db
+from models.product import Product
+from models.user import User
+from routers.auth import get_current_user
+from routers.bot import get_user_bot
+from services.feed import sync_feed
+
+router = APIRouter(prefix="/api/bots", tags=["feed"])
+
+
+class FeedSyncRequest(BaseModel):
+    feed_url: Optional[str] = None  # Verilirse bota kaydedilir; verilmezse kayıtlı URL kullanılır
+
+
+@router.post("/{bot_id}/feed/sync")
+def feed_sync(
+    bot_id: int,
+    req: FeedSyncRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
+    try:
+        stats = sync_feed(bot, db, feed_url=req.feed_url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Feed indirilemedi veya işlenemedi: {e}")
+    return {
+        "status": "success",
+        "message": f"{stats['total']} ürün işlendi ({stats['created']} yeni, {stats['updated']} güncellendi, {stats['removed']} kaldırıldı).",
+        **stats,
+        "feed_url": bot.feed_url,
+        "feed_last_sync": bot.feed_last_sync.isoformat() if bot.feed_last_sync else None,
+    }
+
+
+@router.get("/{bot_id}/products")
+def list_products(
+    bot_id: int,
+    q: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    bot = get_user_bot(bot_id, current_user, db)
+    query = db.query(Product).filter(Product.bot_id == bot.id)
+    if q:
+        query = query.filter(Product.title.ilike(f"%{q}%"))
+    total = query.count()
+    rows = query.order_by(Product.title).offset(offset).limit(min(limit, 200)).all()
+    return {
+        "total": total,
+        "feed_url": bot.feed_url,
+        "feed_last_sync": bot.feed_last_sync.isoformat() if bot.feed_last_sync else None,
+        "products": [
+            {
+                "id": p.id,
+                "external_id": p.external_id,
+                "title": p.title,
+                "price": p.price,
+                "sale_price": p.sale_price,
+                "currency": p.currency,
+                "stock": p.stock,
+                "image_url": p.image_url,
+                "product_url": p.product_url,
+                "category": p.category,
+                "brand": p.brand,
+            }
+            for p in rows
+        ],
+    }
+
+
+@router.delete("/{bot_id}/products")
+def clear_products(
+    bot_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
+    deleted = db.query(Product).filter(Product.bot_id == bot.id).delete()
+    bot.feed_last_sync = None
+    db.commit()
+    return {"status": "success", "deleted": deleted}
