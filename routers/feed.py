@@ -1,7 +1,7 @@
 """Ürün feed yönetimi — feed URL kaydetme, senkronizasyon, ürün listeleme."""
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -38,6 +38,33 @@ def feed_sync(
         "message": f"{stats['total']} ürün işlendi ({stats['created']} yeni, {stats['updated']} güncellendi, {stats['removed']} kaldırıldı).",
         **stats,
         "feed_url": bot.feed_url,
+        "feed_last_sync": bot.feed_last_sync.isoformat() if bot.feed_last_sync else None,
+    }
+
+
+@router.post("/{bot_id}/feed/upload")
+async def feed_upload(
+    bot_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """XML feed dosyasını yükleyerek senkronize et (barındırılan URL olmadığında)."""
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
+    content = await file.read()
+    if len(content) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Dosya çok büyük (maks 50MB).")
+    from services.feed import sync_feed_from_bytes
+    try:
+        stats = sync_feed_from_bytes(bot, db, content)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"XML işlenemedi: {e}")
+    return {
+        "status": "success",
+        "message": f"{stats['total']} ürün işlendi ({stats['created']} yeni, {stats['updated']} güncellendi, {stats['removed']} kaldırıldı).",
+        **stats,
         "feed_last_sync": bot.feed_last_sync.isoformat() if bot.feed_last_sync else None,
     }
 

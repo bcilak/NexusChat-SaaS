@@ -62,6 +62,25 @@ export default function TrainingPage() {
   const [feedSearch, setFeedSearch] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const feedFileRef = useRef<HTMLInputElement>(null);
+
+  const handleFeedFileUpload = async (files: FileList | null) => {
+    const f = files?.[0];
+    if (!f) return;
+    setFeedSyncing(true);
+    setMessage(null);
+    try {
+      const res = await feedApi.uploadFile(botId, f);
+      setMessage({ text: res.message, type: "success" });
+      loadFeedProducts();
+    } catch (err: any) {
+      setMessage({ text: err.message || "Dosya işlenemedi.", type: "error" });
+    } finally {
+      setFeedSyncing(false);
+      if (feedFileRef.current) feedFileRef.current.value = "";
+      setTimeout(() => setMessage(null), 6000);
+    }
+  };
 
   const loadFeedProducts = useCallback((q?: string) => {
     feedApi.listProducts(botId, q).then((res) => {
@@ -623,6 +642,32 @@ export default function TrainingPage() {
                   {feedSyncing ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <RefreshCcw className="w-5 h-5" />}
                   {feedSyncing ? "Ürünler İndiriliyor ve İşleniyor..." : "Feed'i Senkronize Et"}
                 </button>
+
+                {/* Dosya yükleme alternatifi */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-gray-300 dark:bg-white/10" />
+                  <span className="text-[11px] text-gray-500 uppercase tracking-wider">veya</span>
+                  <div className="flex-1 h-px bg-gray-300 dark:bg-white/10" />
+                </div>
+                <input
+                  type="file"
+                  ref={feedFileRef}
+                  accept=".xml,text/xml,application/xml"
+                  className="hidden"
+                  onChange={(e) => handleFeedFileUpload(e.target.files)}
+                />
+                <button
+                  onClick={() => feedFileRef.current?.click()}
+                  disabled={feedSyncing}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-gray-100 dark:bg-white/5 hover:bg-white/10 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white px-8 py-3 rounded-xl font-medium transition-all disabled:opacity-50"
+                >
+                  <UploadCloud className="w-5 h-5" />
+                  XML Dosyası Yükle
+                </button>
+                <p className="text-[11px] text-gray-500 text-center -mt-2">
+                  Panel size URL yerine indirilebilir XML veriyorsa dosyayı buradan yükleyin.
+                  Not: Dosya yüklemede fiyat/stok otomatik güncellenmez — feed değiştikçe tekrar yüklemeniz gerekir.
+                </p>
 
                 {feedLastSync && (
                   <p className="text-xs text-gray-500 text-center">

@@ -205,7 +205,7 @@ def search_products(bot_id: int, query: str, db: Session, k: int = 4) -> list[Pr
 
 
 def sync_feed(bot: Bot, db: Session, feed_url: Optional[str] = None) -> dict:
-    """Feed'i indir, parse et, ürünleri upsert et. Sonuç istatistiği döner."""
+    """Feed'i URL'den indir ve senkronize et."""
     url = feed_url or bot.feed_url
     if not url:
         raise ValueError("Feed URL tanımlı değil.")
@@ -216,8 +216,16 @@ def sync_feed(bot: Bot, db: Session, feed_url: Optional[str] = None) -> dict:
         headers={"User-Agent": "Mozilla/5.0 (compatible; ChatGeniusBot/1.0; +https://chatbot.altikodtech.com.tr)"},
     )
     resp.raise_for_status()
+    stats = sync_feed_from_bytes(bot, db, resp.content, commit=False)
+    if feed_url:
+        bot.feed_url = feed_url
+    db.commit()
+    return stats
 
-    items = parse_feed(resp.content)
+
+def sync_feed_from_bytes(bot: Bot, db: Session, xml_bytes: bytes, commit: bool = True) -> dict:
+    """XML içeriğini parse edip ürünleri upsert eder (URL veya dosya yüklemeden)."""
+    items = parse_feed(xml_bytes)
     if not items:
         raise ValueError("Feed'de ürün bulunamadı — format desteklenmiyor olabilir.")
 
@@ -250,9 +258,8 @@ def sync_feed(bot: Bot, db: Session, feed_url: Optional[str] = None) -> dict:
             db.delete(row)
             removed += 1
 
-    if feed_url:
-        bot.feed_url = feed_url
     bot.feed_last_sync = datetime.utcnow()
-    db.commit()
+    if commit:
+        db.commit()
 
     return {"total": len(items), "created": created, "updated": updated, "removed": removed}

@@ -349,6 +349,11 @@ export const feedApi = {
     apiFetch(`/api/bots/${botId}/products?limit=${limit}&offset=${offset}${q ? `&q=${encodeURIComponent(q)}` : ""}`),
   clearProducts: (botId: number) =>
     apiFetch(`/api/bots/${botId}/products`, { method: "DELETE" }),
+  uploadFile: (botId: number, file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return apiFetch(`/api/bots/${botId}/feed/upload`, { method: "POST", body: fd });
+  },
 };
 
 export { API_BASE };
