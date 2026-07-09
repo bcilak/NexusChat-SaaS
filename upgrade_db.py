@@ -35,7 +35,17 @@ def upgrade_db():
         ("whatsapp_phone_id", "VARCHAR(100)"),
         ("whatsapp_token", "VARCHAR(500)"),
         ("whatsapp_verify_token", "VARCHAR(100)"),
-        ("whatsapp_welcome_message", "TEXT")
+        ("whatsapp_welcome_message", "TEXT"),
+        # Widget appearance & behavior
+        ("subtitle", "VARCHAR(200)"),
+        ("theme_mode", "VARCHAR(10) DEFAULT 'dark'"),
+        ("show_home_screen", "BOOLEAN DEFAULT 0"),
+        ("privacy_url", "VARCHAR(500)"),
+        ("widget_position", "VARCHAR(10) DEFAULT 'right'"),
+        ("auto_open_delay", "INTEGER DEFAULT 0"),
+        ("proactive_message", "TEXT"),
+        ("branding_visible", "BOOLEAN DEFAULT 1"),
+        ("sound_enabled", "BOOLEAN DEFAULT 0")
     ]
     
     for col_name, col_def in bot_columns:

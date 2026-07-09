@@ -310,4 +310,5 @@ def rag_chat(
         "answer": answer,
         "sources": sources,
         "session_id": session_id,
+        "message_id": history.id,
     }

@@ -14,7 +14,7 @@ try:
     RATE_LIMITING_ENABLED = True
 except ImportError:
     RATE_LIMITING_ENABLED = False
-    print("⚠️  WARNING: slowapi not installed. Rate limiting disabled. Install with: pip install slowapi")
+    print("WARNING: slowapi not installed. Rate limiting disabled. Install with: pip install slowapi")
 
 from db.database import engine, Base
 from models import User, Bot, Document, ChatHistory, CrawledPage, BotIntegration, BotTool, InboxConversation, InboxMessage, Ticket, ContactRequest

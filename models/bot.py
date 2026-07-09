@@ -30,7 +30,18 @@ class Bot(Base):
     logo_url = Column(String(500), nullable=True)
     welcome_message = Column(Text, default="Merhaba, size nasıl yardımcı olabilirim?")
     example_questions = Column(Text, nullable=True)  # JSON String
-    
+
+    # Widget Appearance & Behavior
+    subtitle = Column(String(200), nullable=True)  # Header/home screen tagline
+    theme_mode = Column(String(10), default="dark")  # dark | light
+    show_home_screen = Column(Boolean, default=False)  # Welcome screen before chat
+    privacy_url = Column(String(500), nullable=True)  # Privacy policy link shown above input
+    widget_position = Column(String(10), default="right")  # right | left
+    auto_open_delay = Column(Integer, default=0)  # Seconds; 0 = disabled
+    proactive_message = Column(Text, nullable=True)  # Teaser bubble text on the toggle button
+    branding_visible = Column(Boolean, default=True)  # "Powered by" footer
+    sound_enabled = Column(Boolean, default=False)  # Ding on new bot message
+
     # WhatsApp Integration
     whatsapp_phone_id = Column(String(100), nullable=True, index=True)
     whatsapp_token = Column(String(500), nullable=True)

@@ -28,6 +28,15 @@ class BotCreate(BaseModel):
     logo_url: Optional[str] = None
     welcome_message: Optional[str] = "Merhaba, size nasıl yardımcı olabilirim?"
     example_questions: Optional[str] = None
+    subtitle: Optional[str] = None
+    theme_mode: Optional[str] = "dark"
+    show_home_screen: Optional[bool] = False
+    privacy_url: Optional[str] = None
+    widget_position: Optional[str] = "right"
+    auto_open_delay: Optional[int] = 0
+    proactive_message: Optional[str] = None
+    branding_visible: Optional[bool] = True
+    sound_enabled: Optional[bool] = False
     whatsapp_phone_id: Optional[str] = None
     whatsapp_token: Optional[str] = None
     whatsapp_verify_token: Optional[str] = None
@@ -48,6 +57,15 @@ class BotUpdate(BaseModel):
     logo_url: Optional[str] = None
     welcome_message: Optional[str] = None
     example_questions: Optional[str] = None
+    subtitle: Optional[str] = None
+    theme_mode: Optional[str] = None
+    show_home_screen: Optional[bool] = None
+    privacy_url: Optional[str] = None
+    widget_position: Optional[str] = None
+    auto_open_delay: Optional[int] = None
+    proactive_message: Optional[str] = None
+    branding_visible: Optional[bool] = None
+    sound_enabled: Optional[bool] = None
     whatsapp_phone_id: Optional[str] = None
     whatsapp_token: Optional[str] = None
     whatsapp_verify_token: Optional[str] = None
@@ -69,6 +87,15 @@ class BotResponse(BaseModel):
     logo_url: Optional[str]
     welcome_message: str
     example_questions: Optional[str]
+    subtitle: Optional[str]
+    theme_mode: str
+    show_home_screen: bool
+    privacy_url: Optional[str]
+    widget_position: str
+    auto_open_delay: int
+    proactive_message: Optional[str]
+    branding_visible: bool
+    sound_enabled: bool
     whatsapp_phone_id: Optional[str]
     whatsapp_token: Optional[str]
     whatsapp_verify_token: Optional[str]
@@ -115,6 +142,15 @@ def bot_to_response(bot: Bot) -> BotResponse:
         logo_url=bot.logo_url,
         welcome_message=bot.welcome_message or "Merhaba, size nasıl yardımcı olabilirim?",
         example_questions=bot.example_questions,
+        subtitle=bot.subtitle,
+        theme_mode=bot.theme_mode or "dark",
+        show_home_screen=bool(bot.show_home_screen),
+        privacy_url=bot.privacy_url,
+        widget_position=bot.widget_position or "right",
+        auto_open_delay=bot.auto_open_delay or 0,
+        proactive_message=bot.proactive_message,
+        branding_visible=bot.branding_visible if bot.branding_visible is not None else True,
+        sound_enabled=bool(bot.sound_enabled),
         whatsapp_phone_id=bot.whatsapp_phone_id,
         whatsapp_token=bot.whatsapp_token,
         whatsapp_verify_token=bot.whatsapp_verify_token,

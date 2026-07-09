@@ -1,7 +1,11 @@
 /**
- * ChatGenius AI Widget — Premium Embeddable Chat Widget v2.1
+ * ChatGenius AI Widget — Premium Embeddable Chat Widget v3.0
  * Usage: <script src="https://yoursite.com/static/widget.js" data-bot-id="BOT_ID"></script>
  * Optional: data-api-base="https://custom-api-origin.com"
+ *
+ * v3.0: light/dark theme, home screen, privacy notice, left/right position,
+ *       auto-open, proactive bubble, conversation reset, message feedback,
+ *       branding toggle, sound notification.
  */
 (function () {
   "use strict";
@@ -25,6 +29,19 @@
   function _uid() {
     return "s_" + Math.random().toString(36).slice(2, 13);
   }
+
+  /* --- Config state (defaults; overridden by /config) --- */
+  const state = {
+    themeMode: "dark",
+    showHome: false,
+    privacyUrl: null,
+    position: "right",
+    autoOpenDelay: 0,
+    proactiveMessage: null,
+    brandingVisible: true,
+    soundEnabled: false,
+    hasInteracted: sessionStorage.getItem("nxc_interacted_" + botId) === "1",
+  };
 
   /* --- Helper: Hex rengi biraz koyulaştır / açıklaştır --- */
   function _adjustColor(hex, amount) {
@@ -51,6 +68,25 @@
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
+  /* --- Ses bildirimi (Web Audio, dosya gerektirmez) --- */
+  function _playDing() {
+    if (!state.soundEnabled) return;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.3);
+      osc.onended = () => ctx.close();
+    } catch { /* Autoplay policy vb. — sessizce geç */ }
+  }
+
   /* --- Google Fonts (Inter) --- */
   if (!document.getElementById("nxc-font")) {
     const link = document.createElement("link");
@@ -73,6 +109,48 @@
       --nxc-border-radius: 20px;
     }
 
+    /* --- Theme tokens (dark default) --- */
+    #nxc-container {
+      --nxc-bg: rgba(13, 13, 26, 0.88);
+      --nxc-panel-border: rgba(255,255,255,0.08);
+      --nxc-text: #e2e8f0;
+      --nxc-text-muted: #94a3b8;
+      --nxc-text-faint: rgba(255,255,255,0.25);
+      --nxc-bubble-bg: rgba(255,255,255,0.06);
+      --nxc-bubble-border: rgba(255,255,255,0.09);
+      --nxc-input-bg: rgba(255,255,255,0.055);
+      --nxc-input-border: rgba(255,255,255,0.08);
+      --nxc-divider: rgba(255,255,255,0.07);
+      --nxc-divider-text: rgba(255,255,255,0.3);
+      --nxc-scrollbar: rgba(255,255,255,0.1);
+      --nxc-branding: rgba(255,255,255,0.18);
+      --nxc-branding-link: rgba(255,255,255,0.32);
+      --nxc-form-bg: rgba(0,0,0,0.2);
+      --nxc-form-input-bg: rgba(0,0,0,0.3);
+      --nxc-form-text: #ffffff;
+      --nxc-preview-bg: rgba(0,0,0,0.25);
+    }
+    #nxc-container.nxc-light {
+      --nxc-bg: rgba(255, 255, 255, 0.97);
+      --nxc-panel-border: rgba(15,23,42,0.08);
+      --nxc-text: #1e293b;
+      --nxc-text-muted: #64748b;
+      --nxc-text-faint: rgba(15,23,42,0.35);
+      --nxc-bubble-bg: #f1f3f9;
+      --nxc-bubble-border: rgba(15,23,42,0.06);
+      --nxc-input-bg: #f1f3f9;
+      --nxc-input-border: rgba(15,23,42,0.1);
+      --nxc-divider: rgba(15,23,42,0.08);
+      --nxc-divider-text: rgba(15,23,42,0.35);
+      --nxc-scrollbar: rgba(15,23,42,0.15);
+      --nxc-branding: rgba(15,23,42,0.3);
+      --nxc-branding-link: rgba(15,23,42,0.45);
+      --nxc-form-bg: rgba(15,23,42,0.04);
+      --nxc-form-input-bg: #ffffff;
+      --nxc-form-text: #1e293b;
+      --nxc-preview-bg: rgba(15,23,42,0.05);
+    }
+
     /* --- Toggle Button --- */
     #nxc-toggle {
       position: fixed;
@@ -93,6 +171,7 @@
                   box-shadow .3s ease;
       outline: none;
     }
+    #nxc-toggle.nxc-left { right: auto; left: 24px; }
     #nxc-toggle:hover {
       transform: scale(1.12);
       box-shadow: 0 12px 40px rgba(var(--nxc-accent-rgb),.6), 0 0 0 6px rgba(var(--nxc-accent-rgb),.15);
@@ -102,6 +181,45 @@
     #nxc-toggle.open svg.icon-chat { transform: scale(0) rotate(-90deg); }
     #nxc-toggle.open svg.icon-close { transform: scale(1) rotate(0deg); }
     #nxc-toggle svg.icon-close { position: absolute; transform: scale(0) rotate(90deg); }
+
+    /* --- Proaktif balon --- */
+    #nxc-proactive {
+      position: fixed;
+      bottom: 36px;
+      right: 98px;
+      z-index: 2147483646;
+      max-width: 240px;
+      background: #ffffff;
+      color: #1e293b;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      padding: 12px 16px;
+      padding-right: 30px;
+      border-radius: 14px;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.08);
+      cursor: pointer;
+      animation: nxc-proactive-in .45s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    #nxc-proactive.nxc-left { right: auto; left: 98px; border-bottom-right-radius: 14px; border-bottom-left-radius: 4px; }
+    @keyframes nxc-proactive-in {
+      from { opacity: 0; transform: translateY(10px) scale(.92); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #nxc-proactive-close {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 2px;
+      line-height: 1;
+    }
+    #nxc-proactive-close:hover { color: #475569; }
 
     /* --- Notification badge --- */
     #nxc-badge {
@@ -145,10 +263,10 @@
       line-height: 1.5;
 
       /* Glassmorphism */
-      background: rgba(13, 13, 26, 0.88);
+      background: var(--nxc-bg);
       backdrop-filter: blur(24px) saturate(200%);
       -webkit-backdrop-filter: blur(24px) saturate(200%);
-      border: 1px solid rgba(255,255,255,0.08);
+      border: 1px solid var(--nxc-panel-border);
       box-shadow:
         0 32px 80px rgba(0,0,0,0.6),
         0 0 0 1px rgba(255,255,255,0.04) inset,
@@ -162,6 +280,16 @@
       transition:
         transform .38s cubic-bezier(.34,1.56,.64,1),
         opacity .28s ease;
+    }
+    #nxc-container.nxc-light {
+      box-shadow:
+        0 32px 80px rgba(15,23,42,0.18),
+        0 8px 24px rgba(15,23,42,0.08);
+    }
+    #nxc-container.nxc-left {
+      right: auto;
+      left: 24px;
+      transform-origin: bottom left;
     }
     #nxc-container.open {
       transform: scale(1) translateY(0);
@@ -208,6 +336,7 @@
       gap: 12px;
       position: relative;
       z-index: 1;
+      min-width: 0;
     }
     .nxc-avatar {
       width: 40px;
@@ -229,12 +358,16 @@
       object-fit: cover;
     }
     .nxc-avatar svg { width: 20px; height: 20px; fill: var(--nxc-text-on-accent); }
+    .nxc-header-text { min-width: 0; }
     .nxc-header-text h3 {
       margin: 0;
       font-size: 15px;
       font-weight: 700;
       color: var(--nxc-text-on-accent);
       letter-spacing: -0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .nxc-header-text p {
       margin: 2px 0 0;
@@ -243,6 +376,9 @@
       display: flex;
       align-items: center;
       gap: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .nxc-online-dot {
       width: 6px;
@@ -251,6 +387,7 @@
       background: #4ade80;
       box-shadow: 0 0 8px #4ade80;
       animation: nxc-pulse 2s infinite;
+      flex-shrink: 0;
     }
     @keyframes nxc-pulse {
       0%, 100% { opacity: 1; transform: scale(1); }
@@ -262,8 +399,9 @@
       gap: 6px;
       position: relative;
       z-index: 1;
+      flex-shrink: 0;
     }
-    .nxc-close-btn {
+    .nxc-header-btn {
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(8px);
       border: 1px solid rgba(255,255,255,0.2);
@@ -277,8 +415,78 @@
       justify-content: center;
       transition: background .2s, transform .2s;
     }
-    .nxc-close-btn:hover { background: rgba(255,255,255,0.28); transform: scale(1.08); }
-    .nxc-close-btn svg { width: 14px; height: 14px; fill: none; stroke: var(--nxc-text-on-accent); stroke-width: 2.5; stroke-linecap: round; }
+    .nxc-header-btn:hover { background: rgba(255,255,255,0.28); transform: scale(1.08); }
+    .nxc-header-btn svg { width: 14px; height: 14px; fill: none; stroke: var(--nxc-text-on-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* --- Home Screen --- */
+    .nxc-home {
+      flex: 1;
+      overflow-y: auto;
+      padding: 36px 24px 20px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+    }
+    .nxc-home.active { display: flex; }
+    .nxc-home-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--nxc-accent), var(--nxc-accent-end));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 8px 28px rgba(var(--nxc-accent-rgb),.35);
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+    .nxc-home-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .nxc-home-avatar svg { width: 32px; height: 32px; fill: var(--nxc-text-on-accent); }
+    .nxc-home-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--nxc-text);
+      letter-spacing: -0.3px;
+      margin: 0;
+      max-width: 300px;
+    }
+    .nxc-home-subtitle {
+      font-size: 13px;
+      color: var(--nxc-text-muted);
+      margin: 0 0 18px;
+      max-width: 280px;
+      line-height: 1.55;
+    }
+    .nxc-home-chips {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .nxc-home-chips .nxc-chip {
+      font-size: 13px;
+      padding: 9px 16px;
+    }
+    .nxc-home-start {
+      margin-top: 18px;
+      padding: 11px 26px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--nxc-accent), var(--nxc-accent-end));
+      color: var(--nxc-text-on-accent);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(var(--nxc-accent-rgb),.35);
+      transition: transform .18s, box-shadow .2s;
+    }
+    .nxc-home-start:hover { transform: translateY(-1px); box-shadow: 0 8px 26px rgba(var(--nxc-accent-rgb),.5); }
+    .nxc-home-start:active { transform: scale(.97); }
 
     /* --- Messages --- */
     .nxc-messages {
@@ -290,10 +498,10 @@
       gap: 10px;
       scroll-behavior: smooth;
     }
+    .nxc-messages.nxc-hidden { display: none; }
     .nxc-messages::-webkit-scrollbar { width: 3px; }
     .nxc-messages::-webkit-scrollbar-track { background: transparent; }
-    .nxc-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-    .nxc-messages::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    .nxc-messages::-webkit-scrollbar-thumb { background: var(--nxc-scrollbar); border-radius: 10px; }
 
     /* Message animation */
     .nxc-msg {
@@ -311,9 +519,9 @@
       to   { opacity: 1; transform: translateY(0)    scale(1); }
     }
     .nxc-msg.bot {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.09);
-      color: #e2e8f0;
+      background: var(--nxc-bubble-bg);
+      border: 1px solid var(--nxc-bubble-border);
+      color: var(--nxc-text);
       align-self: flex-start;
       border-bottom-left-radius: 4px;
     }
@@ -332,13 +540,39 @@
       margin-top: 4px;
       display: block;
     }
-    .nxc-msg.bot .nxc-msg-time { text-align: left; color: #a0aec0; }
+    .nxc-msg.bot .nxc-msg-time { text-align: left; color: var(--nxc-text-muted); }
     .nxc-msg.user .nxc-msg-time { text-align: right; color: var(--nxc-text-on-accent); }
+
+    /* --- Feedback (thumbs) --- */
+    .nxc-feedback {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .nxc-fb-btn {
+      background: none;
+      border: 1px solid var(--nxc-bubble-border);
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      padding: 4px 7px;
+      opacity: .55;
+      transition: opacity .2s, background .2s, transform .15s;
+    }
+    .nxc-fb-btn:hover { opacity: 1; transform: scale(1.1); }
+    .nxc-fb-btn.selected {
+      opacity: 1;
+      background: rgba(var(--nxc-accent-rgb),.15);
+      border-color: rgba(var(--nxc-accent-rgb),.4);
+    }
+    .nxc-fb-btn:disabled { cursor: default; }
+    .nxc-fb-btn:disabled:not(.selected) { opacity: .25; transform: none; }
 
     /* Typing indicator */
     .nxc-typing {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.09);
+      background: var(--nxc-bubble-bg);
+      border: 1px solid var(--nxc-bubble-border);
       align-self: flex-start;
       border-radius: 14px;
       border-bottom-left-radius: 4px;
@@ -366,11 +600,11 @@
     .nxc-sources {
       margin-top: 8px;
       padding-top: 8px;
-      border-top: 1px solid rgba(255,255,255,0.08);
+      border-top: 1px solid var(--nxc-divider);
     }
     .nxc-sources summary {
       font-size: 10.5px;
-      color: #818cf8;
+      color: var(--nxc-accent);
       cursor: pointer;
       user-select: none;
       list-style: none;
@@ -378,7 +612,7 @@
     .nxc-sources summary::-webkit-details-marker { display: none; }
     .nxc-sources .nxc-src {
       font-size: 10.5px;
-      color: #94a3b8;
+      color: var(--nxc-text-muted);
       padding: 2px 0;
     }
 
@@ -399,6 +633,7 @@
       padding: 6px 13px;
       font-size: 12px;
       font-weight: 500;
+      font-family: inherit;
       color: var(--nxc-accent);
       background: rgba(var(--nxc-accent-rgb),0.09);
       border: 1px solid rgba(var(--nxc-accent-rgb),0.22);
@@ -419,8 +654,8 @@
     #nxc-preview {
       display: none;
       padding: 8px 16px;
-      background: rgba(0,0,0,0.25);
-      border-top: 1px solid rgba(255,255,255,0.06);
+      background: var(--nxc-preview-bg);
+      border-top: 1px solid var(--nxc-divider);
       align-items: center;
       justify-content: space-between;
       gap: 8px;
@@ -440,23 +675,44 @@
     }
     #nxc-preview button:hover { background: rgba(239,68,68,.25); }
 
+    /* --- Privacy notice --- */
+    .nxc-privacy {
+      display: none;
+      padding: 7px 16px;
+      font-size: 10px;
+      letter-spacing: .3px;
+      text-align: center;
+      color: var(--nxc-text-muted);
+      background: var(--nxc-preview-bg);
+      border-top: 1px solid var(--nxc-divider);
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+    }
+    .nxc-privacy a {
+      color: var(--nxc-text);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
     /* --- Input area --- */
     .nxc-input-area {
       padding: 12px 14px;
-      border-top: 1px solid rgba(255,255,255,0.06);
+      border-top: 1px solid var(--nxc-divider);
       display: flex;
       gap: 8px;
       align-items: center;
       flex-shrink: 0;
-      background: rgba(255,255,255,0.025);
+      background: var(--nxc-bubble-bg);
     }
     .nxc-attach {
       width: 38px;
       height: 38px;
       border-radius: 11px;
-      background: rgba(255,255,255,0.055);
-      border: 1px solid rgba(255,255,255,0.09);
-      color: #a0aec0;
+      background: var(--nxc-input-bg);
+      border: 1px solid var(--nxc-input-border);
+      color: var(--nxc-text-muted);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -465,25 +721,26 @@
       flex-shrink: 0;
       font-size: 17px;
     }
-    .nxc-attach:hover { background: rgba(255,255,255,0.11); transform: scale(1.06); color: var(--nxc-accent); }
+    .nxc-attach:hover { transform: scale(1.06); color: var(--nxc-accent); }
     .nxc-input-field {
       flex: 1;
-      background: rgba(255,255,255,0.055);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--nxc-input-bg);
+      border: 1px solid var(--nxc-input-border);
       border-radius: 12px;
       padding: 9px 14px;
-      color: #e2e8f0;
+      color: var(--nxc-text);
       font-size: 13.5px;
       font-family: inherit;
       outline: none;
       transition: border-color .2s, box-shadow .2s;
       caret-color: var(--nxc-accent);
+      min-width: 0;
     }
     .nxc-input-field:focus {
       border-color: rgba(var(--nxc-accent-rgb),0.5);
       box-shadow: 0 0 0 3px rgba(var(--nxc-accent-rgb),0.12);
     }
-    .nxc-input-field::placeholder { color: rgba(255,255,255,0.25); }
+    .nxc-input-field::placeholder { color: var(--nxc-text-faint); }
     .nxc-send {
       width: 38px;
       height: 38px;
@@ -508,19 +765,20 @@
       text-align: center;
       padding: 5px 0 9px;
       font-size: 10px;
-      color: rgba(255,255,255,0.18);
+      color: var(--nxc-branding);
       letter-spacing: .3px;
       flex-shrink: 0;
     }
-    .nxc-branding a { color: rgba(255,255,255,0.32); text-decoration: none; transition: color .2s; }
-    .nxc-branding a:hover { color: rgba(255,255,255,0.6); }
+    .nxc-branding a { color: var(--nxc-branding-link); text-decoration: none; transition: color .2s; }
+    .nxc-branding a:hover { color: var(--nxc-text-muted); }
+    .nxc-branding.nxc-hidden { display: none; }
 
     /* --- Date divider --- */
     .nxc-date-divider {
       display: flex;
       align-items: center;
       gap: 10px;
-      color: rgba(255,255,255,0.3);
+      color: var(--nxc-divider-text);
       font-size: 10.5px;
       font-weight: 500;
       margin: 4px 0;
@@ -530,18 +788,59 @@
       content: '';
       flex: 1;
       height: 1px;
-      background: rgba(255,255,255,0.07);
+      background: var(--nxc-divider);
+    }
+
+    /* --- Ticket form (bot bubble içinde) --- */
+    .nxc-ticket-form {
+      border: 1px solid var(--nxc-bubble-border);
+      background: var(--nxc-form-bg);
+      padding: 12px;
+      border-radius: 12px;
+      font-family: inherit;
+    }
+    .nxc-ticket-form h4 { margin: 0 0 4px 0; color: var(--nxc-accent); font-size: 14px; }
+    .nxc-ticket-form p { margin: 0 0 10px 0; color: var(--nxc-text-muted); font-size: 12px; }
+    .nxc-ticket-form input,
+    .nxc-ticket-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--nxc-input-border);
+      background: var(--nxc-form-input-bg);
+      color: var(--nxc-form-text);
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .nxc-ticket-form button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      background: var(--nxc-accent);
+      color: var(--nxc-text-on-accent);
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: .2s;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #nxc-toggle, #nxc-container, .nxc-msg, .nxc-chips, #nxc-proactive { animation: none !important; transition: none !important; }
     }
 
     /* --- Mobile full-screen --- */
     @media (max-width: 480px) {
       #nxc-container {
-        bottom: 0; right: 0;
+        bottom: 0; right: 0; left: auto;
         width: 100vw; height: 100dvh;
         max-width: 100vw; max-height: 100dvh;
         border-radius: 0;
         transform-origin: bottom center;
       }
+      #nxc-container.nxc-left { left: 0; right: auto; }
       /* Chat açıkken toggle butonunu gizle — input'un üzerine gelmesin */
       #nxc-toggle.open {
         display: none !important;
@@ -553,6 +852,7 @@
       .nxc-branding {
         padding-bottom: calc(9px + env(safe-area-inset-bottom, 0px));
       }
+      #nxc-proactive { max-width: calc(100vw - 120px); }
     }
   `;
   document.head.appendChild(style);
@@ -580,14 +880,27 @@
         </div>
         <div class="nxc-header-text">
           <h3 id="nxc-bot-name">AI Asistan</h3>
-          <p><span class="nxc-online-dot"></span> Çevrimiçi, anında yanıtlıyor</p>
+          <p id="nxc-bot-status"><span class="nxc-online-dot"></span> <span id="nxc-subtitle-text">Çevrimiçi, anında yanıtlıyor</span></p>
         </div>
       </div>
       <div class="nxc-header-actions">
-        <button class="nxc-close-btn" id="nxc-close" aria-label="Kapat">
+        <button class="nxc-header-btn" id="nxc-reset" aria-label="Yeni sohbet" title="Yeni sohbet başlat">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+        </button>
+        <button class="nxc-header-btn" id="nxc-close" aria-label="Kapat">
           <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
+    </div>
+
+    <div class="nxc-home" id="nxc-home">
+      <div class="nxc-home-avatar" id="nxc-home-avatar">
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+      </div>
+      <h2 class="nxc-home-title" id="nxc-home-title">Merhaba! 👋</h2>
+      <p class="nxc-home-subtitle" id="nxc-home-subtitle"></p>
+      <div class="nxc-home-chips" id="nxc-home-chips"></div>
+      <button class="nxc-home-start" id="nxc-home-start">Sohbete başla</button>
     </div>
 
     <div class="nxc-messages" id="nxc-messages">
@@ -598,6 +911,8 @@
 
     <div id="nxc-preview"></div>
 
+    <div class="nxc-privacy" id="nxc-privacy"></div>
+
     <div class="nxc-input-area">
       <label for="nxc-file" class="nxc-attach" title="Resim yükle">📎</label>
       <input type="file" id="nxc-file" accept="image/*" style="display:none"/>
@@ -606,9 +921,26 @@
         <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
       </button>
     </div>
-    <div class="nxc-branding">Powered by <a href="#" target="_blank">ChatGenius</a></div>
+    <div class="nxc-branding" id="nxc-branding">Powered by <a href="#" target="_blank">ChatGenius</a></div>
   `;
   document.body.appendChild(container);
+
+  const homeEl = document.getElementById("nxc-home");
+  const msgList = document.getElementById("nxc-messages");
+  const inputEl = document.getElementById("nxc-input");
+  const sendBtn = document.getElementById("nxc-send");
+
+  /* --- Home screen görünürlüğü --- */
+  function showHomeScreen() {
+    homeEl.classList.add("active");
+    msgList.classList.add("nxc-hidden");
+  }
+  function showChatScreen() {
+    homeEl.classList.remove("active");
+    msgList.classList.remove("nxc-hidden");
+    setTimeout(() => inputEl.focus(), 100);
+  }
+  document.getElementById("nxc-home-start").addEventListener("click", showChatScreen);
 
   /* --- Tema renklerini dinamik olarak uygula --- */
   function applyThemeColor(hexColor) {
@@ -635,17 +967,84 @@
     };
   }
 
+  /* --- Chip oluştur (emoji destekli) --- */
+  function buildChip(text, onClick) {
+    const btn = document.createElement("button");
+    btn.className = "nxc-chip";
+    btn.textContent = text;
+    btn.addEventListener("click", onClick);
+    return btn;
+  }
+
+  /* --- Widget'ı aç --- */
+  function openWidget() {
+    container.classList.add("open");
+    toggle.classList.add("open");
+    _removeProactive();
+    const badge = toggle.querySelector("#nxc-badge");
+    if (badge) badge.remove();
+    if (state.showHome && !state.hasInteracted) {
+      showHomeScreen();
+    } else {
+      setTimeout(() => inputEl.focus(), 350);
+    }
+  }
+  function closeWidget() {
+    container.classList.remove("open");
+    toggle.classList.remove("open");
+  }
+
+  /* --- Proaktif balon --- */
+  let proactiveEl = null;
+  function _removeProactive() {
+    if (proactiveEl) {
+      proactiveEl.remove();
+      proactiveEl = null;
+    }
+  }
+  function showProactive(text) {
+    if (proactiveEl || container.classList.contains("open")) return;
+    if (sessionStorage.getItem("nxc_proactive_dismissed_" + botId)) return;
+    proactiveEl = document.createElement("div");
+    proactiveEl.id = "nxc-proactive";
+    if (state.position === "left") proactiveEl.classList.add("nxc-left");
+    const txt = document.createElement("span");
+    txt.textContent = text;
+    const closeBtn = document.createElement("button");
+    closeBtn.id = "nxc-proactive-close";
+    closeBtn.setAttribute("aria-label", "Kapat");
+    closeBtn.textContent = "✕";
+    closeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sessionStorage.setItem("nxc_proactive_dismissed_" + botId, "1");
+      _removeProactive();
+    });
+    proactiveEl.appendChild(txt);
+    proactiveEl.appendChild(closeBtn);
+    proactiveEl.addEventListener("click", openWidget);
+    document.body.appendChild(proactiveEl);
+  }
+
   /* --- Load bot config --- */
   fetch(`${apiBase}/api/widget/${botId}/config`)
     .then((r) => r.json())
     .then((cfg) => {
       /* Name */
-      if (cfg.name) document.getElementById("nxc-bot-name").textContent = cfg.name;
+      if (cfg.name) {
+        document.getElementById("nxc-bot-name").textContent = cfg.name;
+        document.getElementById("nxc-home-title").textContent = cfg.name;
+      }
+
+      /* Subtitle — header'da ve home screen'de */
+      if (cfg.subtitle) {
+        document.getElementById("nxc-subtitle-text").textContent = cfg.subtitle;
+        document.getElementById("nxc-home-subtitle").textContent = cfg.subtitle;
+      }
 
       /* Avatar / Logo */
       if (cfg.logo_url) {
-        const av = document.getElementById("nxc-avatar");
-        av.innerHTML = `<img src="${cfg.logo_url}" alt="logo"/>`;
+        document.getElementById("nxc-avatar").innerHTML = `<img src="${cfg.logo_url}" alt="logo"/>`;
+        document.getElementById("nxc-home-avatar").innerHTML = `<img src="${cfg.logo_url}" alt="logo"/>`;
       }
 
       /* Theme color — tüm dinamik stilleri güncelle */
@@ -658,32 +1057,83 @@
         container.style.setProperty("--nxc-text-on-accent", cfg.text_color);
       }
 
-      /* Welcome */
-      if (cfg.welcome_message) {
-        document.getElementById("nxc-welcome").textContent = cfg.welcome_message;
+      /* Light / dark theme */
+      state.themeMode = cfg.theme_mode || "dark";
+      if (state.themeMode === "light") {
+        container.classList.add("nxc-light");
       }
 
-      /* Suggestion chips */
-      if (cfg.example_questions) {
-        const chipsEl = document.getElementById("nxc-chips");
-        const questions = cfg.example_questions.split(",").map((q) => q.trim()).filter(Boolean);
-        if (questions.length) {
-          questions.forEach((q) => {
-            const btn = document.createElement("button");
-            btn.className = "nxc-chip";
-            btn.textContent = q;
-            btn.addEventListener("click", () => {
-              document.getElementById("nxc-input").value = q;
-              sendMessage();
-              chipsEl.style.display = "none";
-            });
-            chipsEl.appendChild(btn);
-          });
-        } else {
-          chipsEl.style.display = "none";
+      /* Position */
+      state.position = cfg.widget_position || "right";
+      if (state.position === "left") {
+        toggle.classList.add("nxc-left");
+        container.classList.add("nxc-left");
+      }
+
+      /* Branding */
+      state.brandingVisible = cfg.branding_visible !== false;
+      if (!state.brandingVisible) {
+        document.getElementById("nxc-branding").classList.add("nxc-hidden");
+      }
+
+      /* Sound */
+      state.soundEnabled = !!cfg.sound_enabled;
+
+      /* Privacy notice */
+      if (cfg.privacy_url) {
+        state.privacyUrl = cfg.privacy_url;
+        const privacyEl = document.getElementById("nxc-privacy");
+        privacyEl.style.display = "flex";
+        privacyEl.innerHTML = `<span>Sohbet ederek <a href="${cfg.privacy_url}" target="_blank" rel="noopener">gizlilik politikasını</a> kabul ediyorsunuz.</span>`;
+      }
+
+      /* Welcome */
+      const welcomeText = cfg.welcome_message;
+      if (welcomeText) {
+        document.getElementById("nxc-welcome").textContent = welcomeText;
+        if (!cfg.subtitle) {
+          document.getElementById("nxc-home-subtitle").textContent = welcomeText;
         }
+      }
+
+      /* Home screen */
+      state.showHome = !!cfg.show_home_screen;
+
+      /* Suggestion chips — hem sohbette hem home screen'de */
+      const chipsEl = document.getElementById("nxc-chips");
+      const homeChipsEl = document.getElementById("nxc-home-chips");
+      const questions = (cfg.example_questions || "")
+        .split(",").map((q) => q.trim()).filter(Boolean);
+      if (questions.length) {
+        questions.forEach((q) => {
+          const ask = () => {
+            showChatScreen();
+            inputEl.value = q.replace(/^\p{Extended_Pictographic}+\s*/u, ""); // Emoji öneki soruya girmesin
+            sendMessage();
+            chipsEl.style.display = "none";
+          };
+          chipsEl.appendChild(buildChip(q, ask));
+          homeChipsEl.appendChild(buildChip(q, ask));
+        });
       } else {
-        document.getElementById("nxc-chips").style.display = "none";
+        chipsEl.style.display = "none";
+      }
+
+      /* Auto-open */
+      state.autoOpenDelay = cfg.auto_open_delay || 0;
+      if (state.autoOpenDelay > 0 && !sessionStorage.getItem("nxc_autoopened_" + botId)) {
+        setTimeout(() => {
+          if (!container.classList.contains("open")) {
+            sessionStorage.setItem("nxc_autoopened_" + botId, "1");
+            openWidget();
+          }
+        }, state.autoOpenDelay * 1000);
+      }
+
+      /* Proaktif balon — auto-open'dan bağımsız, 1sn sonra göster */
+      state.proactiveMessage = cfg.proactive_message;
+      if (state.proactiveMessage) {
+        setTimeout(() => showProactive(state.proactiveMessage), 1500);
       }
     })
     .catch(() => {
@@ -692,18 +1142,36 @@
 
   /* --- Toggle open/close --- */
   toggle.addEventListener("click", () => {
-    const isOpen = container.classList.toggle("open");
-    toggle.classList.toggle("open", isOpen);
-    if (isOpen) {
-      // Badge'i kaldır
-      const badge = toggle.querySelector("#nxc-badge");
-      if (badge) badge.remove();
-      setTimeout(() => document.getElementById("nxc-input").focus(), 350);
+    if (container.classList.contains("open")) {
+      closeWidget();
+    } else {
+      openWidget();
     }
   });
-  document.getElementById("nxc-close").addEventListener("click", () => {
-    container.classList.remove("open");
-    toggle.classList.remove("open");
+  document.getElementById("nxc-close").addEventListener("click", closeWidget);
+
+  /* --- Konuşmayı sıfırla --- */
+  document.getElementById("nxc-reset").addEventListener("click", () => {
+    sessionId = _uid();
+    localStorage.setItem("nxc_session_" + botId, sessionId);
+    sessionStorage.removeItem("nxc_interacted_" + botId);
+    state.hasInteracted = false;
+    // Mesaj listesini welcome durumuna döndür
+    const welcome = document.getElementById("nxc-welcome");
+    const chips = document.getElementById("nxc-chips");
+    const divider = msgList.querySelector(".nxc-date-divider");
+    msgList.innerHTML = "";
+    msgList.appendChild(divider);
+    msgList.appendChild(welcome);
+    if (chips) {
+      chips.style.display = "";
+      msgList.appendChild(chips);
+    }
+    if (state.showHome) {
+      showHomeScreen();
+    } else {
+      inputEl.focus();
+    }
   });
 
   /* --- File upload --- */
@@ -746,14 +1214,48 @@
     return now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
   }
 
-  /* --- Send message --- */
-  const inputEl = document.getElementById("nxc-input");
-  const sendBtn = document.getElementById("nxc-send");
-  const msgList = document.getElementById("nxc-messages");
+  /* --- Feedback butonları (👍👎) --- */
+  function attachFeedback(botBubble, messageId) {
+    if (!messageId) return;
+    const wrap = document.createElement("div");
+    wrap.className = "nxc-feedback";
+    const up = document.createElement("button");
+    up.className = "nxc-fb-btn";
+    up.textContent = "👍";
+    up.setAttribute("aria-label", "Faydalı");
+    const down = document.createElement("button");
+    down.className = "nxc-fb-btn";
+    down.textContent = "👎";
+    down.setAttribute("aria-label", "Faydalı değil");
 
+    async function send(liked, btn) {
+      up.disabled = down.disabled = true;
+      btn.classList.add("selected");
+      try {
+        await fetch(`${apiBase}/api/widget/${botId}/feedback`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message_id: messageId, session_id: sessionId, liked }),
+        });
+      } catch { /* Geri bildirim kaydedilemedi — kullanıcıyı rahatsız etme */ }
+    }
+    up.addEventListener("click", () => send(true, up));
+    down.addEventListener("click", () => send(false, down));
+    wrap.appendChild(up);
+    wrap.appendChild(down);
+    botBubble.appendChild(wrap);
+  }
+
+  /* --- Send message --- */
   async function sendMessage() {
     const text = inputEl.value.trim();
     if (!text && !attachmentUrl) return;
+
+    showChatScreen();
+    if (!state.hasInteracted) {
+      state.hasInteracted = true;
+      sessionStorage.setItem("nxc_interacted_" + botId, "1");
+    }
 
     /* User bubble */
     const userBubble = document.createElement("div");
@@ -803,7 +1305,7 @@
       /* Bot bubble */
       const botBubble = document.createElement("div");
       botBubble.className = "nxc-msg bot";
-      
+
       let rawText = data.answer || "Yanıt alınamadı.";
       let mdHtml = rawText
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -813,15 +1315,15 @@
         .replace(/\*(.*?)\*/g, "<em>$1</em>")
         .replace(/\n\n/g, "<br><br>")
         .replace(/\n/g, "<br>");
-      
-            if (rawText.toUpperCase().replace(/\s+/g,'').includes("[TICKET_FORM_RENDER]")) {        
-        botBubble.innerHTML = `<div style="border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; font-family: inherit;">
-            <h4 style="margin:0 0 4px 0; color: #a5b4fc; font-size: 14px;">🛠️ Hasar / Eksik Bildirimi</h4>
-            <p style="margin: 0 0 10px 0; color: #ccc; font-size: 12px;">Yetkiliye iletmek üzere bilgileri doldurun:</p>
-            <input type="text" id="t-order" placeholder="Sipariş No (İsteğe bağlı)" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px;" />
-            <input type="text" id="t-product" placeholder="Hangi Ürün?" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px;" />
-            <textarea id="t-summary" placeholder="Sorunu kısaca açıklayın (kırık, vb.)" style="width: 100%; box-sizing: border-box; padding: 8px; margin-bottom: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: white; font-size: 13px; font-family: inherit;" rows="2"></textarea>
-            <button id="t-submit" style="width: 100%; padding: 8px; border-radius: 6px; border: none; background: #6366f1; color: white; font-weight: 600; cursor: pointer; transition: 0.2s;">Talebi Gönder</button></div>`;
+
+      if (rawText.toUpperCase().replace(/\s+/g,'').includes("[TICKET_FORM_RENDER]")) {
+        botBubble.innerHTML = `<div class="nxc-ticket-form">
+            <h4>🛠️ Hasar / Eksik Bildirimi</h4>
+            <p>Yetkiliye iletmek üzere bilgileri doldurun:</p>
+            <input type="text" id="t-order" placeholder="Sipariş No (İsteğe bağlı)" />
+            <input type="text" id="t-product" placeholder="Hangi Ürün?" />
+            <textarea id="t-summary" placeholder="Sorunu kısaca açıklayın (kırık, vb.)" rows="2"></textarea>
+            <button id="t-submit">Talebi Gönder</button></div>`;
         setTimeout(() => {
           const btn = botBubble.querySelector("#t-submit");
           if (btn) {
@@ -831,14 +1333,14 @@
               const order = botBubble.querySelector("#t-order").value;
               const product = botBubble.querySelector("#t-product").value;
               const summary = botBubble.querySelector("#t-summary").value;
-              
+
               if (!product || !summary) {
                 btn.innerText = "Lütfen ürün adı ve sorunu yazın!";
                 btn.style.background = "#ef4444";
                 setTimeout(() => {
                   btn.disabled = false;
                   btn.innerText = "Talebi Gönder";
-                  btn.style.background = "#6366f1";
+                  btn.style.background = "";
                 }, 2000);
                 return;
               }
@@ -878,7 +1380,12 @@
           data.sources.map((s) => `<div class="nxc-src">• ${s.file_name}</div>`).join("");
         botBubble.appendChild(det);
       }
+
+      /* 👍👎 geri bildirim */
+      attachFeedback(botBubble, data.message_id);
+
       msgList.appendChild(botBubble);
+      _playDing();
 
       if (data.session_id) {
         sessionId = data.session_id;
@@ -913,7 +1420,3 @@
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 })();
-
-
-
-

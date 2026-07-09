@@ -29,6 +29,15 @@ interface BotType {
   logo_url: string | null;
   welcome_message: string;
   example_questions: string | null;
+  subtitle: string | null;
+  theme_mode: string;
+  show_home_screen: boolean;
+  privacy_url: string | null;
+  widget_position: string;
+  auto_open_delay: number;
+  proactive_message: string | null;
+  branding_visible: boolean;
+  sound_enabled: boolean;
   whatsapp_phone_id: string | null;
   whatsapp_token: string | null;
   whatsapp_verify_token: string | null;
@@ -83,8 +92,14 @@ function WidgetPreview({ bot }: { bot: BotType }) {
     setPreviewMsg("");
   };
 
+  const isLight = bot.theme_mode === "light";
+  const surfaceBg = isLight ? "rgba(255,255,255,0.97)" : "rgba(13,13,26,0.92)";
+  const bubbleBg = isLight ? "#f1f3f9" : "rgba(255,255,255,0.07)";
+  const bubbleBorder = isLight ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.09)";
+  const bodyText = isLight ? "#1e293b" : "#e2e8f0";
+
   return (
-    <div className="flex flex-col rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, background: "rgba(13,13,26,0.92)" }}>
+    <div className="flex flex-col rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, background: surfaceBg }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${accent}, ${accentEnd})` }}>
         <div className="absolute top-[-50%] right-[-8%] w-32 h-32 rounded-full opacity-20 pointer-events-none" style={{ background: "white" }} />
@@ -98,7 +113,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
             <div className="font-bold text-sm leading-tight" style={{ color: textOnAccent }}>{bot.name || "AI Asistan"}</div>
             <div className="flex items-center gap-1.5 text-[10px]" style={{ color: `${textOnAccent}b3` }}>
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_6px_#4ade80]" style={{ display: "inline-block" }} />
-              Çevrimiçi
+              {bot.subtitle || "Çevrimiçi"}
             </div>
           </div>
         </div>
@@ -113,7 +128,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
         {chatMsgs.map((msg, i) => (
           <div key={i} className={`max-w-[85%] px-3 py-2 rounded-2xl text-[12px] leading-relaxed ${msg.role === "bot" ? "self-start" : "self-end"}`}
             style={msg.role === "bot"
-              ? { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.09)", color: "#e2e8f0", borderBottomLeftRadius: 4 }
+              ? { background: bubbleBg, border: `1px solid ${bubbleBorder}`, color: bodyText, borderBottomLeftRadius: 4 }
               : { background: `linear-gradient(135deg, ${accent}, ${accentEnd})`, color: textOnAccent, borderBottomRightRadius: 4, boxShadow: rgba(accent, 0.3) + " 0 4px 14px" }
             }
           >
@@ -135,6 +150,13 @@ function WidgetPreview({ bot }: { bot: BotType }) {
         )}
       </div>
 
+      {/* Privacy notice */}
+      {bot.privacy_url && (
+        <div className="text-center text-[9px] py-1.5 border-t" style={{ borderColor: bubbleBorder, color: isLight ? "#64748b" : "rgba(255,255,255,0.4)" }}>
+          SOHBET EDEREK <span className="underline font-semibold">GİZLİLİK POLİTİKASINI</span> KABUL EDİYORSUNUZ.
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex items-center gap-2 px-3 py-2.5 border-t" style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
         <input
@@ -153,9 +175,11 @@ function WidgetPreview({ bot }: { bot: BotType }) {
           <Send size={14} color={textOnAccent} />
         </button>
       </div>
-      <div className="text-center py-1.5 text-[9px]" style={{ color: "rgba(255,255,255,0.18)" }}>
-        Powered by <span style={{ color: "rgba(255,255,255,0.35)" }}>ChatGenius</span>
-      </div>
+      {bot.branding_visible !== false && (
+        <div className="text-center py-1.5 text-[9px]" style={{ color: isLight ? "rgba(15,23,42,0.3)" : "rgba(255,255,255,0.18)" }}>
+          Powered by <span style={{ color: isLight ? "rgba(15,23,42,0.45)" : "rgba(255,255,255,0.35)" }}>ChatGenius</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -224,6 +248,15 @@ export default function BotDetailPage() {
         logo_url: bot.logo_url,
         welcome_message: bot.welcome_message,
         example_questions: bot.example_questions,
+        subtitle: bot.subtitle,
+        theme_mode: bot.theme_mode,
+        show_home_screen: bot.show_home_screen,
+        privacy_url: bot.privacy_url,
+        widget_position: bot.widget_position,
+        auto_open_delay: bot.auto_open_delay,
+        proactive_message: bot.proactive_message,
+        branding_visible: bot.branding_visible,
+        sound_enabled: bot.sound_enabled,
         whatsapp_phone_id: bot.whatsapp_phone_id,
         whatsapp_token: bot.whatsapp_token,
         whatsapp_verify_token: bot.whatsapp_verify_token,
@@ -448,6 +481,17 @@ export default function BotDetailPage() {
                     className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Alt Başlık / Slogan</label>
+                  <input
+                    type="text"
+                    value={bot.subtitle || ""}
+                    onChange={(e) => update("subtitle", e.target.value)}
+                    placeholder="Yeni sezon, kombin önerileri ve sipariş desteği."
+                    className="w-full px-4 py-2.5 bg-gray-100 dark:bg-black/20 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">Widget header'ında ve karşılama ekranında görünür.</p>
+                </div>
               </div>
             </motion.div>
 
@@ -561,6 +605,139 @@ export default function BotDetailPage() {
                   ))}
                 </div>
               )}
+              <p className="text-[11px] text-gray-500 mt-2">
+                💡 İpucu: Başına emoji koyabilirsiniz — örn. &quot;👕 T-Shirt, 👖 Pantolon&quot;
+              </p>
+            </motion.div>
+
+            {/* Widget Davranışı */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-white/[0.03] border border-white/10 rounded-2xl p-6"
+            >
+              <h3 className="text-base font-bold mb-2 flex items-center gap-2 text-white">
+                <Zap className="w-4 h-4 text-cyan-400" /> Widget Davranışı
+              </h3>
+              <p className="text-xs text-gray-500 mb-5">
+                Widget&apos;ın sitede nasıl görüneceğini ve davranacağını ayarlayın.
+              </p>
+
+              <div className="space-y-4">
+                {/* Tema modu + pozisyon */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Tema Modu</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: "dark", label: "🌙 Koyu" },
+                        { value: "light", label: "☀️ Açık" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => update("theme_mode", opt.value)}
+                          className={`flex-1 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                            (bot.theme_mode || "dark") === opt.value
+                              ? "bg-indigo-500/15 border-indigo-500/50 text-indigo-300"
+                              : "bg-black/20 border-white/10 text-gray-400 hover:text-white"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wider">Konum</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: "right", label: "Sağ Alt" },
+                        { value: "left", label: "Sol Alt" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => update("widget_position", opt.value)}
+                          className={`flex-1 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                            (bot.widget_position || "right") === opt.value
+                              ? "bg-indigo-500/15 border-indigo-500/50 text-indigo-300"
+                              : "bg-black/20 border-white/10 text-gray-400 hover:text-white"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Toggle satırları */}
+                {[
+                  { key: "show_home_screen" as const, label: "Karşılama Ekranı", desc: "Sohbet öncesi logo, başlık ve soru butonları göster" },
+                  { key: "branding_visible" as const, label: "\"Powered by\" Görünür", desc: "Widget altındaki marka yazısı" },
+                  { key: "sound_enabled" as const, label: "Ses Bildirimi", desc: "Yeni bot yanıtında kısa bildirim sesi çal" },
+                ].map((row) => (
+                  <div key={row.key} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                    <div>
+                      <p className="text-sm text-white font-medium">{row.label}</p>
+                      <p className="text-[11px] text-gray-500">{row.desc}</p>
+                    </div>
+                    <button
+                      onClick={() => update(row.key, !bot[row.key])}
+                      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+                        bot[row.key] ? "bg-indigo-500" : "bg-white/10"
+                      }`}
+                      aria-label={row.label}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
+                          bot[row.key] ? "left-[22px]" : "left-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Gizlilik URL */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Gizlilik Politikası URL</label>
+                  <input
+                    type="text"
+                    value={bot.privacy_url || ""}
+                    onChange={(e) => update("privacy_url", e.target.value)}
+                    placeholder="https://siteniz.com/gizlilik-politikasi"
+                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm font-mono"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">Doluysa input üstünde &quot;Sohbet ederek gizlilik politikasını kabul ediyorsunuz&quot; notu görünür.</p>
+                </div>
+
+                {/* Proaktif mesaj */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Proaktif Balon Mesajı</label>
+                  <input
+                    type="text"
+                    value={bot.proactive_message || ""}
+                    onChange={(e) => update("proactive_message", e.target.value)}
+                    placeholder="Merhaba! Size nasıl yardımcı olabilirim? 👋"
+                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">Sohbet butonu yanında görünen davet balonu. Boş bırakılırsa gösterilmez.</p>
+                </div>
+
+                {/* Otomatik açılma */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider">Otomatik Açılma (saniye)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={120}
+                    value={bot.auto_open_delay ?? 0}
+                    onChange={(e) => update("auto_open_delay", Math.max(0, Number(e.target.value)))}
+                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm"
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1">Ziyaretçi sayfaya girdikten X saniye sonra widget kendiliğinden açılır. 0 = kapalı.</p>
+                </div>
+              </div>
             </motion.div>
           </div>
 
