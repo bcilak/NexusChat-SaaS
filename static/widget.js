@@ -455,6 +455,10 @@
       gap: 8px;
     }
     .nxc-home.active { display: flex; }
+    /* Karşılama ekranı açıkken yazma alanı ve gizlilik notu gizli */
+    #nxc-container.nxc-home-active .nxc-input-area,
+    #nxc-container.nxc-home-active .nxc-privacy,
+    #nxc-container.nxc-home-active #nxc-preview { display: none !important; }
     .nxc-home-avatar {
       width: 72px;
       height: 72px;
@@ -969,10 +973,12 @@
   function showHomeScreen() {
     homeEl.classList.add("active");
     msgList.classList.add("nxc-hidden");
+    container.classList.add("nxc-home-active");
   }
   function showChatScreen() {
     homeEl.classList.remove("active");
     msgList.classList.remove("nxc-hidden");
+    container.classList.remove("nxc-home-active");
     setTimeout(() => inputEl.focus(), 100);
   }
   document.getElementById("nxc-home-start").addEventListener("click", showChatScreen);
