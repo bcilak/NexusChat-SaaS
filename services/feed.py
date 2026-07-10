@@ -155,53 +155,57 @@ _STOPWORDS = {
 }
 
 
+_TR_MAP = str.maketrans("çğıöşü", "cgiosu")
+
+
+def _fold(text: str) -> str:
+    """Türkçe karakterleri ASCII'ye indirger — 'ZEYTİNLİ' ve 'zeytinyagi' gibi
+    yazımlar aynı forma gelir; SQLite'ın Türkçe büyük/küçük harf sorununu aşar."""
+    return (text or "").replace("İ", "i").replace("I", "i").lower().translate(_TR_MAP)
+
+
 def _tokenize_query(text: str) -> list[str]:
-    tokens = re.findall(r"[\wçğıöşüÇĞİÖŞÜ]+", text.lower())
-    return [t for t in tokens if len(t) >= 3 and t not in _STOPWORDS and not t.isdigit()]
+    tokens = re.findall(r"[\wçğıöşüÇĞİÖŞÜ]+", text)
+    folded = [_fold(t) for t in tokens]
+    stop = {_fold(s) for s in _STOPWORDS}
+    return [t for t in folded if len(t) >= 3 and t not in stop and not t.isdigit()]
 
 
 def search_products(bot_id: int, query: str, db: Session, k: int = 4) -> list[Product]:
     """Soru metnindeki anahtar kelimelerle ürün tablosunda arama yapar.
 
-    Başlıkta eşleşen kelime sayısına göre puanlar; stokta olanları öne alır.
-    Anlamlı kelime yoksa (selamlama vb.) boş döner.
+    Eşleme Türkçe karakterlerden bağımsızdır (İ/i, ğ/g...). Başlıkta eşleşen
+    kelime sayısına göre puanlar; stokta olanları öne alır. Anlamlı kelime
+    yoksa (selamlama vb.) boş döner.
     """
     tokens = _tokenize_query(query)
     if not tokens:
         return []
 
-    from sqlalchemy import or_
-    conditions = []
-    for t in tokens:
-        like = f"%{t}%"
-        conditions.append(Product.title.ilike(like))
-        conditions.append(Product.category.ilike(like))
-        conditions.append(Product.brand.ilike(like))
-    candidates = (
-        db.query(Product)
-        .filter(Product.bot_id == bot_id)
-        .filter(or_(*conditions))
-        .limit(200)
-        .all()
-    )
-    if not candidates:
+    # SQLite LIKE Türkçe harflerde güvenilir değil — eşlemeyi Python'da yap
+    rows = db.query(Product).filter(Product.bot_id == bot_id).all()
+    if not rows:
         return []
 
-    def score(p: Product) -> tuple:
-        title = (p.title or "").lower()
-        cat = (p.category or "").lower()
-        brand = (p.brand or "").lower()
+    scored = []
+    for p in rows:
+        title = _fold(p.title)
+        cat = _fold(p.category)
+        brand = _fold(p.brand)
         title_hits = sum(1 for t in tokens if t in title)
         other_hits = sum(1 for t in tokens if t in cat or t in brand)
-        out_of_stock = 1 if (p.stock or "").strip() in ("0", "out of stock", "outofstock") else 0
-        return (-title_hits, -other_hits, out_of_stock, len(title))
+        if title_hits == 0 and other_hits == 0:
+            continue
+        out_of_stock = 1 if (p.stock or "").strip().lower() in ("0", "out of stock", "outofstock") else 0
+        scored.append(((-title_hits, -other_hits, out_of_stock, len(title)), p))
 
-    candidates.sort(key=score)
-    best = candidates[0]
-    # En az bir başlık eşleşmesi şartı — tamamen alakasız sonuç dönmesin
-    if not any(t in (best.title or "").lower() for t in tokens):
+    if not scored:
         return []
-    return candidates[:k]
+    scored.sort(key=lambda x: x[0])
+    # En az bir başlık eşleşmesi şartı — tamamen alakasız sonuç dönmesin
+    if not any(t in _fold(scored[0][1].title) for t in tokens):
+        return []
+    return [p for _, p in scored[:k]]
 
 
 def sync_feed(bot: Bot, db: Session, feed_url: Optional[str] = None) -> dict:
