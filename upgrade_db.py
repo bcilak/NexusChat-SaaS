@@ -48,7 +48,8 @@ def upgrade_db():
         ("sound_enabled", "BOOLEAN DEFAULT 0"),
         ("hero_header", "BOOLEAN DEFAULT 0"),
         ("feed_url", "VARCHAR(1000)"),
-        ("feed_last_sync", "DATETIME")
+        ("feed_last_sync", "DATETIME"),
+        ("feed_excluded_ids", "TEXT")
     ]
     
     for col_name, col_def in bot_columns:

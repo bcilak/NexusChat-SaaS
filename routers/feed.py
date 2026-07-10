@@ -107,6 +107,28 @@ def list_products(
     }
 
 
+@router.delete("/{bot_id}/products/{product_id}")
+def delete_product(
+    bot_id: int,
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Tek bir ürünü sil (feed'deki hatalı/test ürünleri için)."""
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
+    product = db.query(Product).filter(Product.id == product_id, Product.bot_id == bot.id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Ürün bulunamadı")
+    # Bir sonraki senkronda feed'den geri gelmesin diye hariç tutulanlara ekle
+    if product.external_id:
+        excluded = set((bot.feed_excluded_ids or "").split(",")) - {""}
+        excluded.add(product.external_id)
+        bot.feed_excluded_ids = ",".join(sorted(excluded))
+    db.delete(product)
+    db.commit()
+    return {"status": "success", "deleted_id": product_id}
+
+
 @router.delete("/{bot_id}/products")
 def clear_products(
     bot_id: int,
@@ -116,5 +138,6 @@ def clear_products(
     bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
     deleted = db.query(Product).filter(Product.bot_id == bot.id).delete()
     bot.feed_last_sync = None
+    bot.feed_excluded_ids = None  # Temiz başlangıç — hariç tutulanlar da sıfırlanır
     db.commit()
     return {"status": "success", "deleted": deleted}

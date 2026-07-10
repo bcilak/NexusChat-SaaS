@@ -46,6 +46,7 @@ class Bot(Base):
     # Product feed (Google Merchant / Ticimax / İdeasoft XML)
     feed_url = Column(String(1000), nullable=True)
     feed_last_sync = Column(DateTime, nullable=True)
+    feed_excluded_ids = Column(Text, nullable=True)  # Elle silinen ürünlerin external_id listesi (virgülle)
 
     # WhatsApp Integration
     whatsapp_phone_id = Column(String(100), nullable=True, index=True)

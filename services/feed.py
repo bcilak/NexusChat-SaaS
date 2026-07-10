@@ -233,6 +233,11 @@ def sync_feed_from_bytes(bot: Bot, db: Session, xml_bytes: bytes, commit: bool =
     if not items:
         raise ValueError("Feed'de ürün bulunamadı — format desteklenmiyor olabilir.")
 
+    # Elle silinmiş (hariç tutulan) ürünleri senkrona alma
+    excluded = set((bot.feed_excluded_ids or "").split(",")) - {""}
+    if excluded:
+        items = [i for i in items if i.get("external_id") not in excluded]
+
     existing = {p.external_id: p for p in db.query(Product).filter(Product.bot_id == bot.id).all() if p.external_id}
     existing_by_url = {p.product_url: p for p in db.query(Product).filter(Product.bot_id == bot.id).all() if p.product_url}
 

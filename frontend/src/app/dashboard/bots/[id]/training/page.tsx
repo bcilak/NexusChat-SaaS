@@ -107,6 +107,18 @@ export default function TrainingPage() {
     }
   };
 
+  const handleProductDelete = async (productId: number) => {
+    if (!confirm("Bu ürün listeden silinecek. Emin misiniz?")) return;
+    try {
+      await feedApi.deleteProduct(botId, productId);
+      setFeedProducts(prev => prev.filter(p => p.id !== productId));
+      setFeedTotal(t => Math.max(0, t - 1));
+    } catch (err: any) {
+      setMessage({ text: err.message || "Silme hatası.", type: "error" });
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
   const handleFeedClear = async () => {
     if (!confirm("Tüm senkronize ürünler silinecek. Emin misiniz?")) return;
     try {
@@ -746,6 +758,13 @@ export default function TrainingPage() {
                           Ürüne git →
                         </a>
                       )}
+                      <button
+                        onClick={() => handleProductDelete(p.id)}
+                        className="text-gray-500 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-colors shrink-0"
+                        title="Bu ürünü sil"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </motion.div>
                   ))}
                   {feedTotal > feedProducts.length && (
