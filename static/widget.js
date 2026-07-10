@@ -534,6 +534,7 @@
 
     /* Message animation */
     .nxc-msg {
+      flex-shrink: 0;
       max-width: 88%;
       padding: 10px 14px;
       border-radius: 14px;
@@ -687,6 +688,7 @@
       padding: 4px 2px 8px;
       align-self: stretch;
       max-width: 100%;
+      flex-shrink: 0; /* flex kolon içinde ezilmesin — kartlar tam boy görünsün */
       animation: nxc-msgIn .4s ease both;
       scrollbar-width: thin;
     }
