@@ -16,6 +16,7 @@ interface Bot {
   model: string;
   document_count: number;
   created_at: string;
+  is_active: boolean;
 }
 
 export default function BotListPage() {
@@ -42,6 +43,19 @@ export default function BotListPage() {
       setBots(bots.filter((b) => b.id !== id));
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleToggleActive = async (e: React.MouseEvent, bot: Bot) => {
+    e.stopPropagation();
+    const next = !bot.is_active;
+    // İyimser güncelleme — anahtar anında tepki versin
+    setBots(prev => prev.map(b => b.id === bot.id ? { ...b, is_active: next } : b));
+    try {
+      await botsApi.update(bot.id, { is_active: next });
+    } catch (err) {
+      console.error(err);
+      setBots(prev => prev.map(b => b.id === bot.id ? { ...b, is_active: !next } : b));
     }
   };
 
@@ -155,20 +169,48 @@ export default function BotListPage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1.5 group-hover:text-indigo-300 transition-colors line-clamp-1">{bot.name}</h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 text-xs font-medium uppercase tracking-wider">
-                      {bot.model}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 text-xs font-medium uppercase tracking-wider">
+                        {bot.model}
+                      </span>
+                      {bot.is_active !== false ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Aktif
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-500/10 text-gray-500 border border-gray-500/20 text-[10px] font-bold uppercase tracking-wider">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-500" /> Pasif
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
                 {(!isSubUser || user?.can_edit_bots) && (
-                  <button 
-                    onClick={(e) => handleDelete(e, bot.id, bot.name)}
-                    className="text-gray-500 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-all"
-                    title="Asistanı Sil"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => handleToggleActive(e, bot)}
+                      className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
+                        bot.is_active !== false ? "bg-emerald-500" : "bg-gray-400 dark:bg-white/15"
+                      }`}
+                      title={bot.is_active !== false
+                        ? "Aktif — pasife almak için tıklayın (widget sitelerden kalkar)"
+                        : "Pasif — aktife almak için tıklayın"}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${
+                          bot.is_active !== false ? "left-[22px]" : "left-0.5"
+                        }`}
+                      />
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(e, bot.id, bot.name)}
+                      className="text-gray-500 hover:text-red-400 hover:bg-red-400/10 p-2 rounded-lg transition-all"
+                      title="Asistanı Sil"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 )}
               </div>
               

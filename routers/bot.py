@@ -38,6 +38,7 @@ class BotCreate(BaseModel):
     branding_visible: Optional[bool] = True
     sound_enabled: Optional[bool] = False
     hero_header: Optional[bool] = False
+    is_active: Optional[bool] = True
     whatsapp_phone_id: Optional[str] = None
     whatsapp_token: Optional[str] = None
     whatsapp_verify_token: Optional[str] = None
@@ -68,6 +69,7 @@ class BotUpdate(BaseModel):
     branding_visible: Optional[bool] = None
     sound_enabled: Optional[bool] = None
     hero_header: Optional[bool] = None
+    is_active: Optional[bool] = None
     whatsapp_phone_id: Optional[str] = None
     whatsapp_token: Optional[str] = None
     whatsapp_verify_token: Optional[str] = None
@@ -99,6 +101,7 @@ class BotResponse(BaseModel):
     branding_visible: bool
     sound_enabled: bool
     hero_header: bool
+    is_active: bool
     whatsapp_phone_id: Optional[str]
     whatsapp_token: Optional[str]
     whatsapp_verify_token: Optional[str]
@@ -155,6 +158,7 @@ def bot_to_response(bot: Bot) -> BotResponse:
         branding_visible=bot.branding_visible if bot.branding_visible is not None else True,
         sound_enabled=bool(bot.sound_enabled),
         hero_header=bool(bot.hero_header),
+        is_active=bot.is_active if bot.is_active is not None else True,
         whatsapp_phone_id=bot.whatsapp_phone_id,
         whatsapp_token=bot.whatsapp_token,
         whatsapp_verify_token=bot.whatsapp_verify_token,

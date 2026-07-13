@@ -9,6 +9,7 @@ class Bot(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    is_active = Column(Boolean, default=True)  # Pasifken widget müşteri sitesinde hiç görünmez
     name = Column(String(200), nullable=False)
     description = Column(Text, default="")
     prompt = Column(

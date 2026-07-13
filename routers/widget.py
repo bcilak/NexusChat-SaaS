@@ -35,7 +35,12 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
     if not bot:
         raise HTTPException(status_code=404, detail="Bot bulunamadı")
 
+    # Pasif bot: widget kendini hiç çizmesin
+    if bot.is_active is not None and not bot.is_active:
+        return {"bot_id": bot.id, "active": False}
+
     return {
+        "active": True,
         "bot_id": bot.id,
         "name": bot.name,
         "description": bot.description or "",
@@ -70,6 +75,9 @@ def widget_chat(
     bot = db.query(Bot).filter(Bot.id == bot_id).first()
     if not bot:
         raise HTTPException(status_code=404, detail="Bot bulunamadı")
+
+    if bot.is_active is not None and not bot.is_active:
+        raise HTTPException(status_code=403, detail="Bot pasif durumda")
 
     # IP adresini al
     forwarded = request.headers.get("X-Forwarded-For")

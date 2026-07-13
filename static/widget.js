@@ -1146,6 +1146,14 @@
   fetch(`${apiBase}/api/widget/${botId}/config`)
     .then((r) => r.json())
     .then((cfg) => {
+      /* Bot pasifse widget'ı tamamen kaldır — sitede hiçbir iz kalmasın */
+      if (cfg.active === false) {
+        toggle.remove();
+        container.remove();
+        _removeProactive();
+        return;
+      }
+
       /* Name */
       if (cfg.name) {
         document.getElementById("nxc-bot-name").textContent = cfg.name;

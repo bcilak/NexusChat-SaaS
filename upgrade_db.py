@@ -49,7 +49,8 @@ def upgrade_db():
         ("hero_header", "BOOLEAN DEFAULT 0"),
         ("feed_url", "VARCHAR(1000)"),
         ("feed_last_sync", "DATETIME"),
-        ("feed_excluded_ids", "TEXT")
+        ("feed_excluded_ids", "TEXT"),
+        ("is_active", "BOOLEAN DEFAULT 1")
     ]
     
     for col_name, col_def in bot_columns:
