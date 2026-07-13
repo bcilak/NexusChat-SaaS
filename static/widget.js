@@ -1144,9 +1144,12 @@
 
   /* --- Load bot config --- */
   fetch(`${apiBase}/api/widget/${botId}/config`)
-    .then((r) => r.json())
+    .then((r) => {
+      if (r.status === 404) return { active: false }; // Bot silinmiş — widget'ı kaldır
+      return r.json();
+    })
     .then((cfg) => {
-      /* Bot pasifse widget'ı tamamen kaldır — sitede hiçbir iz kalmasın */
+      /* Bot pasifse veya silinmişse widget'ı tamamen kaldır — sitede hiçbir iz kalmasın */
       if (cfg.active === false) {
         toggle.remove();
         container.remove();
