@@ -1,4 +1,5 @@
 import json
+import logging
 import requests as http_requests
 from typing import Type, Any, Optional
 from langchain_core.tools import BaseTool
@@ -11,6 +12,56 @@ from services.ideasoft import (
     format_orders_for_chat,
     IdeaSoftError,
 )
+
+logger = logging.getLogger(__name__)
+
+
+# ── IdeaSoft token (meta_data) DB yardımcıları ────────────────────────────────
+# Yenilenen access/refresh token'ı güvenilir şekilde saklamak ve her çağrıda en
+# güncel token'ı okumak için. (Rotasyonlu refresh token'da eski snapshot kullanmak
+# 'invalid_grant' hatasına yol açar — bu yüzden çağrı anında taze okuruz.)
+
+def _load_integration_meta(bot_id: int, provider: str) -> Optional[str]:
+    """Entegrasyonun DB'deki güncel meta_data'sını döndürür (taze refresh token)."""
+    if not bot_id:
+        return None
+    from db.database import SessionLocal
+    from models.bot_integration import BotIntegration
+    db = SessionLocal()
+    try:
+        intg = db.query(BotIntegration).filter_by(bot_id=bot_id, provider=provider).first()
+        return intg.meta_data if intg else None
+    except Exception:
+        logger.exception("meta_data DB'den okunamadı (bot_id=%s, provider=%s)", bot_id, provider)
+        return None
+    finally:
+        db.close()
+
+
+def _save_integration_meta(bot_id: int, provider: str, new_meta: str) -> bool:
+    """Yenilenen token'ı DB'ye yazar. Başarısızlıkta SESSİZCE yutmaz — loglar ve
+    False döner; böylece rotasyonla kaybolan refresh token fark edilir."""
+    if not (bot_id and new_meta):
+        return False
+    from db.database import SessionLocal
+    from models.bot_integration import BotIntegration
+    db = SessionLocal()
+    try:
+        intg = db.query(BotIntegration).filter_by(bot_id=bot_id, provider=provider).first()
+        if not intg:
+            return False
+        intg.meta_data = new_meta
+        db.commit()
+        return True
+    except Exception:
+        db.rollback()
+        logger.exception(
+            "KRİTİK: Yenilenen IdeaSoft token DB'ye yazılamadı (bot_id=%s). "
+            "Refresh token rotasyonu kaybolabilir.", bot_id,
+        )
+        return False
+    finally:
+        db.close()
 
 
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ E-Commerce Tool (mevcut) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -32,19 +83,9 @@ class ECommerceProductSearchTool(BaseTool):
 
     def _update_meta(self, new_meta: str):
         if new_meta and new_meta != self.meta_data_str and self.bot_id:
-            try:
-                from db.database import SessionLocal
-                from models.bot_integration import BotIntegration
-                db = SessionLocal()
-                intg = db.query(BotIntegration).filter_by(bot_id=self.bot_id, provider=self.provider).first()
-                if intg:
-                    intg.meta_data = new_meta
-                    db.commit()
-                db.close()
+            if _save_integration_meta(self.bot_id, self.provider, new_meta):
                 self.meta_data_str = new_meta
-            except Exception as e:
-                pass
-    
+
     def _run(self, query: str) -> str:
         # â”€â”€ WooCommerce â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if self.provider == "woocommerce":
@@ -88,6 +129,11 @@ class ECommerceProductSearchTool(BaseTool):
 
         # â”€â”€ IdeaSoft â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         elif self.provider == "ideasoft":
+            # Çağrı anında DB'den EN GÜNCEL meta'yı oku — aynı turdaki başka bir tool
+            # (ör. sipariş sorgusu) token'ı yenilemiş olabilir; eski snapshot 'invalid_grant' verir.
+            fresh_meta = _load_integration_meta(self.bot_id, "ideasoft")
+            if fresh_meta:
+                self.meta_data_str = fresh_meta
             try:
                 meta = json.loads(self.meta_data_str or "{}")
             except Exception:
@@ -189,20 +235,14 @@ class IdeaSoftOrderSearchTool(BaseTool):
 
     def _update_meta(self, new_meta: str):
         if new_meta and new_meta != self.meta_data_str and self.bot_id:
-            try:
-                from db.database import SessionLocal
-                from models.bot_integration import BotIntegration
-                db = SessionLocal()
-                intg = db.query(BotIntegration).filter_by(bot_id=self.bot_id, provider="ideasoft").first()
-                if intg:
-                    intg.meta_data = new_meta
-                    db.commit()
-                db.close()
+            if _save_integration_meta(self.bot_id, "ideasoft", new_meta):
                 self.meta_data_str = new_meta
-            except Exception as e:
-                pass
 
     def _run(self, query: str) -> str:
+        # Çağrı anında DB'den en güncel token'ı oku (rotasyonlu refresh token güvenliği)
+        fresh_meta = _load_integration_meta(self.bot_id, "ideasoft")
+        if fresh_meta:
+            self.meta_data_str = fresh_meta
         try:
             import re
             order_no = None
@@ -274,24 +314,34 @@ def build_ecommerce_tools(bot_id: int, db) -> list:
     Her entegrasyon iÃ§in uygun LangChain tool listesini dÃ¶ndÃ¼rÃ¼r.
     """
     from models.bot_integration import BotIntegration
+    from models.product import Product
 
     integrations = db.query(BotIntegration).filter(
         BotIntegration.bot_id == bot_id,
         BotIntegration.is_active == True,
     ).all()
 
+    # Feed (XML) ile senkronlanmış ürün var mı? Varsa ürün fiyat/stok cevabı feed'den
+    # gelir (search_products → ürün kartları). Bu durumda canlı ürün-arama tool'unu
+    # EKLEMEYİZ — böylece IdeaSoft OAuth token'ının kırılganlığından (art arda soruda
+    # 'invalid_grant') tamamen kaçınırız. Canlı API yalnızca sipariş/kargo için kalır.
+    has_feed_products = (
+        db.query(Product.id).filter(Product.bot_id == bot_id).first() is not None
+    )
+
     tools = []
     for intg in integrations:
         if intg.provider in ("woocommerce", "shopify", "ticimax", "ideasoft"):
-            # ÃœrÃ¼n arama tÃ¼m saÄŸlayÄ±cÄ±larda
-            tools.append(ECommerceProductSearchTool(
-                api_url=intg.api_url,
-                api_key=intg.api_key,
-                api_secret=intg.api_secret or "",
-                provider=intg.provider,
-                meta_data_str=intg.meta_data or "",
-                bot_id=bot_id,
-            ))
+            # Feed doluysa canlı ürün aramayı atla — ürünler feed'den karşılanıyor
+            if not has_feed_products:
+                tools.append(ECommerceProductSearchTool(
+                    api_url=intg.api_url,
+                    api_key=intg.api_key,
+                    api_secret=intg.api_secret or "",
+                    provider=intg.provider,
+                    meta_data_str=intg.meta_data or "",
+                    bot_id=bot_id,
+                ))
             # SipariÅŸ sorgulama sadece IdeaSoft'ta (diÄŸerleri iÃ§in ayrÄ± tool eklenebilir)
             if intg.provider == "ideasoft":
                 tools.append(IdeaSoftOrderSearchTool(

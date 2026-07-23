@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import logging
 import secrets
+import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
@@ -61,6 +62,21 @@ class IdeaSoftAuthRequired(IdeaSoftError):
 # key: (api_url, client_id)
 # value: {"access_token": str, "expires_at": float}
 _TOKEN_CACHE: Dict[Tuple[str, str], Dict[str, Any]] = {}
+
+# Store (mağaza) başına refresh kilidi — aynı anda iki isteğin aynı (tek kullanımlık)
+# refresh token'ı yenilemeye çalışıp birinin 'invalid_grant' almasını önler.
+_REFRESH_LOCKS_GUARD = threading.Lock()
+_REFRESH_LOCKS: Dict[Tuple[str, str], threading.Lock] = {}
+
+
+def _get_refresh_lock(api_url: str, client_id: str) -> threading.Lock:
+    key = _cache_key(api_url, client_id)
+    with _REFRESH_LOCKS_GUARD:
+        lock = _REFRESH_LOCKS.get(key)
+        if lock is None:
+            lock = threading.Lock()
+            _REFRESH_LOCKS[key] = lock
+        return lock
 
 
 # ─────────────────────────────────────────────────────────────
@@ -314,17 +330,29 @@ def get_valid_access_token(
             "updated_meta_data_str": _dump_meta(meta),
         }
 
-    refreshed = refresh_access_token(
-        api_url=api_url,
-        client_id=client_id,
-        client_secret=client_secret,
-        meta_data_str=_dump_meta(meta),
-    )
-    refreshed_meta = _parse_meta(refreshed["updated_meta_data_str"])
-    return {
-        "access_token": refreshed_meta["ideasoft_access_token"],
-        "updated_meta_data_str": refreshed["updated_meta_data_str"],
-    }
+    # Refresh gerekiyor — kilit al, böylece aynı anda yalnızca bir refresh gider.
+    lock = _get_refresh_lock(api_url, client_id)
+    with lock:
+        # Kilidi beklerken başka bir istek zaten yenilemiş olabilir; cache'i tekrar kontrol et.
+        if not force_refresh:
+            cached = _TOKEN_CACHE.get(key)
+            if cached and not _is_expired(cached.get("expires_at")):
+                return {
+                    "access_token": cached["access_token"],
+                    "updated_meta_data_str": _dump_meta(meta),
+                }
+
+        refreshed = refresh_access_token(
+            api_url=api_url,
+            client_id=client_id,
+            client_secret=client_secret,
+            meta_data_str=_dump_meta(meta),
+        )
+        refreshed_meta = _parse_meta(refreshed["updated_meta_data_str"])
+        return {
+            "access_token": refreshed_meta["ideasoft_access_token"],
+            "updated_meta_data_str": refreshed["updated_meta_data_str"],
+        }
 
 
 # ─────────────────────────────────────────────────────────────
