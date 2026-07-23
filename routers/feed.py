@@ -119,10 +119,12 @@ def delete_product(
     product = db.query(Product).filter(Product.id == product_id, Product.bot_id == bot.id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
-    # Bir sonraki senkronda feed'den geri gelmesin diye hariç tutulanlara ekle
-    if product.external_id:
+    # Bir sonraki senkronda feed'den geri gelmesin diye hariç tutulanlara ekle.
+    # external_id yoksa product_url'yi anahtar olarak kullan (feed.py her ikisini de kontrol eder).
+    exclude_key = product.external_id or product.product_url
+    if exclude_key:
         excluded = set((bot.feed_excluded_ids or "").split(",")) - {""}
-        excluded.add(product.external_id)
+        excluded.add(exclude_key)
         bot.feed_excluded_ids = ",".join(sorted(excluded))
     db.delete(product)
     db.commit()

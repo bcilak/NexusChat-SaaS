@@ -17,6 +17,9 @@ router = APIRouter(prefix="/api/bots/{bot_id}/web", tags=["web-training"])
 class TrainUrlRequest(BaseModel):
     url: str
 
+MAX_CRAWL_PAGES = 200  # Kaçak/sonsuz taramayı önlemek için üst sınır
+
+
 class TrainWebsiteRequest(BaseModel):
     base_url: str
     max_pages: int = 50
@@ -35,7 +38,7 @@ def train_url(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
     logger.info(
         "[web-training] Queue single URL url=%s bot_id=%s user_id=%s",
         req.url,
@@ -54,16 +57,17 @@ def train_website(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
+    max_pages = max(1, min(req.max_pages, MAX_CRAWL_PAGES))  # 1..200 aralığına sıkıştır
     logger.info(
         "[web-training] Queue recursive crawl base_url=%s bot_id=%s user_id=%s max_pages=%s",
         req.base_url,
         bot.id,
         current_user.id,
-        req.max_pages,
+        max_pages,
     )
-    background_tasks.add_task(crawl_website_recursive_background, req.base_url, bot.id, req.max_pages)
-    return {"message": f"{req.base_url} tüm site tarama kuyruğuna eklendi (Maks: {req.max_pages} sayfa)."}
+    background_tasks.add_task(crawl_website_recursive_background, req.base_url, bot.id, max_pages)
+    return {"message": f"{req.base_url} tüm site tarama kuyruğuna eklendi (Maks: {max_pages} sayfa)."}
 
 @router.get("/pages", response_model=list[CrawledPageResponse])
 def list_crawled_pages(
@@ -90,11 +94,13 @@ def delete_crawled_page(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    bot = get_user_bot(bot_id, current_user, db)
+    bot = get_user_bot(bot_id, current_user, db, require_can_edit=True)
     page = db.query(CrawledPage).filter(CrawledPage.id == page_id, CrawledPage.bot_id == bot_id).first()
     if not page:
         raise HTTPException(status_code=404, detail="Sayfa bulunamadı")
-    # Note: ideally we should also delete chunks from ChromaDB by URL here.
+    # Bu URL'ye ait chunk'ları vektör deposundan da sil — silinen sayfa cevap vermeye devam etmesin
+    from services.vectordb import VectorDBService
+    VectorDBService().delete_by_source(str(bot_id), page.url)
     db.delete(page)
     db.commit()
     return {"message": "Sayfa silindi"}

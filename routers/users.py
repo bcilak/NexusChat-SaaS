@@ -88,6 +88,11 @@ def create_sub_user(
     if existing:
         raise HTTPException(status_code=400, detail="Bu e-posta zaten kayıtlı")
 
+    # Kredi, üst kullanıcının sahip olduğundan fazla olamaz (admin hariç) — fatura by-pass engeli
+    requested_credits = req.credits or 0
+    if current_user.role != "admin":
+        requested_credits = max(0, min(requested_credits, current_user.credits or 0))
+
     # Üst kullanıcı sahip olmadığı izinleri alt kullanıcıya veremez
     can_use_api = req.can_use_api_tools and current_user.can_use_api_tools
     can_remove_brand = req.can_remove_branding and current_user.can_remove_branding
@@ -100,7 +105,7 @@ def create_sub_user(
         hashed_password=hash_password(req.password),
         plan=req.plan,
         role="user",  # Sub-user her zaman normal kullanıcı
-        credits=req.credits,
+        credits=requested_credits,
         can_use_api_tools=can_use_api,
         can_remove_branding=can_remove_brand,
         can_create_users=can_create,
@@ -149,7 +154,11 @@ def update_sub_user(
     if req.plan is not None:
         sub_user.plan = req.plan
     if req.credits is not None:
-        sub_user.credits = req.credits
+        # Admin dışı üst kullanıcı, kendi kredisinden fazlasını veremez
+        if current_user.role != "admin":
+            sub_user.credits = max(0, min(req.credits, current_user.credits or 0))
+        else:
+            sub_user.credits = req.credits
     if req.can_use_api_tools is not None:
         # Üst kullanıcının yetkisini aşamaz
         sub_user.can_use_api_tools = req.can_use_api_tools and current_user.can_use_api_tools

@@ -233,22 +233,34 @@ def sync_feed_from_bytes(bot: Bot, db: Session, xml_bytes: bytes, commit: bool =
     if not items:
         raise ValueError("Feed'de ürün bulunamadı — format desteklenmiyor olabilir.")
 
-    # Elle silinmiş (hariç tutulan) ürünleri senkrona alma
+    # Elle silinmiş (hariç tutulan) ürünleri senkrona alma. Hariç tutma anahtarı
+    # external_id VEYA product_url olabilir (bazı feed'lerde external_id yoktur).
     excluded = set((bot.feed_excluded_ids or "").split(",")) - {""}
     if excluded:
-        items = [i for i in items if i.get("external_id") not in excluded]
+        items = [
+            i for i in items
+            if i.get("external_id") not in excluded and i.get("product_url") not in excluded
+        ]
 
-    existing = {p.external_id: p for p in db.query(Product).filter(Product.bot_id == bot.id).all() if p.external_id}
-    existing_by_url = {p.product_url: p for p in db.query(Product).filter(Product.bot_id == bot.id).all() if p.product_url}
+    # Mevcut ürünleri tek sorguda çek, hem external_id hem product_url ile indeksle
+    db_rows = db.query(Product).filter(Product.bot_id == bot.id).all()
+    existing_by_id = {p.external_id: p for p in db_rows if p.external_id}
+    existing_by_url = {p.product_url: p for p in db_rows if p.product_url}
+
+    def _match_row(item):
+        key = item.get("external_id")
+        if key and key in existing_by_id:
+            return existing_by_id[key]
+        url = item.get("product_url")
+        if url and url in existing_by_url:
+            return existing_by_url[url]
+        return None
 
     created = updated = 0
-    seen_ids = set()
+    seen_rows = set()  # eşleşen/eklenen Product nesnelerinin id(obj)'leri
     for item in items:
-        key = item.get("external_id")
-        row = existing.get(key) if key else None
-        if row is None and item.get("product_url"):
-            row = existing_by_url.get(item["product_url"])
-        if row:
+        row = _match_row(item)
+        if row is not None:
             for k, v in item.items():
                 setattr(row, k, v)
             row.updated_at = datetime.utcnow()
@@ -256,14 +268,19 @@ def sync_feed_from_bytes(bot: Bot, db: Session, xml_bytes: bytes, commit: bool =
         else:
             row = Product(bot_id=bot.id, **item)
             db.add(row)
+            # Aynı senkron içinde ikinci kez aynı ürün gelirse tekrar eklenmesin diye indeksle
+            if item.get("external_id"):
+                existing_by_id[item["external_id"]] = row
+            if item.get("product_url"):
+                existing_by_url[item["product_url"]] = row
             created += 1
-        if key:
-            seen_ids.add(key)
+        seen_rows.add(id(row))
 
-    # Feed'den kalkan ürünleri sil (external_id'si olup artık feed'de olmayanlar)
+    # Feed'den kalkan ürünleri sil — external_id'si OLSUN OLMASIN, bu senkronda
+    # eşleşmeyen (görülmeyen) tüm eski satırlar kaldırılır.
     removed = 0
-    for ext_id, row in existing.items():
-        if ext_id not in seen_ids:
+    for row in db_rows:
+        if id(row) not in seen_rows:
             db.delete(row)
             removed += 1
 

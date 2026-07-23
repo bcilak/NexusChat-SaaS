@@ -64,8 +64,15 @@ class VectorDBService:
         # 2. Keyword (BM25) Search
         try:
             collection = self.client.get_collection(collection_name)
+
+            # BM25 tüm koleksiyonu belleğe alıp indeksler; çok büyük koleksiyonlarda
+            # her mesajda bunu yapmak pahalı. Belirli bir eşiğin üstünde salt semantik dön.
+            BM25_MAX_CHUNKS = 3000
+            if collection.count() > BM25_MAX_CHUNKS:
+                return semantic_docs
+
             all_data = collection.get(include=["documents", "metadatas"])
-            
+
             if not all_data or not all_data.get("documents"):
                 return semantic_docs
                 
@@ -90,6 +97,29 @@ class VectorDBService:
         except Exception as e:
             # Fallback to pure semantic if BM25 fails (e.g., missing package)
             return semantic_docs
+
+    def delete_by_metadata(self, bot_id: str, where: dict) -> int:
+        """Bir bottaki koleksiyondan verilen metadata filtresine uyan chunk'ları siler.
+        Koleksiyon zaten bot'a özel olduğu için where içinde bot_id gerekmez.
+        Silinen chunk sayısını döndürür."""
+        collection_name = self._collection_name(bot_id)
+        try:
+            collection = self.client.get_collection(collection_name)
+            existing = collection.get(where=where)
+            ids = existing.get("ids", []) if existing else []
+            if ids:
+                collection.delete(where=where)
+            return len(ids)
+        except Exception:
+            return 0  # Koleksiyon henüz yoksa veya filtre boşsa
+
+    def delete_by_document(self, bot_id: str, document_id) -> int:
+        """Bir dökümana ait tüm chunk'ları vektör deposundan siler."""
+        return self.delete_by_metadata(bot_id, {"document_id": str(document_id)})
+
+    def delete_by_source(self, bot_id: str, source_url: str) -> int:
+        """Bir web sayfasına (URL) ait tüm chunk'ları vektör deposundan siler."""
+        return self.delete_by_metadata(bot_id, {"source": source_url})
 
     def delete_collection(self, bot_id: str) -> None:
         """Delete an entire bot's vector store collection."""

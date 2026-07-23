@@ -24,8 +24,10 @@ def train_document(
         chunk.metadata["bot_id"] = str(bot_id)
         chunk.metadata["document_id"] = str(doc.id)
 
-    # 4. Store in vector DB
+    # 4. Store in vector DB — önce bu dökümanın eski chunk'larını temizle (idempotent
+    #    yeniden eğitim; mükerrer/eski parça birikmesini önler)
     vectordb = VectorDBService()
+    vectordb.delete_by_document(bot_id, doc.id)
     chunk_count = vectordb.add_documents(str(bot_id), chunks)
 
     # 5. Update document record

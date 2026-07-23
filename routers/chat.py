@@ -28,6 +28,8 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list
     session_id: str
+    message_id: Optional[int] = None
+    products: Optional[list] = None
 
 
 class HistoryItem(BaseModel):
@@ -100,8 +102,10 @@ def submit_feedback(
     bot_id: int,
     history_id: int,
     req: FeedbackRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    get_user_bot(bot_id, current_user, db)  # yetki: kullanıcı bu bota erişebiliyor mu
     history = db.query(ChatHistory).filter(ChatHistory.id == history_id, ChatHistory.bot_id == bot_id).first()
     if not history:
         raise HTTPException(status_code=404, detail="Sohbet kaydı bulunamadı")

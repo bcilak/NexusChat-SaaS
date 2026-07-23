@@ -332,8 +332,10 @@ def rag_chat(
 
     db.commit()
 
+    # Ürün eşleştiyse kartları göster. Cevap metnindeki "maalesef/üzgünüm" gibi kelimelerin
+    # is_fallback'i tetikleyip kartları gizlemesine izin verme — kartlar eşleşmeye bağlıdır.
     products_payload = []
-    if matched_products and not is_fallback:
+    if matched_products:
         products_payload = [
             {
                 "title": p.title,

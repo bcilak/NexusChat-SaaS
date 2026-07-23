@@ -77,9 +77,12 @@ def process_single_url(url: str, bot_id: int, db: Session):
         for chunk in chunks:
             chunk.metadata["bot_id"] = str(bot_id)
 
-        # 5. Embed & Vector DB
+        # 5. Embed & Vector DB — güncelleme ise bu URL'nin eski chunk'larını önce sil
+        #    (aksi halde eski + yeni içerik birlikte cevap havuzunda kalır)
         logger.info("[web-training] Embedding chunks url=%s bot_id=%s chunks=%s", url, bot_id, len(chunks))
         vectordb = VectorDBService()
+        if existing:
+            vectordb.delete_by_source(str(bot_id), url)
         vectordb.add_documents(str(bot_id), chunks)
         logger.info("[web-training] Embedded chunks url=%s bot_id=%s chunks=%s", url, bot_id, len(chunks))
         
@@ -146,6 +149,8 @@ def crawl_website_recursive(base_url: str, bot_id: int, db: Session, max_pages: 
                     chunk.metadata["bot_id"] = str(bot_id)
                 logger.info("[web-training] Embedding chunks url=%s bot_id=%s chunks=%s", current_url, bot_id, len(chunks))
                 vectordb = VectorDBService()
+                if existing:
+                    vectordb.delete_by_source(str(bot_id), current_url)
                 vectordb.add_documents(str(bot_id), chunks)
                 logger.info("[web-training] Embedded chunks url=%s bot_id=%s chunks=%s", current_url, bot_id, len(chunks))
                 

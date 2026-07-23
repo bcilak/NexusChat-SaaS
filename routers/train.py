@@ -22,6 +22,7 @@ UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./uploads")
 router = APIRouter(prefix="/api/bots/{bot_id}", tags=["training"])
 
 ALLOWED_EXTENSIONS = {"pdf", "docx", "doc", "txt", "xlsx", "xls", "csv"}
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25MB
 
 
 def get_file_extension(filename: str) -> str:
@@ -53,19 +54,39 @@ async def upload_file(
             detail=f"Desteklenmeyen dosya türü: {ext}. İzin verilenler: {', '.join(ALLOWED_EXTENSIONS)}",
         )
 
+    # Dosya adını güvenli hale getir — path traversal (../) ve dizin ayraçlarını engelle
+    safe_name = os.path.basename(file.filename or "").replace("\\", "").strip()
+    if not safe_name or safe_name in (".", ".."):
+        raise HTTPException(status_code=400, detail="Geçersiz dosya adı.")
+
+    content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=400, detail="Dosya çok büyük (maks 25MB).")
+
     # Save file to disk
     bot_upload_dir = os.path.join(UPLOAD_DIR, str(bot_id))
     os.makedirs(bot_upload_dir, exist_ok=True)
 
-    file_path = os.path.join(bot_upload_dir, file.filename)
+    file_path = os.path.join(bot_upload_dir, safe_name)
     with open(file_path, "wb") as f:
-        content = await file.read()
         f.write(content)
+
+    # Aynı isimli eski kaydı (varsa) temizle — mükerrer Document satırı ve dosya ezme sorununu önle
+    old_docs = db.query(Document).filter(
+        Document.bot_id == bot_id, Document.file_name == safe_name
+    ).all()
+    if old_docs:
+        from services.vectordb import VectorDBService
+        vectordb = VectorDBService()
+        for od in old_docs:
+            vectordb.delete_by_document(bot_id, od.id)
+            db.delete(od)
+        db.commit()
 
     # Create document record
     doc = Document(
         bot_id=bot_id,
-        file_name=file.filename,
+        file_name=safe_name,
         file_type=ext,
     )
     db.add(doc)
@@ -76,7 +97,7 @@ async def upload_file(
         "id": doc.id,
         "file_name": doc.file_name,
         "file_type": doc.file_type,
-        "message": f"'{file.filename}' yüklendi. Eğitim başlatmak için /train endpoint'ini kullanın.",
+        "message": f"'{safe_name}' yüklendi. Eğitim başlatmak için /train endpoint'ini kullanın.",
     }
 
 
@@ -134,6 +155,10 @@ def delete_document(
     doc = db.query(Document).filter(Document.id == doc_id, Document.bot_id == bot_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="Döküman bulunamadı")
+
+    # Vektör deposundan bu dökümanın chunk'larını sil — silinen içerik cevap vermeye devam etmesin
+    from services.vectordb import VectorDBService
+    VectorDBService().delete_by_document(bot_id, doc.id)
 
     # Delete file from disk
     file_path = os.path.join(UPLOAD_DIR, str(bot_id), doc.file_name)

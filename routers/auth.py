@@ -18,15 +18,10 @@ from models.user import User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-# Rate limiting (optional)
-try:
-    from slowapi import Limiter
-    from slowapi.util import get_remote_address
-    limiter = Limiter(key_func=get_remote_address)
-    RATE_LIMITING_ENABLED = True
-except ImportError:
-    RATE_LIMITING_ENABLED = False
-    limiter = None
+# Rate limiting — paylaşılan limiter örneği (main.py ile aynı olmalı)
+from rate_limit import rate_limit as _rate_limit
+
+MIN_PASSWORD_LENGTH = 8
 
 # --- Config ---
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -124,7 +119,13 @@ def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
 
 # --- Endpoints ---
 @router.post("/register", response_model=TokenResponse)
+@_rate_limit("5/minute")
 def register(request: Request, req: RegisterRequest, db: Session = Depends(get_db)):
+    if len(req.password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Şifre en az {MIN_PASSWORD_LENGTH} karakter olmalıdır.",
+        )
     existing = db.query(User).filter(User.email == req.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Bu e-posta zaten kayıtlı")
@@ -146,6 +147,7 @@ def register(request: Request, req: RegisterRequest, db: Session = Depends(get_d
 
 
 @router.post("/login", response_model=TokenResponse)
+@_rate_limit("10/minute")
 def login(request: Request, req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email).first()
     if not user or not verify_password(req.password, user.hashed_password):
