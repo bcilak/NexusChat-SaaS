@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: { ignoreDuringBuilds: true },
+  // Not: Next 16'da 'eslint' anahtarı next.config'de desteklenmiyor (build zaten lint çalıştırmaz).
   typescript: { ignoreBuildErrors: true },
   async rewrites() {
     return [

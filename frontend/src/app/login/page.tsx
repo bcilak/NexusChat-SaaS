@@ -101,8 +101,11 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={8}
             />
+            {!isLogin && (
+              <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-500">En az 8 karakter olmalıdır.</p>
+            )}
           </div>
           
           <button

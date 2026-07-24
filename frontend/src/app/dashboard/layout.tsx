@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { Bot, BarChart3, MessageSquarePlus, LogOut, Shield, Zap, ChevronRight, UsersRound } from "lucide-react";
+import { Bot, BarChart3, MessageSquarePlus, LogOut, Shield, Zap, ChevronRight, UsersRound, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-function Sidebar() {
+function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
 
@@ -39,108 +39,132 @@ function Sidebar() {
   const plan = user?.plan || "free";
 
   return (
-    <aside className="fixed top-0 left-0 bottom-0 w-64 flex flex-col z-[100] bg-white dark:bg-[rgba(6,6,18,0.97)] border-r border-gray-200 dark:border-white/[0.06] shadow-xl dark:shadow-black/40"
-    >
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-3 p-5 group border-b border-gray-200 dark:border-white/[0.06]">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.45)] group-hover:shadow-[0_0_28px_rgba(99,102,241,0.65)] transition-shadow">
-          <Bot className="w-5 h-5 text-white" />
+    <>
+      {/* Backdrop — yalnızca mobilde, drawer açıkken */}
+      <div
+        onClick={onClose}
+        aria-hidden="true"
+        className={`fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm lg:hidden transition-opacity duration-300 ${
+          open ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      />
+      <aside
+        className={`fixed top-0 left-0 bottom-0 w-64 flex flex-col z-[100] bg-white dark:bg-[rgba(6,6,18,0.97)] border-r border-gray-200 dark:border-white/[0.06] shadow-xl dark:shadow-black/40 transform transition-transform duration-300 lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Logo + mobil kapatma */}
+        <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/[0.06]">
+          <Link href="/" onClick={onClose} className="flex items-center gap-3 p-5 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-[0_0_20px_rgba(99,102,241,0.45)] group-hover:shadow-[0_0_28px_rgba(99,102,241,0.65)] transition-shadow">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-base text-gray-900 dark:text-white tracking-tight">ChatGenius</span>
+              <div className="text-[10px] text-gray-500 dark:text-gray-500 font-medium">AI Platform</div>
+            </div>
+          </Link>
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 mr-3 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
+            aria-label="Menüyü kapat"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <div>
-          <span className="font-bold text-base text-gray-900 dark:text-white tracking-tight">ChatGenius</span>
-          <div className="text-[10px] text-gray-500 dark:text-gray-500 font-medium">AI Platform</div>
-        </div>
-      </Link>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
-        <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest px-3 py-2 mt-1">Ana Menü</div>
-        {links.map((link) => {
-          const isActive = link.exact
-            ? pathname === link.path
-            : pathname === link.path || pathname.startsWith(link.path + "/");
-          return (
-            <Link
-              key={link.path}
-              href={link.path}
-              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${isActive
-                  ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20"
-                  : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/[0.04]"
-                }`}
-            >
-              <div className="flex items-center gap-3">
-                <span className={isActive ? "text-indigo-500 dark:text-indigo-400" : "text-gray-400 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400"}>{link.icon}</span>
-                {link.label}
+        {/* Navigation */}
+        <nav className="flex-1 p-3 flex flex-col gap-1 overflow-y-auto">
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest px-3 py-2 mt-1">Ana Menü</div>
+          {links.map((link) => {
+            const isActive = link.exact
+              ? pathname === link.path
+              : pathname === link.path || pathname.startsWith(link.path + "/");
+            return (
+              <Link
+                key={link.path}
+                href={link.path}
+                onClick={onClose}
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group ${isActive
+                    ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20"
+                    : "text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/[0.04]"
+                  }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={isActive ? "text-indigo-500 dark:text-indigo-400" : "text-gray-400 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400"}>{link.icon}</span>
+                  {link.label}
+                </div>
+                {isActive && <ChevronRight className="w-3.5 h-3.5 text-indigo-400 opacity-60" />}
+              </Link>
+            );
+          })}
+
+          {/* Divider */}
+          <div className="h-px bg-gray-200 dark:bg-white/[0.06] my-3 mx-1" />
+
+          {/* Quick Actions */}
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest px-3 py-2">Hızlı Erişim</div>
+          <div className="px-3 py-3 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/5 border border-indigo-500/15">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-xs font-semibold text-indigo-400 dark:text-indigo-300">İpucu</span>
+            </div>
+            <p className="text-[11px] text-gray-500 dark:text-gray-500 leading-relaxed">
+              Bot&apos;a döküman ekleyerek bilgi tabanını genişletin.
+            </p>
+          </div>
+        </nav>
+
+        {/* User Info */}
+        <div className="p-3 border-t border-gray-200 dark:border-white/[0.06]">
+          {/* Plan & Credits */}
+          <div className="flex flex-col gap-2 mb-3">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium uppercase tracking-wider">Mevcut Plan</span>
+              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${planBadgeColors[plan] || planBadgeColors.free}`}>
+                {plan}
+              </span>
+            </div>
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium uppercase tracking-wider">Kredi</span>
+              <span className="text-xs font-bold text-indigo-500 dark:text-indigo-400">
+                {user?.credits?.toLocaleString() ?? 0}
+              </span>
+            </div>
+          </div>
+
+          {/* User Card */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-100 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-inner">
+                {user?.name?.[0]?.toUpperCase() || "U"}
               </div>
-              {isActive && <ChevronRight className="w-3.5 h-3.5 text-indigo-400 opacity-60" />}
-            </Link>
-          );
-        })}
-
-        {/* Divider */}
-        <div className="h-px bg-gray-200 dark:bg-white/[0.06] my-3 mx-1" />
-
-        {/* Quick Actions */}
-        <div className="text-[10px] font-bold text-gray-400 dark:text-gray-600 uppercase tracking-widest px-3 py-2">Hızlı Erişim</div>
-        <div className="px-3 py-3 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/5 border border-indigo-500/15">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="text-xs font-semibold text-indigo-400 dark:text-indigo-300">İpucu</span>
-          </div>
-          <p className="text-[11px] text-gray-500 dark:text-gray-500 leading-relaxed">
-            Bot&apos;a döküman ekleyerek bilgi tabanını genişletin.
-          </p>
-        </div>
-      </nav>
-
-      {/* User Info */}
-      <div className="p-3 border-t border-gray-200 dark:border-white/[0.06]">
-        {/* Plan & Credits */}
-        <div className="flex flex-col gap-2 mb-3">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium uppercase tracking-wider">Mevcut Plan</span>
-            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${planBadgeColors[plan] || planBadgeColors.free}`}>
-              {plan}
-            </span>
-          </div>
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium uppercase tracking-wider">Kredi</span>
-            <span className="text-xs font-bold text-indigo-500 dark:text-indigo-400">
-              {user?.credits?.toLocaleString() ?? 0}
-            </span>
-          </div>
-        </div>
-
-        {/* User Card */}
-        <div className="flex items-center justify-between p-3 rounded-xl bg-gray-100 dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.06]">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-inner">
-              {user?.name?.[0]?.toUpperCase() || "U"}
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{user?.name}</div>
+                <div className={`text-[10px] font-medium truncate ${planColors[plan] || planColors.free}`}>{user?.email}</div>
+              </div>
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{user?.name}</div>
-              <div className={`text-[10px] font-medium truncate ${planColors[plan] || planColors.free}`}>{user?.email}</div>
+            <div className="flex gap-1 flex-shrink-0">
+              <ThemeToggle />
+              <button
+                onClick={logout}
+                className="p-2 rounded-lg text-gray-400 dark:text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-all"
+                title="Çıkış Yap"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
-          <div className="flex gap-1 flex-shrink-0">
-            <ThemeToggle />
-            <button
-              onClick={logout}
-              className="p-2 rounded-lg text-gray-400 dark:text-gray-600 hover:text-red-400 hover:bg-red-400/10 transition-all"
-              title="Çıkış Yap"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 
 function DashboardGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -163,12 +187,29 @@ function DashboardGuard({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen text-gray-900 dark:text-white bg-gray-50 dark:bg-[#05050f]">
-      <Sidebar />
-      <main className="flex-1 ml-64 min-h-screen relative overflow-x-hidden">
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <main className="flex-1 lg:ml-64 min-h-screen relative overflow-x-hidden">
+        {/* Mobil üst bar — hamburger menü (yalnızca lg altı) */}
+        <div className="lg:hidden sticky top-0 z-[80] flex items-center gap-3 px-4 h-14 bg-white/90 dark:bg-[rgba(6,6,18,0.95)] backdrop-blur border-b border-gray-200 dark:border-white/[0.06]">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 -ml-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-all"
+            aria-label="Menüyü aç"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-gray-900 dark:text-white">ChatGenius</span>
+          </div>
+        </div>
+
         {/* Ambient background glows */}
         <div className="fixed top-0 right-0 w-[700px] h-[700px] bg-indigo-500/[0.04] rounded-full blur-[140px] pointer-events-none" />
         <div className="fixed bottom-0 left-64 w-[500px] h-[500px] bg-purple-500/[0.03] rounded-full blur-[120px] pointer-events-none" />
-        <div className="relative z-10 p-8 max-w-7xl mx-auto">
+        <div className="relative z-10 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {children}
         </div>
       </main>

@@ -31,7 +31,8 @@ if not SECRET_KEY or len(SECRET_KEY) < 32:
         "Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
     )
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60  # 1 hour (was 7 days - security risk)
+ACCESS_TOKEN_EXPIRE_MINUTES = 480  # 8 saat — bir iş günü; aktif kullanıcı sık sık login'e düşmesin
+                                    # (eski 7 gün güvenlik riskiydi, 1 saat ise UX'i bozuyordu)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")

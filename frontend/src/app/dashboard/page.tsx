@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { botsApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { Bot, FileText, MessageSquare, Package, Plus, TrendingUp, Sparkles, Activity, Clock, MoreVertical } from "lucide-react";
+import { Bot, FileText, MessageSquare, Package, Plus, TrendingUp, Sparkles, Activity, Clock } from "lucide-react";
 import Link from "next/link";
 
 interface BotType {
@@ -121,13 +121,10 @@ export default function DashboardPage() {
             <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/20">
               <MessageSquare className="w-6 h-6" />
             </div>
-            <span className="flex items-center text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-1 rounded-lg">
-              Bu Ay
-            </span>
           </div>
           <div className="relative z-10">
-            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">—</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Toplam Sohbet</p>
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{(user?.credits ?? 0).toLocaleString("tr-TR")}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Kalan Kredi</p>
           </div>
         </motion.div>
 
@@ -207,9 +204,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </div>
-                <button className="text-gray-500 hover:text-white transition-colors">
-                  <MoreVertical className="w-5 h-5" />
-                </button>
               </div>
               
               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 h-10 mb-6">
