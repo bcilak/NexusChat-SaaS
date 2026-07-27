@@ -1508,10 +1508,20 @@
       botBubble.className = "nxc-msg bot";
 
       let rawText = data.answer || "Yanıt alınamadı.";
+      // Güvenli URL: yalnızca http(s)/mailto ve gömülü görsel data URI'lerine izin ver.
+      // javascript:/data:text gibi şemaları ve tırnakla attribute kırma girişimlerini engeller (DOM XSS).
+      const nxcSafeUrl = (u) => {
+        const s = String(u || "").trim();
+        if (/^(https?:|mailto:)/i.test(s) || /^data:image\//i.test(s)) {
+          return s.replace(/'/g, "%27").replace(/"/g, "%22");
+        }
+        return "#";
+      };
+      const nxcAttr = (s) => String(s || "").replace(/'/g, "&#39;").replace(/"/g, "&quot;");
       let mdHtml = rawText
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        .replace(/!\[([^\]]*)\]\((.*?)\)/g, "<img src='$2' alt='$1' style='max-width:100%; border-radius:8px; margin-top:8px;'/>")
-        .replace(/\[([^\]]+)\]\((.*?)\)/g, "<a href='$2' target='_blank' style='color:var(--nxc-accent); font-weight:600; text-decoration:none;'>$1</a>")
+        .replace(/!\[([^\]]*)\]\((.*?)\)/g, (m, alt, url) => `<img src='${nxcSafeUrl(url)}' alt='${nxcAttr(alt)}' style='max-width:100%; border-radius:8px; margin-top:8px;'/>`)
+        .replace(/\[([^\]]+)\]\((.*?)\)/g, (m, txt, url) => `<a href='${nxcSafeUrl(url)}' target='_blank' rel='noopener noreferrer' style='color:var(--nxc-accent); font-weight:600; text-decoration:none;'>${txt}</a>`)
         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.*?)\*/g, "<em>$1</em>")
         .replace(/\n\n/g, "<br><br>")

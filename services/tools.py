@@ -399,6 +399,12 @@ class DynamicApiTool(BaseTool):
         try:
             url = self.api_url.replace("{query}", query)
 
+            # SSRF koruması: kullanıcı tanımlı URL iç/özel ağa (localhost, 10/8, 169.254 metadata vb.)
+            # yönlenemesin. Yalnızca herkese açık http(s) adreslerine izin ver.
+            from services.crawler import _is_public_http_url
+            if not _is_public_http_url(url):
+                return "Bu araç güvenlik nedeniyle bu adrese erişemiyor (yalnızca herkese açık http/https adreslerine izin verilir)."
+
             try:
                 headers = json.loads(self.headers_json or "{}")
             except Exception:

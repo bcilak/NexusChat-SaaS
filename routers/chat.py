@@ -58,11 +58,11 @@ def chat(
     try:
         result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url, platform=req.platform)
         return ChatResponse(**result)
-    except Exception as e:
+    except Exception:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc()  # Gerçek hata sunucu logunda kalır — kullanıcıya sızmaz
         return ChatResponse(
-            answer=f"Sistemde geçici bir hata oluştu: {str(e)}",
+            answer="Sistemde geçici bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
             sources=[],
             session_id=session_id
         )

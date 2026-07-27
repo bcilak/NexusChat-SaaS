@@ -4,6 +4,8 @@ import uuid
 from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 from urllib.parse import urljoin
 
+from rate_limit import rate_limit  # public endpoint — DoS koruması
+
 router = APIRouter(prefix="/api/upload", tags=["upload"])
 
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "./uploads")
@@ -17,6 +19,7 @@ API_BASE_URL = os.getenv("API_BASE_URL", "")
 
 
 @router.post("")
+@rate_limit("20/minute")
 async def upload_file(request: Request, file: UploadFile = File(...)):
     """Upload a file and return its public URL."""
     if not file.filename:

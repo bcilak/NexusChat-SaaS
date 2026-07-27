@@ -6,6 +6,11 @@ __pycache__/
 .env.production
 chatbot.db
 chatbot_corrupted.db.bak
+app.db
+*.db
+*.db.bak
+*.sqlite
+*.sqlite3
 chroma_data/
 uploads/
 node_modules/

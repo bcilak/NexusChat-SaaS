@@ -11,6 +11,7 @@ from db.database import get_db
 from models.bot import Bot
 from models.banned_ip import BannedIP
 from services.chat import rag_chat
+from rate_limit import rate_limit  # public endpoint'ler için kredi/DoS koruması
 
 router = APIRouter(prefix="/api/widget", tags=["widget"])
 
@@ -65,6 +66,7 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/{bot_id}/chat")
+@rate_limit("30/minute")
 def widget_chat(
     bot_id: int,
     req: WidgetChatRequest,
@@ -96,20 +98,22 @@ def widget_chat(
     try:
         result = rag_chat(bot, req.question, session_id, db, attachment_url=req.attachment_url, platform="web", client_ip=client_ip)
         return result
-    except Exception as e:
+    except Exception:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc()  # Gerçek hata sunucu logunda kalır — kullanıcıya sızmaz
         return {
-            "answer": f"Üzgünüm, şu anda sistemde geçici bir sorun yaşanıyor. Lütfen daha sonra tekrar deneyin. (Hata: {str(e)})",
+            "answer": "Üzgünüm, şu anda sistemde geçici bir sorun yaşanıyor. Lütfen daha sonra tekrar deneyin.",
             "sources": [],
             "session_id": session_id
         }
 
 
 @router.post("/{bot_id}/ticket")
+@rate_limit("10/minute")
 def submit_ticket(
     bot_id: int,
     req: WidgetTicketSubmitRequest,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Public endpoint."""
