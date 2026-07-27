@@ -44,6 +44,10 @@ class Bot(Base):
     sound_enabled = Column(Boolean, default=False)  # Ding on new bot message
     hero_header = Column(Boolean, default=False)  # Large brand header that shrinks when chatting starts
 
+    # Araç seçici (otomotiv parçaları) — yalnızca admin açar; varsayılan kapalı,
+    # kapalıyken bu özelliğe dair hiçbir kod yolu çalışmaz (diğer botları etkilemez).
+    vehicle_selector_enabled = Column(Boolean, default=False)
+
     # Product feed (Google Merchant / Ticimax / İdeasoft XML)
     feed_url = Column(String(1000), nullable=True)
     feed_last_sync = Column(DateTime, nullable=True)

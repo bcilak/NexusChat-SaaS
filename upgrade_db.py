@@ -50,7 +50,8 @@ def upgrade_db():
         ("feed_url", "VARCHAR(1000)"),
         ("feed_last_sync", "DATETIME"),
         ("feed_excluded_ids", "TEXT"),
-        ("is_active", "BOOLEAN DEFAULT 1")
+        ("is_active", "BOOLEAN DEFAULT 1"),
+        ("vehicle_selector_enabled", "BOOLEAN DEFAULT 0")
     ]
     
     for col_name, col_def in bot_columns:
@@ -126,6 +127,29 @@ def upgrade_db():
         print("Created products table.")
     except Exception as e:
         print(f"Error creating products table: {e}")
+
+    # Create vehicle_fitment table (araç seçici — parça/araç uyumluluğu)
+    try:
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS vehicle_fitment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bot_id INTEGER NOT NULL,
+            product_id INTEGER NOT NULL,
+            make VARCHAR(100) NOT NULL,
+            model VARCHAR(150),
+            year_from INTEGER,
+            year_to INTEGER,
+            FOREIGN KEY (bot_id) REFERENCES bots(id),
+            FOREIGN KEY (product_id) REFERENCES products(id)
+        )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_vehicle_fitment_bot_id ON vehicle_fitment (bot_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_vehicle_fitment_product_id ON vehicle_fitment (product_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_vehicle_fitment_make ON vehicle_fitment (make)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS ix_vehicle_fitment_model ON vehicle_fitment (model)")
+        print("Created vehicle_fitment table.")
+    except Exception as e:
+        print(f"Error creating vehicle_fitment table: {e}")
 
     conn.commit()
     conn.close()

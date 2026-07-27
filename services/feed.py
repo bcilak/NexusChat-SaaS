@@ -288,4 +288,14 @@ def sync_feed_from_bytes(bot: Bot, db: Session, xml_bytes: bytes, commit: bool =
     if commit:
         db.commit()
 
+    # Araç seçici açıksa: ürün başlıklarından uyumluluk (marka/model/yıl) tablosunu tazele.
+    # Yalnızca bu bayrak açık botlarda çalışır — diğer botları hiç etkilemez.
+    if getattr(bot, "vehicle_selector_enabled", False):
+        try:
+            from services.vehicle_parser import rebuild_fitments_for_bot
+            rebuild_fitments_for_bot(bot, db)
+        except Exception:
+            import traceback
+            traceback.print_exc()  # Fitment hatası feed senkronunu bozmasın
+
     return {"total": len(items), "created": created, "updated": updated, "removed": removed}

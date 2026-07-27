@@ -26,3 +26,4 @@ class Product(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     bot = relationship("Bot", back_populates="products")
+    fitments = relationship("VehicleFitment", back_populates="product", cascade="all, delete-orphan")

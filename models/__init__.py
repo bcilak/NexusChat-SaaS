@@ -10,5 +10,6 @@ from models.ticket import Ticket
 from models.contact_request import ContactRequest
 from models.banned_ip import BannedIP
 from models.product import Product
+from models.vehicle_fitment import VehicleFitment
 
-__all__ = ["User", "Bot", "Document", "ChatHistory", "CrawledPage", "BotIntegration", "BotTool", "InboxConversation", "InboxMessage", "Ticket", "ContactRequest", "BannedIP", "Product"]
+__all__ = ["User", "Bot", "Document", "ChatHistory", "CrawledPage", "BotIntegration", "BotTool", "InboxConversation", "InboxMessage", "Ticket", "ContactRequest", "BannedIP", "Product", "VehicleFitment"]

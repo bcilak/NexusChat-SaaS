@@ -15,7 +15,7 @@ else:
     print("WARNING: slowapi not installed. Rate limiting disabled. Install with: pip install slowapi")
 
 from db.database import engine, Base
-from models import User, Bot, Document, ChatHistory, CrawledPage, BotIntegration, BotTool, InboxConversation, InboxMessage, Ticket, ContactRequest, Product
+from models import User, Bot, Document, ChatHistory, CrawledPage, BotIntegration, BotTool, InboxConversation, InboxMessage, Ticket, ContactRequest, Product, VehicleFitment
 
 # Load environment variables
 load_dotenv()
