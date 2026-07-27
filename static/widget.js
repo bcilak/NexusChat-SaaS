@@ -694,6 +694,45 @@
     }
     .nxc-products::-webkit-scrollbar { height: 4px; }
     .nxc-products::-webkit-scrollbar-thumb { background: var(--nxc-scrollbar); border-radius: 10px; }
+    /* Araç seçici paneli (yalnızca vehicle_selector botlarda çizilir) */
+    .nxc-vsel {
+      align-self: stretch;
+      max-width: 100%;
+      background: var(--nxc-bubble-bg);
+      border: 1px solid var(--nxc-bubble-border);
+      border-radius: 13px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: nxc-msgIn .4s ease both;
+      flex-shrink: 0;
+    }
+    .nxc-vsel-title { font-size: 12.5px; font-weight: 600; opacity: .9; }
+    .nxc-vsel select {
+      width: 100%;
+      padding: 9px 10px;
+      font-size: 13px;
+      border-radius: 9px;
+      border: 1px solid var(--nxc-bubble-border);
+      background: var(--nxc-preview-bg);
+      color: inherit;
+      cursor: pointer;
+    }
+    .nxc-vsel select:disabled { opacity: .5; cursor: not-allowed; }
+    .nxc-vsel-btn {
+      margin-top: 2px;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: 9px;
+      background: var(--nxc-accent);
+      color: var(--nxc-text-on-accent);
+      cursor: pointer;
+    }
+    .nxc-vsel-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .nxc-vsel-note { font-size: 11.5px; opacity: .7; }
     .nxc-pcard {
       min-width: 150px;
       max-width: 150px;
@@ -1234,6 +1273,19 @@
       /* Suggestion chips — hem sohbette hem home screen'de */
       const chipsEl = document.getElementById("nxc-chips");
       const homeChipsEl = document.getElementById("nxc-home-chips");
+
+      /* Araç seçici chip'i — yalnızca admin bu botta açtıysa. Kapalıysa hiç çizilmez,
+         böylece diğer botların widget davranışı hiç değişmez. */
+      if (cfg.vehicle_selector) {
+        const vLabel = cfg.vehicle_selector_label || "🚗 Aracınıza uygun ürünü bulun";
+        const openSel = () => {
+          openVehicleSelector();
+          chipsEl.style.display = "none";
+        };
+        chipsEl.appendChild(buildChip(vLabel, openSel));
+        homeChipsEl.appendChild(buildChip(vLabel, openSel));
+      }
+
       const questions = (cfg.example_questions || "")
         .split(",").map((q) => q.trim()).filter(Boolean);
       if (questions.length) {
@@ -1247,7 +1299,8 @@
           chipsEl.appendChild(buildChip(q, ask));
           homeChipsEl.appendChild(buildChip(q, ask));
         });
-      } else {
+      } else if (!chipsEl.children.length) {
+        // Ne örnek soru ne araç chip'i varsa alanı gizle
         chipsEl.style.display = "none";
       }
 
@@ -1444,6 +1497,141 @@
       wrap.appendChild(card);
     });
     return wrap;
+  }
+
+  /* --- Araç seçici (yalnızca cfg.vehicle_selector=true botlarda kullanılır) --- */
+  async function nxcVehicleFetch(qs) {
+    const res = await fetch(`${apiBase}/api/widget/${botId}/vehicle-options${qs}`);
+    if (!res.ok) throw new Error("options " + res.status);
+    return res.json();
+  }
+
+  function nxcFillSelect(sel, options, placeholder) {
+    sel.innerHTML = "";
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = placeholder;
+    sel.appendChild(first);
+    (options || []).forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = String(o);
+      opt.textContent = String(o);
+      sel.appendChild(opt);
+    });
+  }
+
+  async function openVehicleSelector() {
+    showChatScreen();
+    collapseHero();
+    const panel = document.createElement("div");
+    panel.className = "nxc-vsel";
+
+    const title = document.createElement("div");
+    title.className = "nxc-vsel-title";
+    title.textContent = "Aracınızı seçin";
+    panel.appendChild(title);
+
+    const makeSel = document.createElement("select");
+    const modelSel = document.createElement("select");
+    const yearSel = document.createElement("select");
+    modelSel.disabled = true;
+    yearSel.disabled = true;
+    nxcFillSelect(makeSel, [], "Marka yükleniyor…");
+    nxcFillSelect(modelSel, [], "Önce marka seçin");
+    nxcFillSelect(yearSel, [], "Önce model seçin");
+    panel.appendChild(makeSel);
+    panel.appendChild(modelSel);
+    panel.appendChild(yearSel);
+
+    const note = document.createElement("div");
+    note.className = "nxc-vsel-note";
+    panel.appendChild(note);
+
+    const goBtn = document.createElement("button");
+    goBtn.className = "nxc-vsel-btn";
+    goBtn.textContent = "Ürünleri Göster";
+    goBtn.disabled = true;
+    panel.appendChild(goBtn);
+
+    msgList.appendChild(panel);
+    msgList.scrollTop = msgList.scrollHeight;
+
+    const enc = encodeURIComponent;
+
+    // Markaları yükle
+    try {
+      const data = await nxcVehicleFetch("");
+      nxcFillSelect(makeSel, data.options, "Marka seçin");
+    } catch {
+      title.textContent = "Araç bilgisi şu anda yüklenemedi.";
+      makeSel.remove(); modelSel.remove(); yearSel.remove(); goBtn.remove();
+      return;
+    }
+
+    makeSel.addEventListener("change", async () => {
+      modelSel.disabled = true; yearSel.disabled = true; goBtn.disabled = true;
+      nxcFillSelect(modelSel, [], "Önce marka seçin");
+      nxcFillSelect(yearSel, [], "Önce model seçin");
+      if (!makeSel.value) return;
+      try {
+        const data = await nxcVehicleFetch(`?make=${enc(makeSel.value)}`);
+        if (data.options && data.options.length) {
+          nxcFillSelect(modelSel, data.options, "Model seçin");
+          modelSel.disabled = false;
+        } else {
+          // Model bilgisi yoksa doğrudan gösterime izin ver
+          nxcFillSelect(modelSel, [], "Model bilgisi yok");
+          goBtn.disabled = false;
+        }
+      } catch { /* sessiz — kullanıcı tekrar deneyebilir */ }
+    });
+
+    modelSel.addEventListener("change", async () => {
+      yearSel.disabled = true; goBtn.disabled = !makeSel.value;
+      nxcFillSelect(yearSel, [], "Önce model seçin");
+      if (!modelSel.value) return;
+      try {
+        const data = await nxcVehicleFetch(`?make=${enc(makeSel.value)}&model=${enc(modelSel.value)}`);
+        if (data.options && data.options.length) {
+          nxcFillSelect(yearSel, data.options, "Yıl seçin (opsiyonel)");
+          yearSel.disabled = false;
+        }
+        goBtn.disabled = false; // model seçildiyse yıl olmadan da gösterilebilir
+      } catch { /* sessiz */ }
+    });
+
+    goBtn.addEventListener("click", async () => {
+      if (!makeSel.value) return;
+      goBtn.disabled = true;
+      goBtn.textContent = "Aranıyor…";
+      let qs = `?make=${enc(makeSel.value)}`;
+      if (modelSel.value) qs += `&model=${enc(modelSel.value)}`;
+      if (yearSel.value) qs += `&year=${enc(yearSel.value)}`;
+      try {
+        const res = await fetch(`${apiBase}/api/widget/${botId}/vehicle-products${qs}`);
+        const data = await res.json();
+        note.textContent = "";
+        if (data.products && data.products.length) {
+          const label = [makeSel.value, modelSel.value, yearSel.value].filter(Boolean).join(" ");
+          const bot = document.createElement("div");
+          bot.className = "nxc-msg bot";
+          bot.textContent = `${label} için ${data.count} ürün bulundu:`;
+          msgList.appendChild(bot);
+          msgList.appendChild(buildProductCards(data.products));
+        } else {
+          const bot = document.createElement("div");
+          bot.className = "nxc-msg bot";
+          bot.textContent = "Seçtiğiniz araca uygun ürün bulunamadı. Farklı bir model/yıl deneyebilirsiniz.";
+          msgList.appendChild(bot);
+        }
+        msgList.scrollTop = msgList.scrollHeight;
+      } catch {
+        note.textContent = "Ürünler yüklenemedi, lütfen tekrar deneyin.";
+      } finally {
+        goBtn.disabled = false;
+        goBtn.textContent = "Ürünleri Göster";
+      }
+    });
   }
 
   /* --- Send message --- */
