@@ -65,6 +65,7 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
         # Araç seçici — yalnızca admin açtıysa widget seçiciyi çizer. Kapalıysa
         # (tüm diğer botlar) bu bayrak False döner ve widget hiçbir araç kodunu çalıştırmaz.
         "vehicle_selector": bool(getattr(bot, "vehicle_selector_enabled", False)),
+        "vehicle_selector_label": getattr(bot, "vehicle_selector_label", None),
     }
 
 

@@ -43,6 +43,8 @@ interface BotType {
   whatsapp_token: string | null;
   whatsapp_verify_token: string | null;
   whatsapp_welcome_message: string | null;
+  vehicle_selector_enabled: boolean;
+  vehicle_selector_label: string | null;
   user_id: number;
 }
 
@@ -342,6 +344,7 @@ export default function BotDetailPage() {
         whatsapp_token: bot.whatsapp_token,
         whatsapp_verify_token: bot.whatsapp_verify_token,
         whatsapp_welcome_message: bot.whatsapp_welcome_message,
+        vehicle_selector_label: bot.vehicle_selector_label,
       });
       setBot(updated);
       setMessage({ text: "Ayarlar başarıyla kaydedildi.", type: "success" });
@@ -355,6 +358,24 @@ export default function BotDetailPage() {
 
   const update = (key: keyof BotType, value: any) => {
     if (bot) setBot({ ...bot, [key]: value });
+  };
+
+  // Araç seçici aç/kapat — yalnızca admin. Backend rol kontrolü + fitment inşası yapar.
+  const [vehicleToggling, setVehicleToggling] = useState(false);
+  const handleVehicleToggle = async (enabled: boolean) => {
+    if (!bot) return;
+    setVehicleToggling(true);
+    setMessage(null);
+    try {
+      const updated = await botsApi.toggleVehicleSelector(botId, enabled);
+      setBot(updated);
+      setMessage({ text: enabled ? "Araç seçici açıldı." : "Araç seçici kapatıldı.", type: "success" });
+      setTimeout(() => setMessage(null), 4000);
+    } catch (err: any) {
+      setMessage({ text: err.message || "İşlem başarısız.", type: "error" });
+    } finally {
+      setVehicleToggling(false);
+    }
   };
 
   if (loading) {
@@ -691,6 +712,69 @@ export default function BotDetailPage() {
                 💡 İpucu: Başına emoji koyabilirsiniz — örn. &quot;👕 T-Shirt, 👖 Pantolon&quot;
               </p>
             </motion.div>
+
+            {/* Araç Seçici — admin toggle + müşteri etiketi. Yalnızca admin açtıysa
+                veya kullanıcı admin ise gösterilir; kapalı normal müşteride hiç görünmez. */}
+            {(user?.role === "admin" || bot.vehicle_selector_enabled) && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12 }}
+                className="bg-white/[0.03] border border-white/10 rounded-2xl p-6"
+              >
+                <h3 className="text-base font-bold mb-2 flex items-center gap-2 text-white">
+                  🚗 Araç Seçici
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Otomotiv parçaları için müşterinin marka/model/yıl seçerek uygun ürünleri
+                  görmesini sağlar.
+                </p>
+
+                {user?.role === "admin" && (
+                  <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-white/10 bg-black/20 mb-4">
+                    <div className="text-left">
+                      <div className="text-sm font-medium text-white">Özelliği etkinleştir</div>
+                      <div className="text-[11px] text-gray-500">Yalnızca yönetici açıp kapatabilir</div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={vehicleToggling}
+                      onClick={() => handleVehicleToggle(!bot.vehicle_selector_enabled)}
+                      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${bot.vehicle_selector_enabled ? "bg-emerald-500" : "bg-white/15"}`}
+                      aria-pressed={bot.vehicle_selector_enabled}
+                      aria-label="Araç seçiciyi aç/kapat"
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${bot.vehicle_selector_enabled ? "translate-x-6" : ""}`} />
+                    </button>
+                  </div>
+                )}
+
+                {bot.vehicle_selector_enabled ? (
+                  <>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                      Buton etiketi
+                    </label>
+                    <input
+                      type="text"
+                      value={bot.vehicle_selector_label || ""}
+                      onChange={(e) => update("vehicle_selector_label", e.target.value)}
+                      placeholder="🚗 Aracınıza uygun ürünü bulun"
+                      maxLength={200}
+                      className="w-full px-4 py-3 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 transition-all text-sm"
+                    />
+                    <p className="text-[11px] text-gray-500 mt-2">
+                      Boş bırakılırsa varsayılan etiket kullanılır. Değişiklik &quot;Kaydet&quot; ile uygulanır.
+                    </p>
+                  </>
+                ) : (
+                  user?.role === "admin" && (
+                    <p className="text-[11px] text-gray-500">
+                      Açtığınızda, mevcut ürünlerden marka/model/yıl uyumluluk tablosu otomatik oluşturulur.
+                    </p>
+                  )
+                )}
+              </motion.div>
+            )}
 
             {/* Widget Davranışı sekmesine yönlendirme */}
             <motion.div

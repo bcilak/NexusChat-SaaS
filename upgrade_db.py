@@ -51,7 +51,8 @@ def upgrade_db():
         ("feed_last_sync", "DATETIME"),
         ("feed_excluded_ids", "TEXT"),
         ("is_active", "BOOLEAN DEFAULT 1"),
-        ("vehicle_selector_enabled", "BOOLEAN DEFAULT 0")
+        ("vehicle_selector_enabled", "BOOLEAN DEFAULT 0"),
+        ("vehicle_selector_label", "VARCHAR(200)")
     ]
     
     for col_name, col_def in bot_columns:

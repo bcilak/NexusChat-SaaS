@@ -104,6 +104,13 @@ export const botsApi = {
 
   delete: (id: number) =>
     apiFetch(`/api/bots/${id}`, { method: "DELETE" }),
+
+  // Araç seçici aç/kapat — yalnızca admin (backend rol kontrolü yapar)
+  toggleVehicleSelector: (id: number, enabled: boolean) =>
+    apiFetch(`/api/bots/${id}/vehicle-selector`, {
+      method: "PATCH",
+      body: JSON.stringify({ enabled }),
+    }),
 };
 
 // --- Training ---

@@ -47,6 +47,8 @@ class Bot(Base):
     # Araç seçici (otomotiv parçaları) — yalnızca admin açar; varsayılan kapalı,
     # kapalıyken bu özelliğe dair hiçbir kod yolu çalışmaz (diğer botları etkilemez).
     vehicle_selector_enabled = Column(Boolean, default=False)
+    # Müşteri chip etiketini özelleştirebilir (yetki: normal düzenleme); boşsa widget varsayılanı.
+    vehicle_selector_label = Column(String(200), nullable=True)
 
     # Product feed (Google Merchant / Ticimax / İdeasoft XML)
     feed_url = Column(String(1000), nullable=True)
