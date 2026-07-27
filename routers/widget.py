@@ -62,6 +62,9 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
         "branding_visible": bot.branding_visible if bot.branding_visible is not None else True,
         "sound_enabled": bool(bot.sound_enabled),
         "hero_header": bool(bot.hero_header),
+        # Araç seçici — yalnızca admin açtıysa widget seçiciyi çizer. Kapalıysa
+        # (tüm diğer botlar) bu bayrak False döner ve widget hiçbir araç kodunu çalıştırmaz.
+        "vehicle_selector": bool(getattr(bot, "vehicle_selector_enabled", False)),
     }
 
 
@@ -167,3 +170,115 @@ def submit_feedback(
     history.is_liked = req.liked
     db.commit()
     return {"status": "success"}
+
+
+# ---------------------------------------------------------------------------
+# Araç seçici (otomotiv parçaları) — yalnızca vehicle_selector_enabled botlar için.
+# Diğer tüm botlarda bu endpoint'ler 404 döner; widget config'te vehicle_selector=False
+# geldiği için widget bunları hiç çağırmaz. Böylece mevcut botlar hiç etkilenmez.
+# ---------------------------------------------------------------------------
+
+def _require_vehicle_bot(bot_id: int, db: Session) -> Bot:
+    bot = db.query(Bot).filter(Bot.id == bot_id).first()
+    if not bot:
+        raise HTTPException(status_code=404, detail="Bot bulunamadı")
+    if not getattr(bot, "vehicle_selector_enabled", False):
+        raise HTTPException(status_code=404, detail="Bu bot için araç seçici etkin değil")
+    return bot
+
+
+def _serialize_product(p) -> dict:
+    return {
+        "id": p.id,
+        "title": p.title,
+        "price": p.price,
+        "sale_price": p.sale_price,
+        "currency": p.currency or "TRY",
+        "stock": p.stock,
+        "image_url": p.image_url,
+        "product_url": p.product_url,
+        "brand": p.brand,
+    }
+
+
+@router.get("/{bot_id}/vehicle-options")
+@rate_limit("60/minute")
+def vehicle_options(
+    bot_id: int,
+    request: Request,
+    make: Optional[str] = None,
+    model: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """Kademeli seçici verisi: marka → model → yıl.
+
+    - make yok → mevcut markalar
+    - make var, model yok → o markanın modelleri
+    - make + model → o araç için yıl seçenekleri (aralıklar tekil yıllara açılır)
+    """
+    from models.vehicle_fitment import VehicleFitment
+
+    _require_vehicle_bot(bot_id, db)
+    q = db.query(VehicleFitment).filter(VehicleFitment.bot_id == bot_id)
+
+    if not make:
+        rows = q.with_entities(VehicleFitment.make).distinct().all()
+        makes = sorted({r[0] for r in rows if r[0]})
+        return {"level": "make", "options": makes}
+
+    q = q.filter(VehicleFitment.make == make)
+    if not model:
+        rows = q.with_entities(VehicleFitment.model).distinct().all()
+        models = sorted({r[0] for r in rows if r[0]})
+        return {"level": "model", "options": models}
+
+    q = q.filter(VehicleFitment.model == model)
+    years: set[int] = set()
+    for yf, yt in q.with_entities(VehicleFitment.year_from, VehicleFitment.year_to).all():
+        if yf is None and yt is None:
+            continue
+        lo = yf if yf is not None else yt
+        hi = yt if yt is not None else yf
+        if lo is None or hi is None:
+            continue
+        if lo > hi:
+            lo, hi = hi, lo
+        # Aşırı geniş/hatalı aralıkları makul sınırla (feed gürültüsüne karşı)
+        if hi - lo > 60:
+            continue
+        years.update(range(lo, hi + 1))
+    return {"level": "year", "options": sorted(years, reverse=True)}
+
+
+@router.get("/{bot_id}/vehicle-products")
+@rate_limit("60/minute")
+def vehicle_products(
+    bot_id: int,
+    request: Request,
+    make: str,
+    model: Optional[str] = None,
+    year: Optional[int] = None,
+    db: Session = Depends(get_db),
+):
+    """Seçilen marka/model/yıla uyan ürünleri döndürür (en fazla 60)."""
+    from models.vehicle_fitment import VehicleFitment
+    from models.product import Product
+
+    _require_vehicle_bot(bot_id, db)
+
+    q = (
+        db.query(Product)
+        .join(VehicleFitment, VehicleFitment.product_id == Product.id)
+        .filter(VehicleFitment.bot_id == bot_id, VehicleFitment.make == make)
+    )
+    if model:
+        q = q.filter(VehicleFitment.model == model)
+    if year is not None:
+        # Yıl aralığına düşen kayıtlar; sınır alanı NULL ise o yönden serbest.
+        q = q.filter(
+            (VehicleFitment.year_from == None) | (VehicleFitment.year_from <= year),  # noqa: E711
+            (VehicleFitment.year_to == None) | (VehicleFitment.year_to >= year),  # noqa: E711
+        )
+
+    products = q.distinct().limit(60).all()
+    return {"count": len(products), "products": [_serialize_product(p) for p in products]}
