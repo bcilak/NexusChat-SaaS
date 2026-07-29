@@ -171,7 +171,10 @@ def rag_chat(
         
         from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
         
-        messages_input = [SystemMessage(content=system_text.format(context=context))]
+        # DİKKAT: str.format KULLANMA — bot.prompt kullanıcı tarafından yazılır ve içinde
+        # {index=1} gibi süslü parantezler olabilir; .format bunları alan sanıp KeyError fırlatır.
+        # Yalnızca {context} yer tutucusunu güvenli şekilde değiştir.
+        messages_input = [SystemMessage(content=system_text.replace("{context}", context))]
         for h in recent_history:
             messages_input.append(HumanMessage(content=h.question))
             messages_input.append(AIMessage(content=h.answer))
