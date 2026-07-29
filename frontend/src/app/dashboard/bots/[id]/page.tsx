@@ -216,7 +216,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
 function PreviewColumn({ bot }: { bot: BotType }) {
   const accent = bot.theme_color || "#6366f1";
   return (
-    <div className="lg:sticky lg:top-8">
+    <div className="2xl:sticky 2xl:top-8 w-full max-w-md 2xl:max-w-none mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -513,7 +513,7 @@ export default function BotDetailPage() {
 
       {/* ── APPEARANCE SECTION ── */}
       {activeSection === "appearance" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-8">
           {/* Left: Settings */}
           <div className="space-y-6">
             {/* Bot Kimliği */}
@@ -810,7 +810,7 @@ export default function BotDetailPage() {
 
       {/* ── BEHAVIOR SECTION ── */}
       {activeSection === "behavior" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 2xl:grid-cols-2 gap-8">
           {/* Left: Settings */}
           <div className="space-y-6">
             {/* Widget Davranışı */}
