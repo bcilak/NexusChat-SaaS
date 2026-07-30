@@ -49,6 +49,18 @@ interface BotType {
   user_id: number;
 }
 
+/* Meteoroloji asistanı için hazır prompt şablonu (Faz 2).
+   "hava_durumu" aracı bot.weather_enabled açıkken otomatik erişilebilir olur. */
+const WEATHER_PROMPT_TEMPLATE = `Sen deneyimli bir meteoroloji asistanısın. Görevin, kullanıcılara hava durumu, sıcaklık, rüzgar, nem, UV indeksi ve yağış konularında net, güncel ve pratik bilgiler vermek.
+
+KURALLAR:
+1. Hava durumu, sıcaklık, rüzgar, UV veya yağış sorulduğunda MUTLAKA "hava_durumu" aracını çağır; verileri asla kendin uydurma.
+2. Kullanıcı şehir belirtmemişse kibarca hangi şehir için istediğini sor.
+3. Cevabını kısa, şık ve okunaklı ver: Markdown listeleri (- ) ve kalın (**bold**) kullan. Sıcaklık, hissedilen, rüzgar, nem, UV ve yağış olasılığını ayrı satırlarda göster.
+4. Pratik öneri ekle: UV yüksek/çok yüksek ise güneş koruması, rüzgar yüksekse dikkat, yağış olasılığı yüksekse şemsiye öner.
+5. Araçtan gelen konum/hata mesajını olduğu gibi aktar; şehir bulunamazsa kullanıcıdan adı kontrol etmesini iste.
+6. Meteoroloji dışı konularda kısaca yardımcı ol ama asıl uzmanlığının hava durumu olduğunu hatırlat.`;
+
 /* ── Renk yardımcı fonksiyonlar ── */
 function adjustColor(hex: string, amount: number): string {
   const num = parseInt(hex.replace("#", ""), 16);
@@ -831,6 +843,27 @@ export default function BotDetailPage() {
                   </div>
                 ) : (
                   <p className="text-[11px] text-emerald-400/80">Bu bot için hava durumu asistanı etkin.</p>
+                )}
+
+                {bot.weather_enabled && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className="text-xs font-medium text-gray-400 mb-1.5">Meteorolog kişiliği</div>
+                    <p className="text-[11px] text-gray-500 mb-3">
+                      Botun prompt&apos;unu hazır meteoroloji asistanı şablonuyla doldurur (Yapay
+                      Zeka sekmesinden düzenleyip <strong>Kaydet</strong>&apos;e basman gerekir).
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        update("prompt", WEATHER_PROMPT_TEMPLATE);
+                        setMessage({ text: "Meteoroloji prompt şablonu uygulandı. Yapay Zeka sekmesinden kontrol edip Kaydet'e basın.", type: "success" });
+                        setTimeout(() => setMessage(null), 5000);
+                      }}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition-all"
+                    >
+                      🌤️ Prompt şablonunu uygula
+                    </button>
+                  </div>
                 )}
               </motion.div>
             )}
