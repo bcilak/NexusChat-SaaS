@@ -491,6 +491,38 @@ def build_dynamic_tools_from_db(bot_id: int, db) -> list:
         ))
     return tools
 
+
+# ── Hava Durumu (meteoroloji asistanı) ────────────────────────────────────────
+# Yalnızca bot.weather_enabled=True olan botlara eklenir; diğer botlar bu aracı
+# hiç görmez (izolasyon). Open-Meteo (ücretsiz) üzerinden şehir bazlı hava verisi.
+
+class WeatherInput(BaseModel):
+    city: str = Field(description="Hava durumu istenen şehir/ilçe adı. Örn: 'Ankara', 'İzmir Konak'")
+
+
+class WeatherTool(BaseTool):
+    name: str = "hava_durumu"
+    description: str = (
+        "Bir şehir için GÜNCEL hava durumunu verir: sıcaklık, hissedilen sıcaklık, "
+        "hava durumu (açık/yağmurlu vb.), rüzgar, nem, UV indeksi ve yağış olasılığı. "
+        "Kullanıcı hava durumu, sıcaklık, rüzgar, UV veya yağış sorduğunda bu aracı çağır. "
+        "Şehir adını 'city' argümanına ver."
+    )
+    args_schema: Type[BaseModel] = WeatherInput
+
+    def _run(self, city: str) -> str:
+        from services.weather import get_weather
+        result = get_weather(city)
+        return result.get("summary") or "Hava durumu bilgisi alınamadı."
+
+
+def build_weather_tool(bot) -> list:
+    """bot.weather_enabled ise hava durumu aracını döndürür, aksi halde boş liste."""
+    if getattr(bot, "weather_enabled", False):
+        return [WeatherTool()]
+    return []
+
+
 # â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Ticket Tool â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 from langchain_core.tools import StructuredTool

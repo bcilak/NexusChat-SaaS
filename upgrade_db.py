@@ -52,7 +52,8 @@ def upgrade_db():
         ("feed_excluded_ids", "TEXT"),
         ("is_active", "BOOLEAN DEFAULT 1"),
         ("vehicle_selector_enabled", "BOOLEAN DEFAULT 0"),
-        ("vehicle_selector_label", "VARCHAR(200)")
+        ("vehicle_selector_label", "VARCHAR(200)"),
+        ("weather_enabled", "BOOLEAN DEFAULT 0")
     ]
     
     for col_name, col_def in bot_columns:

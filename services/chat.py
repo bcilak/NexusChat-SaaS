@@ -12,7 +12,7 @@ from models.bot import Bot
 from models.user import User
 from models.chat_history import ChatHistory
 from services.vectordb import VectorDBService
-from services.tools import build_ecommerce_tools, build_dynamic_tools_from_db
+from services.tools import build_ecommerce_tools, build_dynamic_tools_from_db, build_weather_tool
 from langchain_core.messages import ToolMessage
 
 load_dotenv()
@@ -240,6 +240,9 @@ def rag_chat(
 
         ecommerce_tools = build_ecommerce_tools(bot.id, db)
         active_tools.extend(ecommerce_tools)
+
+        # Hava durumu aracı — yalnızca bot.weather_enabled ise eklenir (izolasyon)
+        active_tools.extend(build_weather_tool(bot))
 
         # Dynamic API tools defined by the user in the dashboard
         dynamic_tools = build_dynamic_tools_from_db(bot.id, db)

@@ -50,6 +50,10 @@ class Bot(Base):
     # Müşteri chip etiketini özelleştirebilir (yetki: normal düzenleme); boşsa widget varsayılanı.
     vehicle_selector_label = Column(String(200), nullable=True)
 
+    # Meteoroloji asistanı — hava durumu aracı yalnızca bu bayrak açıkken devreye girer.
+    # Varsayılan kapalı; kapalıyken diğer botlar bu araçtan hiç etkilenmez (izolasyon).
+    weather_enabled = Column(Boolean, default=False)
+
     # Product feed (Google Merchant / Ticimax / İdeasoft XML)
     feed_url = Column(String(1000), nullable=True)
     feed_last_sync = Column(DateTime, nullable=True)
