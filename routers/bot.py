@@ -111,6 +111,7 @@ class BotResponse(BaseModel):
     whatsapp_welcome_message: Optional[str]
     vehicle_selector_enabled: bool = False
     vehicle_selector_label: Optional[str] = None
+    weather_enabled: bool = False
     document_count: int = 0
     created_at: str
     user_id: int
@@ -170,6 +171,7 @@ def bot_to_response(bot: Bot) -> BotResponse:
         whatsapp_welcome_message=bot.whatsapp_welcome_message,
         vehicle_selector_enabled=bool(getattr(bot, "vehicle_selector_enabled", False)),
         vehicle_selector_label=getattr(bot, "vehicle_selector_label", None),
+        weather_enabled=bool(getattr(bot, "weather_enabled", False)),
         document_count=len(bot.documents) if bot.documents else 0,
         created_at=bot.created_at.isoformat() if bot.created_at else "",
         user_id=bot.user_id,
@@ -269,6 +271,32 @@ def toggle_vehicle_selector(
             import traceback
             traceback.print_exc()
 
+    return bot_to_response(bot)
+
+
+class WeatherToggle(BaseModel):
+    enabled: bool
+
+
+@router.patch("/{bot_id}/weather-toggle", response_model=BotResponse)
+def toggle_weather(
+    bot_id: int,
+    req: WeatherToggle,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Hava durumu (meteoroloji) aracını aç/kapat — YALNIZCA admin. Kapalı kalan tüm
+    botlar bu araçtan hiç etkilenmez (izolasyon)."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Bu özellik yalnızca yönetici tarafından açılabilir.")
+
+    bot = db.query(Bot).filter(Bot.id == bot_id).first()
+    if not bot:
+        raise HTTPException(status_code=404, detail="Bot bulunamadı")
+
+    bot.weather_enabled = bool(req.enabled)
+    db.commit()
+    db.refresh(bot)
     return bot_to_response(bot)
 
 

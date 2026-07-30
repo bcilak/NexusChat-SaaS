@@ -45,6 +45,7 @@ interface BotType {
   whatsapp_welcome_message: string | null;
   vehicle_selector_enabled: boolean;
   vehicle_selector_label: string | null;
+  weather_enabled: boolean;
   user_id: number;
 }
 
@@ -375,6 +376,24 @@ export default function BotDetailPage() {
       setMessage({ text: err.message || "İşlem başarısız.", type: "error" });
     } finally {
       setVehicleToggling(false);
+    }
+  };
+
+  // Hava durumu (meteoroloji) aracı aç/kapat — yalnızca admin.
+  const [weatherToggling, setWeatherToggling] = useState(false);
+  const handleWeatherToggle = async (enabled: boolean) => {
+    if (!bot) return;
+    setWeatherToggling(true);
+    setMessage(null);
+    try {
+      const updated = await botsApi.toggleWeather(botId, enabled);
+      setBot(updated);
+      setMessage({ text: enabled ? "Hava durumu aracı açıldı." : "Hava durumu aracı kapatıldı.", type: "success" });
+      setTimeout(() => setMessage(null), 4000);
+    } catch (err: any) {
+      setMessage({ text: err.message || "İşlem başarısız.", type: "error" });
+    } finally {
+      setWeatherToggling(false);
     }
   };
 
@@ -772,6 +791,46 @@ export default function BotDetailPage() {
                       Açtığınızda, mevcut ürünlerden marka/model/yıl uyumluluk tablosu otomatik oluşturulur.
                     </p>
                   )
+                )}
+              </motion.div>
+            )}
+
+            {/* Hava Durumu (meteoroloji) — yalnızca admin aç/kapat. Kapalı normal
+                müşteride kart hiç görünmez. */}
+            {(user?.role === "admin" || bot.weather_enabled) && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.13 }}
+                className="bg-white/[0.03] border border-white/10 rounded-2xl p-6"
+              >
+                <h3 className="text-base font-bold mb-2 flex items-center gap-2 text-white">
+                  🌤️ Hava Durumu Asistanı
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Bot, kullanıcının sorduğu şehir için güncel sıcaklık, rüzgar, UV ve yağış
+                  bilgisini canlı verir (Open-Meteo).
+                </p>
+
+                {user?.role === "admin" ? (
+                  <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-white/10 bg-black/20">
+                    <div className="text-left">
+                      <div className="text-sm font-medium text-white">Özelliği etkinleştir</div>
+                      <div className="text-[11px] text-gray-500">Yalnızca yönetici açıp kapatabilir</div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={weatherToggling}
+                      onClick={() => handleWeatherToggle(!bot.weather_enabled)}
+                      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${bot.weather_enabled ? "bg-emerald-500" : "bg-white/15"}`}
+                      aria-pressed={bot.weather_enabled}
+                      aria-label="Hava durumu aracını aç/kapat"
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${bot.weather_enabled ? "translate-x-6" : ""}`} />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-emerald-400/80">Bu bot için hava durumu asistanı etkin.</p>
                 )}
               </motion.div>
             )}

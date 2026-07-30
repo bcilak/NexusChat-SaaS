@@ -111,6 +111,13 @@ export const botsApi = {
       method: "PATCH",
       body: JSON.stringify({ enabled }),
     }),
+
+  // Hava durumu (meteoroloji) aracı aç/kapat — yalnızca admin
+  toggleWeather: (id: number, enabled: boolean) =>
+    apiFetch(`/api/bots/${id}/weather-toggle`, {
+      method: "PATCH",
+      body: JSON.stringify({ enabled }),
+    }),
 };
 
 // --- Training ---
