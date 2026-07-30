@@ -134,7 +134,23 @@ def rag_chat(
     except Exception:
         matched_products = []
 
-    if not retrieved_docs and not attachment_url and not matched_products:
+    # Botun aktif aracı (hava durumu / entegrasyon / dinamik API) var mı? Varsa
+    # bilgi tabanı boş olsa bile LLM'in aracı çağırabilmesi için fallback'e DÜŞME.
+    # (Meteoroloji botu gibi dokümansız, tamamen araç tabanlı botlar için şart.)
+    has_tools = bool(getattr(bot, "weather_enabled", False))
+    if not has_tools:
+        from models.bot_integration import BotIntegration
+        from models.bot_tool import BotTool
+        has_tools = (
+            db.query(BotIntegration.id).filter(
+                BotIntegration.bot_id == bot.id, BotIntegration.is_active == True
+            ).first() is not None
+            or db.query(BotTool.id).filter(
+                BotTool.bot_id == bot.id, BotTool.is_active == True
+            ).first() is not None
+        )
+
+    if not retrieved_docs and not attachment_url and not matched_products and not has_tools:
         answer = "Bu konuda bilgim yok. Lütfen farklı bir soru sorun veya botun eğitim verilerine daha fazla bilgi ekleyin."
         sources = []
         is_fallback = True
