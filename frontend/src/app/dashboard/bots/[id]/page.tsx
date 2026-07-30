@@ -854,14 +854,28 @@ export default function BotDetailPage() {
                     </p>
                     <button
                       type="button"
-                      onClick={() => {
-                        update("prompt", WEATHER_PROMPT_TEMPLATE);
-                        setMessage({ text: "Meteoroloji prompt şablonu uygulandı. Yapay Zeka sekmesinden kontrol edip Kaydet'e basın.", type: "success" });
-                        setTimeout(() => setMessage(null), 5000);
+                      disabled={saving}
+                      onClick={async () => {
+                        if (!bot) return;
+                        // Şablonu uygula + ANINDA kaydet + prompt sekmesine geç
+                        setBot({ ...bot, prompt: WEATHER_PROMPT_TEMPLATE });
+                        setActiveSection("ai");
+                        setSaving(true);
+                        setMessage(null);
+                        try {
+                          const updated = await botsApi.update(botId, { prompt: WEATHER_PROMPT_TEMPLATE });
+                          setBot(updated);
+                          setMessage({ text: "Meteoroloji prompt şablonu uygulandı ve kaydedildi.", type: "success" });
+                        } catch (err: any) {
+                          setMessage({ text: err?.message || "Şablon kaydedilemedi.", type: "error" });
+                        } finally {
+                          setSaving(false);
+                          setTimeout(() => setMessage(null), 5000);
+                        }
                       }}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition-all"
+                      className="px-4 py-2 rounded-xl text-xs font-semibold border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 transition-all disabled:opacity-50"
                     >
-                      🌤️ Prompt şablonunu uygula
+                      🌤️ {saving ? "Uygulanıyor…" : "Prompt şablonunu uygula ve kaydet"}
                     </button>
                   </div>
                 )}
