@@ -30,6 +30,12 @@ class BanIPRequest(BaseModel):
     ip_address: str
     reason: Optional[str] = "Bot/Spam Saldırısı"
 
+class SetPasswordRequest(BaseModel):
+    new_password: str
+
+class TransferBotRequest(BaseModel):
+    new_owner_id: int
+
 @router.get("/stats")
 def get_platform_stats(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     total_users = db.query(User).count()
@@ -124,6 +130,23 @@ def update_user(user_id: int, payload: dict, db: Session = Depends(get_db), admi
     return {"message": "Kullanıcı güncellendi"}
 
 
+@router.put("/users/{user_id}/password")
+def set_user_password(user_id: int, req: SetPasswordRequest, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    """Admin bir kullanıcının şifresini sıfırlar (yeni şifre belirler).
+
+    Not: Mevcut şifre GÖSTERİLEMEZ — şifreler bcrypt ile tek yönlü hash'lenir,
+    geri çözülemez. Şifresini unutan müşteriye buradan yeni bir şifre verilir.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Kullanıcı bulunamadı")
+    if len(req.new_password or "") < 6:
+        raise HTTPException(status_code=400, detail="Şifre en az 6 karakter olmalı")
+    user.hashed_password = hash_password(req.new_password)
+    db.commit()
+    return {"message": "Kullanıcı şifresi güncellendi"}
+
+
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     user = db.query(User).filter(User.id == user_id).first()
@@ -150,16 +173,34 @@ def update_user_plan(user_id: int, payload: dict, db: Session = Depends(get_db),
 @router.get("/bots")
 def list_all_bots(db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
     bots = db.query(Bot).all()
-    return [
-        {
+    owners = {u.id: u for u in db.query(User).all()}
+    result = []
+    for b in bots:
+        owner = owners.get(b.user_id)
+        result.append({
             "id": b.id,
             "name": b.name,
             "model": b.model,
-            "owner_id": b.owner_id,
-            "created_at": b.created_at
-        }
-        for b in bots
-    ]
+            "owner_id": b.user_id,
+            "owner_name": owner.name if owner else None,
+            "owner_email": owner.email if owner else None,
+            "created_at": b.created_at,
+        })
+    return result
+
+@router.put("/bots/{bot_id}/transfer")
+def transfer_bot(bot_id: int, req: TransferBotRequest, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):
+    """Bir botun sahipliğini başka bir kullanıcıya taşır (Bot.user_id değişir)."""
+    bot = db.query(Bot).filter(Bot.id == bot_id).first()
+    if not bot:
+        raise HTTPException(status_code=404, detail="Bot bulunamadı")
+    new_owner = db.query(User).filter(User.id == req.new_owner_id).first()
+    if not new_owner:
+        raise HTTPException(status_code=404, detail="Hedef kullanıcı bulunamadı")
+    bot.user_id = new_owner.id
+    db.commit()
+    return {"message": f"Bot '{new_owner.name}' hesabına taşındı", "new_owner_id": new_owner.id}
+
 
 @router.delete("/bots/{bot_id}")
 def delete_bot_admin(bot_id: int, db: Session = Depends(get_db), admin: User = Depends(get_current_admin)):

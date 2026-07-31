@@ -47,6 +47,11 @@ export default function UsersAdminPage() {
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [editLoading, setEditLoading] = useState(false);
 
+  // Şifre sıfırlama (edit modal içinde)
+  const [newPassword, setNewPassword] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwMsg, setPwMsg] = useState("");
+
   // Delete confirm
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -83,7 +88,31 @@ export default function UsersAdminPage() {
   };
 
   // ---------- Edit ----------
-  const openEdit = (user: UserData) => { setEditingUser({ ...user }); setIsEditOpen(true); };
+  const openEdit = (user: UserData) => {
+    setEditingUser({ ...user });
+    setNewPassword("");
+    setPwMsg("");
+    setIsEditOpen(true);
+  };
+
+  const handleResetPassword = async () => {
+    if (!editingUser) return;
+    if (newPassword.trim().length < 6) {
+      setPwMsg("Şifre en az 6 karakter olmalı.");
+      return;
+    }
+    setPwSaving(true);
+    setPwMsg("");
+    try {
+      await adminApi.setUserPassword(editingUser.id, newPassword.trim());
+      setPwMsg("✅ Şifre güncellendi. Yeni şifreyi müşteriye iletin.");
+      setNewPassword("");
+    } catch (err) {
+      setPwMsg((err as Error).message || "Şifre güncellenemedi.");
+    } finally {
+      setPwSaving(false);
+    }
+  };
 
   const handleSaveEdit = async () => {
     if (!editingUser) return;
@@ -435,6 +464,35 @@ export default function UsersAdminPage() {
                   <input type="number" value={editingUser.credits}
                     onChange={e => setEditingUser({ ...editingUser, credits: parseInt(e.target.value) || 0 })}
                     className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500/60 transition-colors" />
+                </div>
+
+                {/* Şifre Sıfırlama */}
+                <div className="bg-amber-500/[0.06] rounded-xl border border-amber-500/20 p-4 space-y-2">
+                  <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Şifre Sıfırla</p>
+                  <p className="text-[11px] text-gray-500 leading-relaxed">
+                    Mevcut şifre gösterilemez (güvenlik gereği tek yönlü şifrelenir). Buradan
+                    <span className="font-medium"> yeni bir şifre</span> belirleyip müşteriye iletebilirsiniz.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Yeni şifre (min 6 karakter)"
+                      className="flex-1 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-500/60 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleResetPassword}
+                      disabled={pwSaving}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-medium rounded-xl transition-colors whitespace-nowrap"
+                    >
+                      {pwSaving ? "..." : "Değiştir"}
+                    </button>
+                  </div>
+                  {pwMsg && (
+                    <p className={`text-xs ${pwMsg.startsWith("✅") ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>{pwMsg}</p>
+                  )}
                 </div>
 
                 <div className="bg-gray-50 dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-white/10 p-4 space-y-3">

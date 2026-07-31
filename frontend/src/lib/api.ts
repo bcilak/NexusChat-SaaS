@@ -268,7 +268,19 @@ export const adminApi = {
   deleteUser: (userId: number) =>
     apiFetch(`/api/admin/users/${userId}`, { method: "DELETE" }),
 
+  setUserPassword: (userId: number, newPassword: string) =>
+    apiFetch(`/api/admin/users/${userId}/password`, {
+      method: "PUT",
+      body: JSON.stringify({ new_password: newPassword }),
+    }),
+
   getBots: () => apiFetch(`/api/admin/bots`),
+
+  transferBot: (botId: number, newOwnerId: number) =>
+    apiFetch(`/api/admin/bots/${botId}/transfer`, {
+      method: "PUT",
+      body: JSON.stringify({ new_owner_id: newOwnerId }),
+    }),
 
   deleteBot: (botId: number) =>
     apiFetch(`/api/admin/bots/${botId}`, { method: "DELETE" }),
