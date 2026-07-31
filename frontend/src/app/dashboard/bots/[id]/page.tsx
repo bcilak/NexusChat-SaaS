@@ -394,6 +394,8 @@ export default function BotDetailPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [activeSection, setActiveSection] = useState<"appearance" | "behavior" | "ai" | "whatsapp">("appearance");
+  // Görünüm sekmesi içi alt sekmeler — dikey yığılmayı kırmak için
+  const [appTab, setAppTab] = useState<"basic" | "features" | "advanced">("basic");
 
   // 🎬 Videolu cevap kuralları
   type VideoRule = { id: number; bot_id: number; title: string | null; keywords: string; video_url: string; is_active: boolean };
@@ -711,6 +713,25 @@ export default function BotDetailPage() {
         <div className="grid grid-cols-1 2xl:grid-cols-2 gap-8">
           {/* Left: Settings */}
           <div className="space-y-6">
+            {/* Görünüm alt sekmeleri */}
+            <div className="flex gap-1 p-1 rounded-2xl bg-gray-100 dark:bg-white/[0.04] border border-gray-200 dark:border-white/10">
+              {([
+                { key: "basic", label: "Temel & Tema", icon: "🎨" },
+                { key: "features", label: "Özellikler", icon: "🧩" },
+                { key: "advanced", label: "Gelişmiş", icon: "⚙️" },
+              ] as const).map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => setAppTab(t.key)}
+                  className={`flex-1 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${appTab === t.key ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/25" : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"}`}
+                >
+                  <span className="mr-1">{t.icon}</span>{t.label}
+                </button>
+              ))}
+            </div>
+
+            {appTab === "basic" && (<>
             {/* Bot Kimliği */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -935,6 +956,9 @@ export default function BotDetailPage() {
               </p>
             </motion.div>
 
+            </>)}
+
+            {appTab === "features" && (<>
             {/* Araç Seçici — admin toggle + müşteri etiketi. Yalnızca admin açtıysa
                 veya kullanıcı admin ise gösterilir; kapalı normal müşteride hiç görünmez. */}
             {(user?.role === "admin" || bot.vehicle_selector_enabled) && (
@@ -1178,7 +1202,9 @@ export default function BotDetailPage() {
             </motion.div>
 
             </div>{/* /grid: küçük özellik anahtarları */}
+            </>)}
 
+            {appTab === "advanced" && (<>
             {/* 🎨 Marka Kimliği (Paket A) — buton, köşe, font, ikon */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -1405,7 +1431,9 @@ export default function BotDetailPage() {
               </div>
             </motion.div>
 
-            {/* Widget Davranışı sekmesine yönlendirme */}
+            </>)}
+
+            {/* Widget Davranışı sekmesine yönlendirme (her alt sekmede görünür) */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
