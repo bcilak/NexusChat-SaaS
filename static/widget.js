@@ -1304,6 +1304,14 @@
         chipsEl.style.display = "none";
       }
 
+      /* Görsel yükleme kapalıysa 📎 butonunu ve dosya girişini gizle */
+      if (cfg.image_upload_enabled === false) {
+        const _attach = container.querySelector(".nxc-attach");
+        const _file = document.getElementById("nxc-file");
+        if (_attach) _attach.style.display = "none";
+        if (_file) _file.style.display = "none";
+      }
+
       /* Auto-open */
       state.autoOpenDelay = cfg.auto_open_delay || 0;
       if (state.autoOpenDelay > 0 && !sessionStorage.getItem("nxc_autoopened_" + botId)) {
@@ -1366,11 +1374,7 @@
   const preview = document.getElementById("nxc-preview");
   const attachBtn = container.querySelector(".nxc-attach");
 
-  // Müşteri görsel yüklemeyi kapattıysa 📎 butonunu ve dosya girişini tamamen gizle.
-  if (cfg.image_upload_enabled === false) {
-    if (attachBtn) attachBtn.style.display = "none";
-    if (fileInput) fileInput.style.display = "none";
-  }
+  // Not: 📎 butonunu gizleme mantığı config /then callback'inde (cfg orada tanımlı).
 
   fileInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
