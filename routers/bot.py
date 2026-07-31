@@ -77,6 +77,8 @@ class BotUpdate(BaseModel):
     # Araç seçici etiketi müşteri tarafından düzenlenebilir.
     # (vehicle_selector_enabled BİLEREK burada YOK — yalnızca admin ayrı endpoint'ten açar.)
     vehicle_selector_label: Optional[str] = None
+    # Görsel yükleme müşteri tercihidir; kendi botunda açıp kapatabilir.
+    image_upload_enabled: Optional[bool] = None
 
 
 class BotResponse(BaseModel):
@@ -112,6 +114,7 @@ class BotResponse(BaseModel):
     vehicle_selector_enabled: bool = False
     vehicle_selector_label: Optional[str] = None
     weather_enabled: bool = False
+    image_upload_enabled: bool = True
     document_count: int = 0
     created_at: str
     user_id: int
@@ -172,6 +175,7 @@ def bot_to_response(bot: Bot) -> BotResponse:
         vehicle_selector_enabled=bool(getattr(bot, "vehicle_selector_enabled", False)),
         vehicle_selector_label=getattr(bot, "vehicle_selector_label", None),
         weather_enabled=bool(getattr(bot, "weather_enabled", False)),
+        image_upload_enabled=bool(getattr(bot, "image_upload_enabled", True)),
         document_count=len(bot.documents) if bot.documents else 0,
         created_at=bot.created_at.isoformat() if bot.created_at else "",
         user_id=bot.user_id,

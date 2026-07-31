@@ -54,6 +54,10 @@ class Bot(Base):
     # Varsayılan kapalı; kapalıyken diğer botlar bu araçtan hiç etkilenmez (izolasyon).
     weather_enabled = Column(Boolean, default=False)
 
+    # Kullanıcının bota görsel/dosya yükleyebilmesi (widget 📎 butonu).
+    # Varsayılan AÇIK; müşteri istemezse kapatır → widget'ta buton hiç görünmez.
+    image_upload_enabled = Column(Boolean, default=True)
+
     # Product feed (Google Merchant / Ticimax / İdeasoft XML)
     feed_url = Column(String(1000), nullable=True)
     feed_last_sync = Column(DateTime, nullable=True)

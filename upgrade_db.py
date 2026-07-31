@@ -53,7 +53,8 @@ def upgrade_db():
         ("is_active", "BOOLEAN DEFAULT 1"),
         ("vehicle_selector_enabled", "BOOLEAN DEFAULT 0"),
         ("vehicle_selector_label", "VARCHAR(200)"),
-        ("weather_enabled", "BOOLEAN DEFAULT 0")
+        ("weather_enabled", "BOOLEAN DEFAULT 0"),
+        ("image_upload_enabled", "BOOLEAN DEFAULT 1")
     ]
     
     for col_name, col_def in bot_columns:

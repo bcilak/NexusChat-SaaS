@@ -1366,6 +1366,12 @@
   const preview = document.getElementById("nxc-preview");
   const attachBtn = container.querySelector(".nxc-attach");
 
+  // Müşteri görsel yüklemeyi kapattıysa 📎 butonunu ve dosya girişini tamamen gizle.
+  if (cfg.image_upload_enabled === false) {
+    if (attachBtn) attachBtn.style.display = "none";
+    if (fileInput) fileInput.style.display = "none";
+  }
+
   fileInput.addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file) return;

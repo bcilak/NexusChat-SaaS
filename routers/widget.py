@@ -66,6 +66,8 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
         # (tüm diğer botlar) bu bayrak False döner ve widget hiçbir araç kodunu çalıştırmaz.
         "vehicle_selector": bool(getattr(bot, "vehicle_selector_enabled", False)),
         "vehicle_selector_label": getattr(bot, "vehicle_selector_label", None),
+        # Görsel yükleme — varsayılan açık; müşteri kapatırsa widget 📎 butonunu çizmez.
+        "image_upload_enabled": bool(getattr(bot, "image_upload_enabled", True)),
     }
 
 

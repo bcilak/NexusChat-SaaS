@@ -46,6 +46,7 @@ interface BotType {
   vehicle_selector_enabled: boolean;
   vehicle_selector_label: string | null;
   weather_enabled: boolean;
+  image_upload_enabled: boolean;
   user_id: number;
 }
 
@@ -369,6 +370,7 @@ export default function BotDetailPage() {
         whatsapp_verify_token: bot.whatsapp_verify_token,
         whatsapp_welcome_message: bot.whatsapp_welcome_message,
         vehicle_selector_label: bot.vehicle_selector_label,
+        image_upload_enabled: bot.image_upload_enabled,
       });
       setBot(updated);
       setMessage({ text: "Ayarlar başarıyla kaydedildi.", type: "success" });
@@ -892,6 +894,57 @@ export default function BotDetailPage() {
                 )}
               </motion.div>
             )}
+
+            {/* 📎 Görsel yükleme — müşteri kendi tercihine göre açar/kapatır */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12 }}
+              className="p-5 rounded-2xl border border-white/10 bg-white/[0.02]"
+            >
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-1">
+                📎 Görsel Yükleme
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Kullanıcıların sohbette bota resim/dosya gönderebilmesi. Kapatırsan
+                widget&apos;taki ataç (📎) butonu hiç görünmez.
+              </p>
+              <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-white/10 bg-black/20">
+                <div className="text-left">
+                  <div className="text-sm font-medium text-white">Görsel göndermeye izin ver</div>
+                  <div className="text-[11px] text-gray-500">
+                    {bot.image_upload_enabled ? "Şu an açık — kullanıcılar resim atabilir" : "Şu an kapalı — resim atılamaz"}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={async () => {
+                    if (!bot) return;
+                    const next = !bot.image_upload_enabled;
+                    setBot({ ...bot, image_upload_enabled: next });
+                    setSaving(true);
+                    setMessage(null);
+                    try {
+                      const updated = await botsApi.update(botId, { image_upload_enabled: next });
+                      setBot(updated);
+                      setMessage({ text: next ? "Görsel yükleme açıldı." : "Görsel yükleme kapatıldı.", type: "success" });
+                    } catch (err: any) {
+                      setBot({ ...bot, image_upload_enabled: !next }); // geri al
+                      setMessage({ text: err?.message || "İşlem başarısız.", type: "error" });
+                    } finally {
+                      setSaving(false);
+                      setTimeout(() => setMessage(null), 4000);
+                    }
+                  }}
+                  className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${bot.image_upload_enabled ? "bg-emerald-500" : "bg-white/15"}`}
+                  aria-pressed={bot.image_upload_enabled}
+                  aria-label="Görsel yüklemeyi aç/kapat"
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${bot.image_upload_enabled ? "translate-x-6" : ""}`} />
+                </button>
+              </div>
+            </motion.div>
 
             {/* Widget Davranışı sekmesine yönlendirme */}
             <motion.div
