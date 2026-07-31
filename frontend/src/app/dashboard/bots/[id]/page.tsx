@@ -99,11 +99,55 @@ function rgba(hex: string, alpha: number) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+/* ── Görünüm yardımcıları (önizleme + widget aynı mantık) ── */
+const FONT_STACKS: Record<string, string> = {
+  system: "'Inter', system-ui, sans-serif",
+  inter: "'Inter', system-ui, sans-serif",
+  poppins: "'Poppins', system-ui, sans-serif",
+  nunito: "'Nunito', system-ui, sans-serif",
+  roboto: "'Roboto', system-ui, sans-serif",
+};
+const GOOGLE_FONTS: Record<string, string> = {
+  poppins: "Poppins:wght@400;500;600;700",
+  nunito: "Nunito:wght@400;500;600;700",
+  roboto: "Roboto:wght@400;500;700",
+};
+function radiusFor(corner: string | undefined) {
+  return corner === "sharp" ? 8 : corner === "pill" ? 24 : 18; // soft varsayılan
+}
+function isHex(v?: string | null) {
+  return !!v && /^#?[0-9a-fA-F]{3,8}$/.test(v);
+}
+function secondaryOf(bot: BotType) {
+  const accent = bot.theme_color || "#6366f1";
+  if (isHex(bot.secondary_color)) {
+    const s = bot.secondary_color as string;
+    return s.startsWith("#") ? s : "#" + s;
+  }
+  return adjustColor(accent, -30);
+}
+
 /* ── Canlı Widget Önizlemesi ── */
 function WidgetPreview({ bot }: { bot: BotType }) {
   const accent = bot.theme_color || "#6366f1";
-  const accentEnd = adjustColor(accent, -30);
+  const accentEnd = secondaryOf(bot);
   const textOnAccent = bot.text_color || "#ffffff";
+  const fontStack = FONT_STACKS[bot.font_family || "system"] || FONT_STACKS.system;
+  const rad = radiusFor(bot.corner_radius);
+
+  // Önizleme için Google fontunu (Poppins/Nunito/Roboto) yükle
+  useEffect(() => {
+    const key = bot.font_family || "system";
+    const spec = GOOGLE_FONTS[key];
+    if (!spec) return;
+    const id = "nxc-preview-font-" + key;
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=" + spec + "&display=swap";
+    document.head.appendChild(link);
+  }, [bot.font_family]);
   const [previewMsg, setPreviewMsg] = useState("");
   const [heroCollapsed, setHeroCollapsed] = useState(false);
   const [chatMsgs, setChatMsgs] = useState([
@@ -142,7 +186,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
   const bodyText = isLight ? "#1e293b" : "#e2e8f0";
 
   return (
-    <div className="flex flex-col rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, background: surfaceBg }}>
+    <div className="flex flex-col overflow-hidden border border-white/10 shadow-2xl" style={{ fontFamily: fontStack, fontSize: 14, background: surfaceBg, borderRadius: rad + 4 }}>
       {/* Header (hero modunda genişler, sohbet başlayınca küçülür) */}
       <div
         className="flex items-center justify-between relative overflow-hidden transition-all duration-500"
@@ -186,10 +230,10 @@ function WidgetPreview({ bot }: { bot: BotType }) {
       <div className="flex-1 p-3 flex flex-col gap-2.5 overflow-y-auto" style={{ minHeight: 220, maxHeight: 220 }}>
         <div className="text-center text-[10px] text-white/30 font-medium">Bugün</div>
         {chatMsgs.map((msg, i) => (
-          <div key={i} className={`max-w-[85%] px-3 py-2 rounded-2xl text-[12px] leading-relaxed ${msg.role === "bot" ? "self-start" : "self-end"}`}
+          <div key={i} className={`max-w-[85%] px-3 py-2 text-[12px] leading-relaxed ${msg.role === "bot" ? "self-start" : "self-end"}`}
             style={msg.role === "bot"
-              ? { background: bubbleBg, border: `1px solid ${bubbleBorder}`, color: bodyText, borderBottomLeftRadius: 4 }
-              : { background: `linear-gradient(135deg, ${accent}, ${accentEnd})`, color: textOnAccent, borderBottomRightRadius: 4, boxShadow: rgba(accent, 0.3) + " 0 4px 14px" }
+              ? { background: bubbleBg, border: `1px solid ${bubbleBorder}`, color: bodyText, borderRadius: rad, borderBottomLeftRadius: 4 }
+              : { background: `linear-gradient(135deg, ${accent}, ${accentEnd})`, color: textOnAccent, borderRadius: rad, borderBottomRightRadius: 4, boxShadow: rgba(accent, 0.3) + " 0 4px 14px" }
             }
           >
             {msg.text}
@@ -245,8 +289,15 @@ function WidgetPreview({ bot }: { bot: BotType }) {
 }
 
 /* ── Canlı önizleme sütunu (Görünüm ve Davranış sekmelerinde ortak) ── */
+const LAUNCHER_EMOJI: Record<string, string> = { chat: "💬", bot: "🤖", help: "❓", sparkle: "✨" };
 function PreviewColumn({ bot }: { bot: BotType }) {
   const accent = bot.theme_color || "#6366f1";
+  const accentEnd = secondaryOf(bot);
+  const btnPx = bot.button_size === "small" ? 48 : bot.button_size === "large" ? 68 : 56;
+  const btnRadius = bot.button_shape === "rounded" ? 18 : "50%";
+  const iconVal = (bot.launcher_icon || "").trim();
+  const isUrl = /^https?:\/\//i.test(iconVal);
+  const presetEmoji = LAUNCHER_EMOJI[iconVal];
   return (
     <div className="2xl:sticky 2xl:top-8 w-full max-w-md 2xl:max-w-none mx-auto">
       <motion.div
@@ -265,13 +316,18 @@ function PreviewColumn({ bot }: { bot: BotType }) {
           <p className="text-xs text-gray-500 mb-3 uppercase tracking-wider font-semibold">Sohbet Butonu</p>
           <div className="flex items-center gap-4">
             <div
-              className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl"
+              className="flex items-center justify-center shadow-2xl overflow-hidden"
               style={{
-                background: `linear-gradient(135deg, ${accent}, ${adjustColor(accent, -30)})`,
+                width: btnPx, height: btnPx, borderRadius: btnRadius,
+                background: `linear-gradient(135deg, ${accent}, ${accentEnd})`,
                 boxShadow: `0 8px 30px ${rgba(accent, 0.5)}`,
               }}
             >
-              <MessageSquare size={24} color={bot.text_color || "#ffffff"} />
+              {isUrl
+                ? <img src={iconVal} alt="ikon" className="w-full h-full object-cover" />
+                : presetEmoji || (iconVal && !isUrl)
+                  ? <span style={{ fontSize: btnPx * 0.42, lineHeight: 1 }}>{presetEmoji || iconVal}</span>
+                  : <MessageSquare size={Math.round(btnPx * 0.42)} color={bot.text_color || "#ffffff"} />}
             </div>
             <div>
               <p className="text-sm text-white font-medium">Widget Butonu</p>
@@ -312,6 +368,20 @@ const COLOR_PRESETS = [
   { name: "Lacivert", color: "#3b82f6" },
   { name: "Gece", color: "#1e293b" },
   { name: "Siyah", color: "#111111" },
+];
+
+/* ── Hazır temalar (Paket B) — tek tıkla renk + font + köşe kombinasyonu ── */
+const THEME_PRESETS: {
+  name: string; emoji: string;
+  theme_color: string; secondary_color: string;
+  corner_radius: string; font_family: string; button_shape: string;
+}[] = [
+  { name: "Modern Mor", emoji: "🟣", theme_color: "#6366f1", secondary_color: "#8b5cf6", corner_radius: "soft", font_family: "system", button_shape: "round" },
+  { name: "Okyanus", emoji: "🌊", theme_color: "#0ea5e9", secondary_color: "#2563eb", corner_radius: "soft", font_family: "nunito", button_shape: "round" },
+  { name: "Zümrüt", emoji: "🟢", theme_color: "#10b981", secondary_color: "#059669", corner_radius: "pill", font_family: "poppins", button_shape: "round" },
+  { name: "Gün Batımı", emoji: "🌅", theme_color: "#f97316", secondary_color: "#ec4899", corner_radius: "pill", font_family: "poppins", button_shape: "round" },
+  { name: "Kurumsal", emoji: "🏢", theme_color: "#1e293b", secondary_color: "#334155", corner_radius: "sharp", font_family: "roboto", button_shape: "rounded" },
+  { name: "Şeker Pembe", emoji: "🍬", theme_color: "#ec4899", secondary_color: "#a855f7", corner_radius: "pill", font_family: "nunito", button_shape: "round" },
 ];
 
 export default function BotDetailPage() {
@@ -734,9 +804,36 @@ export default function BotDetailPage() {
                 <Palette className="w-4 h-4 text-purple-400" /> Renk Teması
               </h3>
 
+              {/* Hazır Temalar (Paket B) — tek tıkla tam kombinasyon */}
+              <div className="mb-5">
+                <label className="block text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Hazır Temalar</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {THEME_PRESETS.map((t) => {
+                    const active = bot.theme_color === t.theme_color && bot.secondary_color === t.secondary_color;
+                    return (
+                      <button
+                        key={t.name}
+                        type="button"
+                        onClick={() => setBot({ ...bot, theme_color: t.theme_color, secondary_color: t.secondary_color, corner_radius: t.corner_radius, font_family: t.font_family, button_shape: t.button_shape })}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-left transition-all ${active ? "border-indigo-400 ring-1 ring-indigo-400/40" : "border-white/10 hover:border-white/25"}`}
+                        style={{ background: `linear-gradient(135deg, ${rgba(t.theme_color, 0.18)}, ${rgba(t.secondary_color, 0.12)})` }}
+                        title={t.name}
+                      >
+                        <span
+                          className="w-6 h-6 rounded-full flex-shrink-0 border border-white/20"
+                          style={{ background: `linear-gradient(135deg, ${t.theme_color}, ${t.secondary_color})` }}
+                        />
+                        <span className="text-xs font-medium text-white truncate">{t.emoji} {t.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-gray-500 mt-2">Renk, ikincil renk, köşe stili ve yazı tipini birlikte ayarlar. Sonra alttan ince ayar yapabilirsin.</p>
+              </div>
+
               {/* Preset Renkler */}
               <div className="mb-5">
-                <label className="block text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Hazır Renkler</label>
+                <label className="block text-xs font-semibold text-gray-400 mb-3 uppercase tracking-wider">Ana Renk (İnce Ayar)</label>
                 <div className="grid grid-cols-6 gap-2">
                   {COLOR_PRESETS.map((preset) => (
                     <button
@@ -976,6 +1073,8 @@ export default function BotDetailPage() {
               </motion.div>
             )}
 
+            {/* Küçük özellik anahtarları yan yana (alt alta yığılmasın) */}
+            <div className="grid sm:grid-cols-2 gap-6">
             {/* 📎 Görsel yükleme — müşteri kendi tercihine göre açar/kapatır */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -1077,6 +1176,8 @@ export default function BotDetailPage() {
                 </button>
               </div>
             </motion.div>
+
+            </div>{/* /grid: küçük özellik anahtarları */}
 
             {/* 🎨 Marka Kimliği (Paket A) — buton, köşe, font, ikon */}
             <motion.div
