@@ -127,12 +127,14 @@ def rag_chat(
     retrieved_docs = vectordb.hybrid_search(str(bot.id), question, k=4)
 
     # 1b. Ürün feed'inden eşleşen ürünler (widget'ta kart olarak gösterilir)
+    # Bot bazlı kapatılabilir; kapalıysa ürün eşleştirmeyi hiç çalıştırma.
     matched_products = []
-    try:
-        from services.feed import search_products
-        matched_products = search_products(bot.id, question, db, k=4)
-    except Exception:
-        matched_products = []
+    if getattr(bot, "product_cards_enabled", True):
+        try:
+            from services.feed import search_products
+            matched_products = search_products(bot.id, question, db, k=4)
+        except Exception:
+            matched_products = []
 
     # Botun aktif aracı (hava durumu / entegrasyon / dinamik API) var mı? Varsa
     # bilgi tabanı boş olsa bile LLM'in aracı çağırabilmesi için fallback'e DÜŞME.

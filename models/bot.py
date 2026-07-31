@@ -58,6 +58,20 @@ class Bot(Base):
     # Varsayılan AÇIK; müşteri istemezse kapatır → widget'ta buton hiç görünmez.
     image_upload_enabled = Column(Boolean, default=True)
 
+    # Ürün öneri kartları — feed'li botlarda ürün kartı gösterimi. Varsayılan AÇIK;
+    # kapatılırsa hiçbir soruda ürün kartı çıkmaz (izolasyon, mevcut botları etkilemez).
+    product_cards_enabled = Column(Boolean, default=True)
+
+    # --- Paket A: Marka kimliği / görünüm özelleştirme ---
+    # Launcher (baloncuk) ikonu: emoji ("💬"), hazır anahtar ("chat"/"bot"/"help"/"sparkle")
+    # veya yüklenmiş bir görsel URL'si. Boşsa widget varsayılan konuşma ikonunu çizer.
+    launcher_icon = Column(String(500), nullable=True)
+    button_size = Column(String(10), default="medium")   # small | medium | large
+    button_shape = Column(String(10), default="round")   # round | rounded (yumuşak kare)
+    corner_radius = Column(String(10), default="soft")   # sharp | soft | pill
+    secondary_color = Column(String(20), nullable=True)  # vurgu rengi; boşsa theme_color kullanılır
+    font_family = Column(String(50), default="system")   # system | inter | poppins | nunito | roboto
+
     # Product feed (Google Merchant / Ticimax / İdeasoft XML)
     feed_url = Column(String(1000), nullable=True)
     feed_last_sync = Column(DateTime, nullable=True)

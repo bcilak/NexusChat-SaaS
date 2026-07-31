@@ -1099,10 +1099,12 @@
   document.getElementById("nxc-home-start").addEventListener("click", showChatScreen);
 
   /* --- Tema renklerini dinamik olarak uygula --- */
-  function applyThemeColor(hexColor) {
+  function applyThemeColor(hexColor, secondaryColor) {
     const accent = hexColor;
-    // Gradient bitiş rengi: birincil renkten biraz farklılaştır
-    const accentEnd = _adjustColor(accent, -30); // biraz koyulaştır
+    // Gradient bitiş rengi: ikincil renk verildiyse onu kullan, yoksa birincilden türet
+    const accentEnd = (secondaryColor && /^#?[0-9a-fA-F]{3,8}$/.test(secondaryColor))
+      ? (secondaryColor.startsWith("#") ? secondaryColor : "#" + secondaryColor)
+      : _adjustColor(accent, -30); // biraz koyulaştır
     const { r, g, b } = _hexToRgb(accent);
 
     // CSS değişkenlerini container'a set et
@@ -1121,6 +1123,77 @@
     toggle.onmouseleave = () => {
       toggle.style.boxShadow = `0 8px 30px ${_rgba(accent, 0.45)}, 0 0 0 0 ${_rgba(accent, 0.3)}`;
     };
+  }
+
+  /* --- Paket A: Görünüm özelleştirme (buton, köşe, font, ikon) --- */
+  const _PRESET_ICONS = {
+    chat: '<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>',
+    bot: '<svg viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2v1h4a2 2 0 0 1 2 2v3h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2H3a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1V7a2 2 0 0 1 2-2h4V4a2 2 0 0 1 2-2zM9 12a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm6 0a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>',
+    help: '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 15.5a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4zm1.6-5.9c-.6.4-.8.6-.8 1.2v.3h-1.6v-.4c0-1.1.5-1.7 1.3-2.2.6-.4.8-.7.8-1.2 0-.6-.5-1-1.2-1-.6 0-1.1.3-1.4 1l-1.4-.6C9.4 7.6 10.5 7 11.9 7c1.6 0 2.8.9 2.8 2.4 0 1-.5 1.6-1.1 2.2z"/></svg>',
+    sparkle: '<svg viewBox="0 0 24 24"><path d="M12 2l1.9 5.6L19.5 9l-5.6 1.4L12 16l-1.9-5.6L4.5 9l5.6-1.4L12 2zm6 12l.9 2.6L21.5 18l-2.6.7L18 21l-.9-2.3-2.6-.7 2.6-1.4.9-2.6z"/></svg>',
+  };
+  const _FONT_STACKS = {
+    system: "'Inter','Segoe UI',system-ui,sans-serif",
+    inter: "'Inter','Segoe UI',system-ui,sans-serif",
+    poppins: "'Poppins','Segoe UI',system-ui,sans-serif",
+    nunito: "'Nunito','Segoe UI',system-ui,sans-serif",
+    roboto: "'Roboto','Segoe UI',system-ui,sans-serif",
+  };
+  const _GOOGLE_FONTS = {
+    poppins: "Poppins:wght@400;500;600;700",
+    nunito: "Nunito:wght@400;600;700;800",
+    roboto: "Roboto:wght@400;500;700",
+  };
+
+  function applyAppearance(cfg) {
+    // Köşe yuvarlaklığı
+    const radiusMap = { sharp: "6px", soft: "20px", pill: "28px" };
+    const radius = radiusMap[cfg.corner_radius] || radiusMap.soft;
+    container.style.setProperty("--nxc-border-radius", radius);
+
+    // Buton boyutu
+    const sizeMap = { small: "52px", medium: "62px", large: "74px" };
+    const size = sizeMap[cfg.button_size] || sizeMap.medium;
+    toggle.style.width = size;
+    toggle.style.height = size;
+
+    // Buton şekli
+    toggle.style.borderRadius = cfg.button_shape === "rounded" ? "18px" : "50%";
+
+    // Font
+    const fontKey = (cfg.font_family || "system").toLowerCase();
+    const stack = _FONT_STACKS[fontKey] || _FONT_STACKS.system;
+    if (_GOOGLE_FONTS[fontKey] && !document.getElementById("nxc-font-" + fontKey)) {
+      const l = document.createElement("link");
+      l.id = "nxc-font-" + fontKey;
+      l.rel = "stylesheet";
+      l.href = "https://fonts.googleapis.com/css2?family=" + _GOOGLE_FONTS[fontKey] + "&display=swap";
+      document.head.appendChild(l);
+    }
+    if (fontKey !== "system" && fontKey !== "inter" && !document.getElementById("nxc-font-override")) {
+      const s = document.createElement("style");
+      s.id = "nxc-font-override";
+      s.textContent = "#nxc-container, #nxc-container *, #nxc-toggle { font-family: " + stack + " !important; }";
+      document.head.appendChild(s);
+    }
+
+    // Launcher ikonu (emoji / hazır ikon / görsel URL)
+    const icon = (cfg.launcher_icon || "").trim();
+    if (icon) {
+      let inner;
+      if (_PRESET_ICONS[icon]) {
+        inner = _PRESET_ICONS[icon];
+      } else if (/^https?:\/\//.test(icon)) {
+        inner = '<img src="' + icon + '" alt="" style="width:58%;height:58%;object-fit:contain;pointer-events:none;"/>';
+      } else {
+        // Emoji veya kısa metin
+        inner = '<span style="font-size:26px;line-height:1;pointer-events:none;">' + icon + '</span>';
+      }
+      // Açık ikon (close) korunur; sadece "chat" durumundaki içerik değişir
+      toggle.innerHTML =
+        '<span class="icon-chat" style="display:flex;align-items:center;justify-content:center;transition:transform .35s cubic-bezier(.34,1.56,.64,1);">' + inner + '</span>' +
+        '<svg class="icon-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+    }
   }
 
   /* --- Chip oluştur (emoji destekli) --- */
@@ -1216,8 +1289,11 @@
 
       /* Theme color — tüm dinamik stilleri güncelle */
       if (cfg.theme_color) {
-        applyThemeColor(cfg.theme_color);
+        applyThemeColor(cfg.theme_color, cfg.secondary_color);
       }
+
+      /* Paket A — görünüm özelleştirme (buton, köşe, font, ikon) */
+      applyAppearance(cfg);
 
       /* Text color */
       if (cfg.text_color) {

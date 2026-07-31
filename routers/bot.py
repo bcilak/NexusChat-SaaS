@@ -79,6 +79,15 @@ class BotUpdate(BaseModel):
     vehicle_selector_label: Optional[str] = None
     # Görsel yükleme müşteri tercihidir; kendi botunda açıp kapatabilir.
     image_upload_enabled: Optional[bool] = None
+    # Ürün öneri kartları aç/kapat.
+    product_cards_enabled: Optional[bool] = None
+    # Paket A — görünüm özelleştirme
+    launcher_icon: Optional[str] = None
+    button_size: Optional[str] = None
+    button_shape: Optional[str] = None
+    corner_radius: Optional[str] = None
+    secondary_color: Optional[str] = None
+    font_family: Optional[str] = None
 
 
 class BotResponse(BaseModel):
@@ -115,6 +124,13 @@ class BotResponse(BaseModel):
     vehicle_selector_label: Optional[str] = None
     weather_enabled: bool = False
     image_upload_enabled: bool = True
+    product_cards_enabled: bool = True
+    launcher_icon: Optional[str] = None
+    button_size: Optional[str] = "medium"
+    button_shape: Optional[str] = "round"
+    corner_radius: Optional[str] = "soft"
+    secondary_color: Optional[str] = None
+    font_family: Optional[str] = "system"
     document_count: int = 0
     created_at: str
     user_id: int
@@ -176,6 +192,13 @@ def bot_to_response(bot: Bot) -> BotResponse:
         vehicle_selector_label=getattr(bot, "vehicle_selector_label", None),
         weather_enabled=bool(getattr(bot, "weather_enabled", False)),
         image_upload_enabled=bool(getattr(bot, "image_upload_enabled", True)),
+        product_cards_enabled=bool(getattr(bot, "product_cards_enabled", True)),
+        launcher_icon=getattr(bot, "launcher_icon", None),
+        button_size=getattr(bot, "button_size", None) or "medium",
+        button_shape=getattr(bot, "button_shape", None) or "round",
+        corner_radius=getattr(bot, "corner_radius", None) or "soft",
+        secondary_color=getattr(bot, "secondary_color", None),
+        font_family=getattr(bot, "font_family", None) or "system",
         document_count=len(bot.documents) if bot.documents else 0,
         created_at=bot.created_at.isoformat() if bot.created_at else "",
         user_id=bot.user_id,

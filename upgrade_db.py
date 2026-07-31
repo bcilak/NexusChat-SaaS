@@ -54,7 +54,15 @@ def upgrade_db():
         ("vehicle_selector_enabled", "BOOLEAN DEFAULT 0"),
         ("vehicle_selector_label", "VARCHAR(200)"),
         ("weather_enabled", "BOOLEAN DEFAULT 0"),
-        ("image_upload_enabled", "BOOLEAN DEFAULT 1")
+        ("image_upload_enabled", "BOOLEAN DEFAULT 1"),
+        ("product_cards_enabled", "BOOLEAN DEFAULT 1"),
+        # Paket A — görünüm özelleştirme
+        ("launcher_icon", "VARCHAR(500)"),
+        ("button_size", "VARCHAR(10) DEFAULT 'medium'"),
+        ("button_shape", "VARCHAR(10) DEFAULT 'round'"),
+        ("corner_radius", "VARCHAR(10) DEFAULT 'soft'"),
+        ("secondary_color", "VARCHAR(20)"),
+        ("font_family", "VARCHAR(50) DEFAULT 'system'")
     ]
     
     for col_name, col_def in bot_columns:

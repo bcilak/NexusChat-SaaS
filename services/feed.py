@@ -171,40 +171,73 @@ def _tokenize_query(text: str) -> list[str]:
     return [t for t in folded if len(t) >= 3 and t not in stop and not t.isdigit()]
 
 
+# Alışveriş niyeti sinyalleri — sorunun ürünle ilgili olduğunu gösteren kalıplar.
+# (Birçoğu _STOPWORDS'te olduğu için token'lardan değil, ham metinden aranır.)
+_INTENT_MARKERS = {
+    "fiyat", "fiyati", "kaca", "kac para", "kacpara", "tl", "lira", "stok", "stokta",
+    "satin", "siparis", "urun", "urunu", "urunler", "model", "beden", "numara", "renk",
+    "oner", "onerir", "onerisi", "tavsiye", "indirim", "kampanya", "satiyor", "satiyormu",
+    "alabilir", "almak istiyorum", "var mi", "varmi", "kargo", "teslimat", "sepet",
+}
+
+
+def _has_shopping_intent(query: str) -> bool:
+    """Ham soru metninde ürün/alışveriş niyeti var mı? (fiyat, stok, satın alma vb.)"""
+    q = _fold(query)
+    return any(m in q for m in _INTENT_MARKERS)
+
+
+def _title_words(text: str) -> set[str]:
+    """Başlığı foldlanmış tam kelimelere ayırır (kelime sınırı eşleşmesi için)."""
+    return {w for w in re.split(r"[^\wçğıöşü]+", _fold(text)) if w}
+
+
 def search_products(bot_id: int, query: str, db: Session, k: int = 4) -> list[Product]:
     """Soru metnindeki anahtar kelimelerle ürün tablosunda arama yapar.
 
-    Eşleme Türkçe karakterlerden bağımsızdır (İ/i, ğ/g...). Başlıkta eşleşen
-    kelime sayısına göre puanlar; stokta olanları öne alır. Anlamlı kelime
-    yoksa (selamlama vb.) boş döner.
+    Yanlış tetiklenmeyi önlemek için:
+      1) TAM KELIME eşleşmesi (substring değil) — "hava", "havalandırma"yı tetiklemez.
+      2) NIYET KAPISI — soruda ürün/fiyat/stok niyeti yoksa, yalnızca başlıkta
+         birebir tam kelime eşleşmesi olan ürünler döner (rastgele sohbet elenir).
+    Eşleme Türkçe karakterlerden bağımsızdır; stokta olanları öne alır.
     """
     tokens = _tokenize_query(query)
     if not tokens:
         return []
 
-    # SQLite LIKE Türkçe harflerde güvenilir değil — eşlemeyi Python'da yap
     rows = db.query(Product).filter(Product.bot_id == bot_id).all()
     if not rows:
         return []
 
+    has_intent = _has_shopping_intent(query)
+
     scored = []
     for p in rows:
-        title = _fold(p.title)
-        cat = _fold(p.category)
-        brand = _fold(p.brand)
-        title_hits = sum(1 for t in tokens if t in title)
-        other_hits = sum(1 for t in tokens if t in cat or t in brand)
-        if title_hits == 0 and other_hits == 0:
+        title_words = _title_words(p.title)
+        cat_words = _title_words(p.category)
+        brand_words = _title_words(p.brand)
+        # Tam kelime eşleşmeleri
+        title_exact = sum(1 for t in tokens if t in title_words)
+        other_exact = sum(1 for t in tokens if t in cat_words or t in brand_words)
+        # Niyet varsa daha esnek ol: başlıkta substring de kabul (ör. çekim eki farkları)
+        title_loose = sum(1 for t in tokens if len(t) >= 4 and any(t in w for w in title_words))
+
+        if has_intent:
+            hit = title_exact or other_exact or title_loose
+            title_score = title_exact or title_loose
+        else:
+            # Niyet yoksa: yalnızca başlıkta TAM kelime eşleşmesi kabul edilir.
+            hit = title_exact
+            title_score = title_exact
+
+        if not hit:
             continue
         out_of_stock = 1 if (p.stock or "").strip().lower() in ("0", "out of stock", "outofstock") else 0
-        scored.append(((-title_hits, -other_hits, out_of_stock, len(title)), p))
+        scored.append(((-title_score, -other_exact, out_of_stock, len(p.title or "")), p))
 
     if not scored:
         return []
     scored.sort(key=lambda x: x[0])
-    # En az bir başlık eşleşmesi şartı — tamamen alakasız sonuç dönmesin
-    if not any(t in _fold(scored[0][1].title) for t in tokens):
-        return []
     return [p for _, p in scored[:k]]
 
 

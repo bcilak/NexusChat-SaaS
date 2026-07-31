@@ -68,6 +68,15 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
         "vehicle_selector_label": getattr(bot, "vehicle_selector_label", None),
         # Görsel yükleme — varsayılan açık; müşteri kapatırsa widget 📎 butonunu çizmez.
         "image_upload_enabled": bool(getattr(bot, "image_upload_enabled", True)),
+        # Ürün öneri kartları — varsayılan açık.
+        "product_cards_enabled": bool(getattr(bot, "product_cards_enabled", True)),
+        # Paket A — görünüm özelleştirme
+        "launcher_icon": getattr(bot, "launcher_icon", None),
+        "button_size": getattr(bot, "button_size", None) or "medium",
+        "button_shape": getattr(bot, "button_shape", None) or "round",
+        "corner_radius": getattr(bot, "corner_radius", None) or "soft",
+        "secondary_color": getattr(bot, "secondary_color", None),
+        "font_family": getattr(bot, "font_family", None) or "system",
     }
 
 

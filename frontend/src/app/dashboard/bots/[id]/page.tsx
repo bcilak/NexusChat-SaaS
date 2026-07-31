@@ -47,6 +47,13 @@ interface BotType {
   vehicle_selector_label: string | null;
   weather_enabled: boolean;
   image_upload_enabled: boolean;
+  product_cards_enabled: boolean;
+  launcher_icon: string | null;
+  button_size: string;
+  button_shape: string;
+  corner_radius: string;
+  secondary_color: string | null;
+  font_family: string;
   user_id: number;
 }
 
@@ -438,6 +445,13 @@ export default function BotDetailPage() {
         whatsapp_welcome_message: bot.whatsapp_welcome_message,
         vehicle_selector_label: bot.vehicle_selector_label,
         image_upload_enabled: bot.image_upload_enabled,
+        product_cards_enabled: bot.product_cards_enabled,
+        launcher_icon: bot.launcher_icon,
+        button_size: bot.button_size,
+        button_shape: bot.button_shape,
+        corner_radius: bot.corner_radius,
+        secondary_color: bot.secondary_color,
+        font_family: bot.font_family,
       });
       setBot(updated);
       setMessage({ text: "Ayarlar başarıyla kaydedildi.", type: "success" });
@@ -1011,6 +1025,197 @@ export default function BotDetailPage() {
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${bot.image_upload_enabled ? "translate-x-6" : ""}`} />
                 </button>
               </div>
+            </motion.div>
+
+            {/* 🛍️ Ürün öneri kartları — aç/kapat */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.125 }}
+              className="p-5 rounded-2xl border border-white/10 bg-white/[0.02]"
+            >
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-1">
+                🛍️ Ürün Öneri Kartları
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Ürün feed&apos;i bağlı botlarda, kullanıcının sorusunda ürün/fiyat/stok niyeti
+                algılandığında cevabın altında ürün kartı gösterilir. İstemezsen tamamen kapat.
+              </p>
+              <div className="flex items-center justify-between gap-3 p-3 rounded-xl border border-white/10 bg-black/20">
+                <div className="text-left">
+                  <div className="text-sm font-medium text-white">Ürün kartlarını göster</div>
+                  <div className="text-[11px] text-gray-500">
+                    {bot.product_cards_enabled ? "Şu an açık — uygun sorularda kart çıkar" : "Şu an kapalı — hiçbir soruda kart çıkmaz"}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={async () => {
+                    if (!bot) return;
+                    const next = !bot.product_cards_enabled;
+                    setBot({ ...bot, product_cards_enabled: next });
+                    setSaving(true);
+                    setMessage(null);
+                    try {
+                      const updated = await botsApi.update(botId, { product_cards_enabled: next });
+                      setBot(updated);
+                      setMessage({ text: next ? "Ürün kartları açıldı." : "Ürün kartları kapatıldı.", type: "success" });
+                    } catch (err: any) {
+                      setBot({ ...bot, product_cards_enabled: !next });
+                      setMessage({ text: err?.message || "İşlem başarısız.", type: "error" });
+                    } finally {
+                      setSaving(false);
+                      setTimeout(() => setMessage(null), 4000);
+                    }
+                  }}
+                  className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${bot.product_cards_enabled ? "bg-emerald-500" : "bg-white/15"}`}
+                  aria-pressed={bot.product_cards_enabled}
+                  aria-label="Ürün kartlarını aç/kapat"
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${bot.product_cards_enabled ? "translate-x-6" : ""}`} />
+                </button>
+              </div>
+            </motion.div>
+
+            {/* 🎨 Marka Kimliği (Paket A) — buton, köşe, font, ikon */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.128 }}
+              className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] space-y-5"
+            >
+              <div>
+                <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-1">
+                  🎨 Marka Kimliği
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Widget&apos;ın baloncuk butonunu, köşe stilini, yazı tipini ve vurgu rengini özelleştir.
+                </p>
+              </div>
+
+              {/* Launcher ikonu */}
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-2">Baloncuk (launcher) ikonu</label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { key: "chat", label: "💬 Sohbet" },
+                    { key: "bot", label: "🤖 Bot" },
+                    { key: "help", label: "❓ Yardım" },
+                    { key: "sparkle", label: "✨ Yıldız" },
+                  ].map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setBot({ ...bot, launcher_icon: opt.key })}
+                      className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${bot.launcher_icon === opt.key ? "border-indigo-500 bg-indigo-500/15 text-indigo-300" : "border-white/10 bg-black/20 text-gray-400 hover:border-white/20"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setBot({ ...bot, launcher_icon: "" })}
+                    className={`px-3 py-1.5 rounded-lg text-xs border transition-all ${!bot.launcher_icon ? "border-indigo-500 bg-indigo-500/15 text-indigo-300" : "border-white/10 bg-black/20 text-gray-400 hover:border-white/20"}`}
+                  >
+                    Varsayılan
+                  </button>
+                </div>
+                <input
+                  value={bot.launcher_icon ?? ""}
+                  onChange={e => setBot({ ...bot, launcher_icon: e.target.value })}
+                  placeholder="veya emoji yaz (örn. 🛒) ya da görsel URL yapıştır"
+                  className="mt-2 w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/60"
+                />
+              </div>
+
+              {/* Buton boyutu & şekli */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Buton boyutu</label>
+                  <select
+                    value={bot.button_size}
+                    onChange={e => setBot({ ...bot, button_size: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/60"
+                  >
+                    <option value="small" className="text-gray-900 bg-white">Küçük</option>
+                    <option value="medium" className="text-gray-900 bg-white">Orta</option>
+                    <option value="large" className="text-gray-900 bg-white">Büyük</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Buton şekli</label>
+                  <select
+                    value={bot.button_shape}
+                    onChange={e => setBot({ ...bot, button_shape: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/60"
+                  >
+                    <option value="round" className="text-gray-900 bg-white">Yuvarlak</option>
+                    <option value="rounded" className="text-gray-900 bg-white">Yumuşak kare</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Köşe yuvarlaklığı & Font */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Köşe yuvarlaklığı</label>
+                  <select
+                    value={bot.corner_radius}
+                    onChange={e => setBot({ ...bot, corner_radius: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/60"
+                  >
+                    <option value="sharp" className="text-gray-900 bg-white">Keskin</option>
+                    <option value="soft" className="text-gray-900 bg-white">Yumuşak</option>
+                    <option value="pill" className="text-gray-900 bg-white">Hap (çok yuvarlak)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-2">Yazı tipi</label>
+                  <select
+                    value={bot.font_family}
+                    onChange={e => setBot({ ...bot, font_family: e.target.value })}
+                    className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/60"
+                  >
+                    <option value="system" className="text-gray-900 bg-white">Sistem (Inter)</option>
+                    <option value="poppins" className="text-gray-900 bg-white">Poppins</option>
+                    <option value="nunito" className="text-gray-900 bg-white">Nunito</option>
+                    <option value="roboto" className="text-gray-900 bg-white">Roboto</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* İkincil (vurgu) rengi */}
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-2">İkincil (vurgu) renk — buton gradyanının bitişi</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={bot.secondary_color || "#8b5cf6"}
+                    onChange={e => setBot({ ...bot, secondary_color: e.target.value })}
+                    className="w-12 h-10 rounded-lg bg-transparent border border-white/10 cursor-pointer"
+                  />
+                  <input
+                    value={bot.secondary_color ?? ""}
+                    onChange={e => setBot({ ...bot, secondary_color: e.target.value })}
+                    placeholder="#8b5cf6 (boşsa ana renkten türetilir)"
+                    className="flex-1 bg-black/20 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-indigo-500/60"
+                  />
+                  {bot.secondary_color && (
+                    <button
+                      type="button"
+                      onClick={() => setBot({ ...bot, secondary_color: null })}
+                      className="text-xs text-gray-400 hover:text-white px-2 py-1"
+                    >
+                      Temizle
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-[11px] text-gray-500">
+                Değişiklikler sayfanın altındaki <strong>Kaydet</strong> ile uygulanır.
+              </p>
             </motion.div>
 
             {/* 🎬 Videolu cevap kuralları — anahtar kelimeyle tetiklenir */}
