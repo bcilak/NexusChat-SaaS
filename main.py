@@ -16,6 +16,7 @@ else:
 
 from db.database import engine, Base
 from models import User, Bot, Document, ChatHistory, CrawledPage, BotIntegration, BotTool, InboxConversation, InboxMessage, Ticket, ContactRequest, Product, VehicleFitment
+from models.bot_video import BotVideo  # noqa: F401 — create_all'dan ÖNCE import edilmeli ki tablo oluşsun
 
 # Load environment variables
 load_dotenv()
