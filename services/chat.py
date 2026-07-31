@@ -371,10 +371,41 @@ def rag_chat(
             for p in matched_products
         ]
 
-    return {
+    # Videolu cevap kuralları (anahtar kelime): soru bir kuralın tetikleyicisini
+    # içeriyorsa cevaba video iliştir. Kural yoksa bu blok hiçbir şey yapmaz.
+    video_url = _match_video_rule(bot.id, question, db)
+
+    result = {
         "answer": answer,
         "sources": sources,
         "session_id": session_id,
         "message_id": history.id,
         "products": products_payload,
     }
+    if video_url:
+        result["video"] = video_url
+    return result
+
+
+def _match_video_rule(bot_id: int, question: str, db: Session):
+    """Aktif video kurallarını tarar; soru bir tetikleyiciyi içeriyorsa video_url döner."""
+    try:
+        from models.bot_video import BotVideo
+        q = (question or "").lower()
+        if not q.strip():
+            return None
+        rules = (
+            db.query(BotVideo)
+            .filter(BotVideo.bot_id == bot_id, BotVideo.is_active == True)
+            .order_by(BotVideo.id.desc())
+            .all()
+        )
+        for rule in rules:
+            for kw in (rule.keywords or "").split(","):
+                kw = kw.strip().lower()
+                if kw and kw in q:
+                    return rule.video_url
+    except Exception:
+        # Video eşleştirme asla ana cevabı bozmasın.
+        return None
+    return None

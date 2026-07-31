@@ -29,7 +29,8 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
     file_ext = os.path.splitext(file.filename)[1].lower()
     
     # Optional: Validate file extensions if needed
-    allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".pdf", ".txt", ".csv"}
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".pdf", ".txt", ".csv",
+                          ".mp4", ".webm", ".mov"}  # kısa video cevap kuralları için
     if file_ext and file_ext not in allowed_extensions:
         raise HTTPException(status_code=400, detail=f"Desteklenmeyen dosya formatı: {file_ext}")
 

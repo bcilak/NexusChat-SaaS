@@ -1786,6 +1786,17 @@
         botBubble.appendChild(det);
       }
 
+      /* 🎬 Videolu cevap — kural eşleştiyse cevabın altında oynatıcı */
+      if (data.video) {
+        const vid = document.createElement("video");
+        vid.src = data.video;
+        vid.controls = true;
+        vid.preload = "metadata";
+        vid.playsInline = true;
+        vid.style.cssText = "margin-top:8px;max-width:100%;width:100%;border-radius:12px;display:block;";
+        botBubble.appendChild(vid);
+      }
+
       /* 👍👎 geri bildirim */
       attachFeedback(botBubble, data.message_id);
 

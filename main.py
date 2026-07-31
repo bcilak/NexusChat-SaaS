@@ -78,7 +78,7 @@ async def widget_no_cache(request: Request, call_next):
     return response
 
 # Include routers
-from routers import auth, bot, train, chat, widget, web_train, integration, analytics, admin, inbox, whatsapp, upload, bot_tools, contact, users, feed
+from routers import auth, bot, train, chat, widget, web_train, integration, analytics, admin, inbox, whatsapp, upload, bot_tools, contact, users, feed, bot_video
 
 app.include_router(auth.router)
 app.include_router(admin.router)
@@ -86,6 +86,7 @@ app.include_router(bot.router)
 app.include_router(train.router)
 app.include_router(chat.router)
 app.include_router(widget.router)
+app.include_router(bot_video.router)
 app.include_router(web_train.router)
 app.include_router(integration.router)
 app.include_router(analytics.router)

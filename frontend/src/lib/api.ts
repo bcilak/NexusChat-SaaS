@@ -120,6 +120,27 @@ export const botsApi = {
     }),
 };
 
+// --- Videolu cevap kuralları (anahtar kelime → video) ---
+export const videoApi = {
+  list: (botId: number) => apiFetch(`/api/bots/${botId}/videos`),
+
+  create: (botId: number, data: { title?: string; keywords: string; video_url: string; is_active?: boolean }) =>
+    apiFetch(`/api/bots/${botId}/videos`, { method: "POST", body: JSON.stringify(data) }),
+
+  update: (botId: number, videoId: number, data: Record<string, unknown>) =>
+    apiFetch(`/api/bots/${botId}/videos/${videoId}`, { method: "PUT", body: JSON.stringify(data) }),
+
+  remove: (botId: number, videoId: number) =>
+    apiFetch(`/api/bots/${botId}/videos/${videoId}`, { method: "DELETE" }),
+
+  // Video dosyası yükle → { url, filename }
+  upload: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiFetch(`/api/upload`, { method: "POST", body: formData });
+  },
+};
+
 // --- Training ---
 export const trainingApi = {
   upload: (botId: number, file: File) => {

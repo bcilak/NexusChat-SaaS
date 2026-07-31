@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { botsApi } from "@/lib/api";
+import { botsApi, videoApi, API_BASE } from "@/lib/api";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -318,6 +318,72 @@ export default function BotDetailPage() {
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [activeSection, setActiveSection] = useState<"appearance" | "behavior" | "ai" | "whatsapp">("appearance");
 
+  // 🎬 Videolu cevap kuralları
+  type VideoRule = { id: number; bot_id: number; title: string | null; keywords: string; video_url: string; is_active: boolean };
+  const [videoRules, setVideoRules] = useState<VideoRule[]>([]);
+  const [vidTitle, setVidTitle] = useState("");
+  const [vidKeywords, setVidKeywords] = useState("");
+  const [vidUploading, setVidUploading] = useState(false);
+  const [vidUploadedUrl, setVidUploadedUrl] = useState<string>("");
+
+  const loadVideoRules = () => {
+    videoApi.list(botId).then(setVideoRules).catch(() => {});
+  };
+
+  const handleVideoUpload = async (file: File) => {
+    setVidUploading(true);
+    setMessage(null);
+    try {
+      const res = await videoApi.upload(file);
+      // Widget müşteri sitesinde çalışacağı için MUTLAKA mutlak URL sakla.
+      const url = res.url?.startsWith("http") ? res.url : `${API_BASE}${res.url}`;
+      setVidUploadedUrl(url);
+      setMessage({ text: "Video yüklendi. Şimdi tetikleyici kelimeleri girip 'Kural ekle'ye bas.", type: "success" });
+    } catch (err: any) {
+      setMessage({ text: err?.message || "Video yüklenemedi (maks 10MB, mp4/webm).", type: "error" });
+    } finally {
+      setVidUploading(false);
+      setTimeout(() => setMessage(null), 5000);
+    }
+  };
+
+  const handleAddVideoRule = async () => {
+    if (!vidUploadedUrl) {
+      setMessage({ text: "Önce bir video yükle.", type: "error" });
+      setTimeout(() => setMessage(null), 4000);
+      return;
+    }
+    if (!vidKeywords.trim()) {
+      setMessage({ text: "En az bir tetikleyici kelime gir (virgülle ayır).", type: "error" });
+      setTimeout(() => setMessage(null), 4000);
+      return;
+    }
+    try {
+      await videoApi.create(botId, { title: vidTitle.trim(), keywords: vidKeywords.trim(), video_url: vidUploadedUrl, is_active: true });
+      setVidTitle(""); setVidKeywords(""); setVidUploadedUrl("");
+      loadVideoRules();
+      setMessage({ text: "Video kuralı eklendi.", type: "success" });
+    } catch (err: any) {
+      setMessage({ text: err?.message || "Kural eklenemedi.", type: "error" });
+    } finally {
+      setTimeout(() => setMessage(null), 4000);
+    }
+  };
+
+  const handleToggleVideoRule = async (rule: VideoRule) => {
+    try {
+      await videoApi.update(botId, rule.id, { is_active: !rule.is_active });
+      loadVideoRules();
+    } catch { /* sessiz */ }
+  };
+
+  const handleDeleteVideoRule = async (id: number) => {
+    try {
+      await videoApi.remove(botId, id);
+      loadVideoRules();
+    } catch { /* sessiz */ }
+  };
+
   // Yalnızca bot yüklendikten sonra sahiplik ve izin kontrolü yap
   const isSubUser = !!user?.parent_id; // parent_id varsa alt kullanıcı
   const isOwner = !loading && bot != null && bot.user_id === user?.id;
@@ -327,6 +393,7 @@ export default function BotDetailPage() {
 
   useEffect(() => {
     botsApi.get(botId).then(setBot).catch(console.error).finally(() => setLoading(false));
+    videoApi.list(botId).then(setVideoRules).catch(() => {});
   }, [botId]);
 
   useEffect(() => {
@@ -943,6 +1010,92 @@ export default function BotDetailPage() {
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${bot.image_upload_enabled ? "translate-x-6" : ""}`} />
                 </button>
+              </div>
+            </motion.div>
+
+            {/* 🎬 Videolu cevap kuralları — anahtar kelimeyle tetiklenir */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.13 }}
+              className="p-5 rounded-2xl border border-white/10 bg-white/[0.02]"
+            >
+              <h3 className="text-sm font-semibold text-white flex items-center gap-2 mb-1">
+                🎬 Videolu Cevaplar
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Kullanıcının sorusu, tanımladığın <strong>tetikleyici kelimelerden</strong> birini
+                içerirse bot cevabına kısa videoyu ekler. Örn. kelimeler: <em>kurulum, nasıl takılır, montaj</em>.
+              </p>
+
+              {/* Mevcut kurallar */}
+              {videoRules.length > 0 && (
+                <div className="flex flex-col gap-2 mb-4">
+                  {videoRules.map((r) => (
+                    <div key={r.id} className="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-black/20">
+                      <video src={r.video_url} className="w-16 h-12 rounded-md object-cover bg-black flex-shrink-0" muted />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white truncate">{r.title || "(başlıksız)"}</div>
+                        <div className="text-[11px] text-gray-500 truncate">🔑 {r.keywords || "—"}</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleVideoRule(r)}
+                        className={`text-[11px] px-2 py-1 rounded-lg font-semibold ${r.is_active ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-gray-400"}`}
+                      >
+                        {r.is_active ? "Aktif" : "Pasif"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteVideoRule(r.id)}
+                        className="text-gray-500 hover:text-red-400 transition-colors"
+                        aria-label="Kuralı sil"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Yeni kural ekle */}
+              <div className="flex flex-col gap-2 p-3 rounded-xl border border-dashed border-white/15 bg-black/10">
+                <div className="text-xs font-medium text-gray-400">Yeni kural</div>
+                <input
+                  value={vidTitle}
+                  onChange={(e) => setVidTitle(e.target.value)}
+                  placeholder="Başlık (opsiyonel — ör: Ürün kurulumu)"
+                  className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-white placeholder-gray-600 outline-none focus:border-indigo-500/60"
+                />
+                <input
+                  value={vidKeywords}
+                  onChange={(e) => setVidKeywords(e.target.value)}
+                  placeholder="Tetikleyici kelimeler (virgülle ayır): kurulum, montaj, nasıl takılır"
+                  className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-white placeholder-gray-600 outline-none focus:border-indigo-500/60"
+                />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <label className="px-3 py-2 rounded-lg text-xs font-semibold border border-white/15 bg-white/5 text-gray-200 hover:bg-white/10 cursor-pointer transition-all">
+                    {vidUploading ? "Yükleniyor…" : vidUploadedUrl ? "✅ Video seçildi — değiştir" : "🎬 Video seç (mp4/webm, maks 10MB)"}
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm,video/quicktime"
+                      className="hidden"
+                      disabled={vidUploading}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoUpload(f); e.target.value = ""; }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddVideoRule}
+                    disabled={vidUploading || !vidUploadedUrl}
+                    className="px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-40 transition-all"
+                  >
+                    Kural ekle
+                  </button>
+                </div>
+                {vidUploadedUrl && (
+                  <video src={vidUploadedUrl} controls className="w-full max-w-xs mt-1 rounded-lg" />
+                )}
               </div>
             </motion.div>
 
