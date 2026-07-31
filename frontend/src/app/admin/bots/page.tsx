@@ -171,13 +171,13 @@ export default function BotsAdminPage() {
                 <select
                   value={targetUserId}
                   onChange={e => setTargetUserId(e.target.value ? Number(e.target.value) : "")}
-                  className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-indigo-500/60"
+                  className="w-full bg-gray-50 dark:bg-white/5 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 outline-none focus:border-indigo-500/60"
                 >
-                  <option value="">— Hesap seçin —</option>
+                  <option value="" className="text-gray-900 bg-white">— Hesap seçin —</option>
                   {users
                     .filter(u => u.id !== transferBot.owner_id)
                     .map(u => (
-                      <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                      <option key={u.id} value={u.id} className="text-gray-900 bg-white">{u.name} ({u.email})</option>
                     ))}
                 </select>
               </div>
