@@ -50,6 +50,7 @@ interface BotType {
   product_cards_enabled: boolean;
   launcher_icon: string | null;
   button_size: string;
+  widget_size: string;
   button_shape: string;
   corner_radius: string;
   secondary_color: string | null;
@@ -134,6 +135,10 @@ function WidgetPreview({ bot }: { bot: BotType }) {
   const textOnAccent = bot.text_color || "#ffffff";
   const fontStack = FONT_STACKS[bot.font_family || "system"] || FONT_STACKS.system;
   const rad = radiusFor(bot.corner_radius);
+  // Panel boyutu önizlemeye yansısın (gerçek widget: 400/460/520 gen., 590/660/720 yük.)
+  const wsize = bot.widget_size || "normal";
+  const previewMaxW = wsize === "xlarge" ? 400 : wsize === "large" ? 360 : 320;
+  const msgAreaH = wsize === "xlarge" ? 300 : wsize === "large" ? 260 : 220;
 
   // Önizleme için Google fontunu (Poppins/Nunito/Roboto) yükle
   useEffect(() => {
@@ -186,7 +191,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
   const bodyText = isLight ? "#1e293b" : "#e2e8f0";
 
   return (
-    <div className="flex flex-col overflow-hidden border border-white/10 shadow-2xl" style={{ fontFamily: fontStack, fontSize: 14, background: surfaceBg, borderRadius: rad + 4 }}>
+    <div className="flex flex-col overflow-hidden border border-white/10 shadow-2xl mx-auto w-full" style={{ fontFamily: fontStack, fontSize: 14, background: surfaceBg, borderRadius: rad + 4, maxWidth: previewMaxW }}>
       {/* Header (hero modunda genişler, sohbet başlayınca küçülür) */}
       <div
         className="flex items-center justify-between relative overflow-hidden transition-all duration-500"
@@ -227,7 +232,7 @@ function WidgetPreview({ bot }: { bot: BotType }) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 p-3 flex flex-col gap-2.5 overflow-y-auto" style={{ minHeight: 220, maxHeight: 220 }}>
+      <div className="flex-1 p-3 flex flex-col gap-2.5 overflow-y-auto" style={{ minHeight: msgAreaH, maxHeight: msgAreaH }}>
         <div className="text-center text-[10px] text-white/30 font-medium">Bugün</div>
         {chatMsgs.map((msg, i) => (
           <div key={i} className={`max-w-[85%] px-3 py-2 text-[12px] leading-relaxed ${msg.role === "bot" ? "self-start" : "self-end"}`}
@@ -524,6 +529,7 @@ export default function BotDetailPage() {
         corner_radius: bot.corner_radius,
         secondary_color: bot.secondary_color,
         font_family: bot.font_family,
+        widget_size: bot.widget_size,
       });
       setBot(updated);
       setMessage({ text: "Ayarlar başarıyla kaydedildi.", type: "success" });
@@ -1310,6 +1316,29 @@ export default function BotDetailPage() {
                     <option value="roboto" className="text-gray-900 bg-white">Roboto</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Panel boyutu (okunaklılık) */}
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-2">Sohbet paneli boyutu (okunaklılık)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: "normal", label: "Normal", sub: "400×590" },
+                    { key: "large", label: "Geniş", sub: "460×660" },
+                    { key: "xlarge", label: "Tam", sub: "520×720" },
+                  ].map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setBot({ ...bot, widget_size: opt.key })}
+                      className={`px-2 py-2 rounded-xl text-xs border transition-all text-center ${(bot.widget_size || "normal") === opt.key ? "border-indigo-500 bg-indigo-500/15 text-indigo-300" : "border-white/10 bg-black/20 text-gray-400 hover:border-white/20"}`}
+                    >
+                      <div className="font-semibold">{opt.label}</div>
+                      <div className="text-[10px] opacity-70">{opt.sub}</div>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1.5">Masaüstünde panel daha büyük ve okunaklı olur. Mobilde ekrana göre otomatik sığar.</p>
               </div>
 
               {/* İkincil (vurgu) rengi */}

@@ -77,6 +77,7 @@ def get_widget_config(bot_id: int, db: Session = Depends(get_db)):
         "corner_radius": getattr(bot, "corner_radius", None) or "soft",
         "secondary_color": getattr(bot, "secondary_color", None),
         "font_family": getattr(bot, "font_family", None) or "system",
+        "widget_size": getattr(bot, "widget_size", None) or "normal",
     }
 
 

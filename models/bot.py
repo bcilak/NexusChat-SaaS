@@ -71,6 +71,7 @@ class Bot(Base):
     corner_radius = Column(String(10), default="soft")   # sharp | soft | pill
     secondary_color = Column(String(20), nullable=True)  # vurgu rengi; boşsa theme_color kullanılır
     font_family = Column(String(50), default="system")   # system | inter | poppins | nunito | roboto
+    widget_size = Column(String(10), default="normal")   # normal | large | xlarge  (panel okunaklılığı)
 
     # Product feed (Google Merchant / Ticimax / İdeasoft XML)
     feed_url = Column(String(1000), nullable=True)

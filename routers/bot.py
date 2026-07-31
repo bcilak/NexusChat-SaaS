@@ -88,6 +88,7 @@ class BotUpdate(BaseModel):
     corner_radius: Optional[str] = None
     secondary_color: Optional[str] = None
     font_family: Optional[str] = None
+    widget_size: Optional[str] = None
 
 
 class BotResponse(BaseModel):
@@ -131,6 +132,7 @@ class BotResponse(BaseModel):
     corner_radius: Optional[str] = "soft"
     secondary_color: Optional[str] = None
     font_family: Optional[str] = "system"
+    widget_size: Optional[str] = "normal"
     document_count: int = 0
     created_at: str
     user_id: int
@@ -199,6 +201,7 @@ def bot_to_response(bot: Bot) -> BotResponse:
         corner_radius=getattr(bot, "corner_radius", None) or "soft",
         secondary_color=getattr(bot, "secondary_color", None),
         font_family=getattr(bot, "font_family", None) or "system",
+        widget_size=getattr(bot, "widget_size", None) or "normal",
         document_count=len(bot.documents) if bot.documents else 0,
         created_at=bot.created_at.isoformat() if bot.created_at else "",
         user_id=bot.user_id,

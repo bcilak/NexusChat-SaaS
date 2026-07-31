@@ -62,7 +62,8 @@ def upgrade_db():
         ("button_shape", "VARCHAR(10) DEFAULT 'round'"),
         ("corner_radius", "VARCHAR(10) DEFAULT 'soft'"),
         ("secondary_color", "VARCHAR(20)"),
-        ("font_family", "VARCHAR(50) DEFAULT 'system'")
+        ("font_family", "VARCHAR(50) DEFAULT 'system'"),
+        ("widget_size", "VARCHAR(10) DEFAULT 'normal'")
     ]
     
     for col_name, col_def in bot_columns:

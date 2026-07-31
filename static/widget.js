@@ -251,9 +251,9 @@
       bottom: 96px;
       right: 24px;
       z-index: 2147483645;
-      width: 400px;
+      width: var(--nxc-width, 400px);
       max-width: calc(100vw - 48px);
-      height: 590px;
+      height: var(--nxc-height, 590px);
       max-height: calc(100vh - 120px);
       border-radius: var(--nxc-border-radius);
       overflow: hidden;
@@ -1150,6 +1150,16 @@
     const radiusMap = { sharp: "6px", soft: "20px", pill: "28px" };
     const radius = radiusMap[cfg.corner_radius] || radiusMap.soft;
     container.style.setProperty("--nxc-border-radius", radius);
+
+    // Panel boyutu (okunaklılık) — mobilde max-width/height zaten sınırlıyor
+    const panelMap = {
+      normal: { w: "400px", h: "590px" },
+      large:  { w: "460px", h: "660px" },
+      xlarge: { w: "520px", h: "720px" },
+    };
+    const panel = panelMap[cfg.widget_size] || panelMap.normal;
+    container.style.setProperty("--nxc-width", panel.w);
+    container.style.setProperty("--nxc-height", panel.h);
 
     // Buton boyutu
     const sizeMap = { small: "52px", medium: "62px", large: "74px" };
